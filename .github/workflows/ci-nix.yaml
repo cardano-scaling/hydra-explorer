@@ -1,0 +1,46 @@
+name: "CI"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+on:
+  merge_group:
+  push:
+    branches:
+    - master
+    - release
+  pull_request:
+  schedule:
+    - cron: "0 4 * * *"
+
+permissions:
+  checks: write
+  pull-requests: write
+
+jobs:
+  build-test:
+    name: "Build & test"
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v4
+
+    - name: ❄ Prepare nix
+      uses: cachix/install-nix-action@v30
+      with:
+        extra_nix_config: |
+          accept-flake-config = true
+          log-lines = 1000
+
+    - name: ❄ Cachix cache of nix derivations
+      uses: cachix/cachix-action@v15
+      with:
+        name: cardano-scaling
+        authToken: '${{ secrets.CACHIX_CARDANO_SCALING_AUTH_TOKEN }}'
+
+    - name: ❓ Test
+      run: |
+        nix build github:srid/devour-flake \
+           -L --no-link --print-out-paths \
+           --override-input flake .
