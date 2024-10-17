@@ -1,6 +1,5 @@
 { repoRoot, inputs }:
 {
-  nixosConfigurations = {
     hydra-explorer = inputs.nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       specialArgs = inputs;
@@ -18,6 +17,7 @@
           imports = [
             "${inputs.nixpkgs}/nixos/modules/virtualisation/amazon-image.nix"
             inputs.cardano-node.nixosModules.cardano-node
+            (import (inputs.self + "/nix/nixosModule.nix") { inherit inputs; })
           ];
 
           networking = {
@@ -33,8 +33,11 @@
           services.cardano-node = {
             enable = true;
             environment = "preprod";
+            socketPath = "/root/node.socket";
             port = 3002;
           };
+
+          services.hydra-explorer.enable = true;
 
           services.openssh.enable = true;
 
@@ -42,5 +45,4 @@
         }
       ];
     };
-  };
 }
