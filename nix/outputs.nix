@@ -7,6 +7,9 @@ let
 in
 
 [
+  {
+    apps = inputs.nixinate.nixinate."x86_64-linux" inputs.self;
+  }
   (
     project.flake
   )

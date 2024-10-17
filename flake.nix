@@ -10,8 +10,6 @@
 
     cardano-node.url = "github:IntersectMBO/cardano-node/9.2.0";
 
-    flake-parts.url = "github:hercules-ci/flake-parts";
-
     hackage = {
       url = "github:input-output-hk/hackage.nix";
       flake = false;
@@ -33,7 +31,6 @@
     nixinate.url = "github:MatthewCroughan/nixinate";
 
     nixpkgs.follows = "haskell-nix/nixpkgs";
-
   };
 
   outputs = inputs:
@@ -45,67 +42,14 @@
         "aarch64-linux"
       ];
     in
-    inputs.iogx.lib.mkFlake
-      {
-
-        inherit inputs;
-        inherit systems;
-
-        repoRoot = ./.;
-
-        outputs = import ./nix/outputs.nix;
-
-      } //
-    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+    inputs.iogx.lib.mkFlake {
+      inherit inputs;
       inherit systems;
-      flake = {
-
-        apps = inputs.nixinate.nixinate."x86_64-linux" inputs.self;
-
-        nixosConfigurations = {
-          hydra-explorer = inputs.nixpkgs.lib.nixosSystem {
-            system = "x86_64-linux";
-            specialArgs = inputs;
-            modules = [
-              {
-                _module.args.nixinate = {
-                  host = "explorer.hydra.family";
-                  sshUser = "root";
-                  buildOn = "local";
-                  substituteOnTarget = true;
-                  hermetic = false;
-                };
-              }
-              {
-                imports = [
-                  "${inputs.nixpkgs}/nixos/modules/virtualisation/amazon-image.nix"
-                  inputs.cardano-node.nixosModules.cardano-node
-                ];
-
-                networking = {
-                  hostName = "hydra-explorer";
-                  firewall = {
-                    allowedTCPPorts = [ 25 80 443 ];
-                    enable = false;
-                  };
-                };
-
-                nix.settings.trusted-users = [ "root" ];
-
-                services.cardano-node = {
-                  enable = true;
-                  environment = "preprod";
-                  port = 3002;
-                };
-
-                services.openssh.enable = true;
-
-                system.stateVersion = "24.05";
-              }
-            ];
-          };
-        };
+      repoRoot = ./.;
+      flake = args: {
+        nixosConfigurations = import ./nix/nixos-configs.nix args;
       };
+      outputs = import ./nix/outputs.nix;
     };
 
   nixConfig = {
