@@ -2,19 +2,20 @@ module Hydra.Explorer.ExplorerState where
 
 import Hydra.Prelude
 
-import Hydra.HeadId (HeadId (..), HeadSeed)
+import Hydra.Tx.HeadId (HeadId (..), HeadSeed)
 
 import Data.Aeson (Value (..))
 import Hydra.Cardano.Api (BlockNo, ChainPoint (..), TxIn, UTxO)
-import Hydra.Chain (HeadParameters (..), OnChainTx (..))
+import Hydra.Chain (OnChainTx (..))
 import Hydra.Chain.Direct.Tx (
   headSeedToTxIn,
  )
-import Hydra.ChainObserver (ChainObservation (..))
-import Hydra.ContestationPeriod (ContestationPeriod, toNominalDiffTime)
-import Hydra.OnChainId (OnChainId)
-import Hydra.Party (Party)
-import Hydra.Snapshot (SnapshotNumber (..))
+import Hydra.ChainObserver.NodeClient (ChainObservation (..))
+import Hydra.Tx.ContestationPeriod (ContestationPeriod, toNominalDiffTime)
+import Hydra.Tx.HeadParameters (HeadParameters (..))
+import Hydra.Tx.OnChainId (OnChainId)
+import Hydra.Tx.Party (Party)
+import Hydra.Tx.Snapshot (SnapshotNumber (..))
 
 data HeadMember = HeadMember
   { party :: Party
@@ -225,6 +226,94 @@ aggregateCollectComObservation headId point blockNo currentHeads =
       , blockNo = blockNo
       }
 
+aggregateDepositObservation :: HeadId -> ChainPoint -> BlockNo -> [HeadState] -> [HeadState]
+aggregateDepositObservation headId point blockNo currentHeads =
+  case findHeadState headId currentHeads of
+    Just headState ->
+      let newHeadState = headState{status = Open}
+       in replaceHeadState newHeadState currentHeads
+    Nothing -> currentHeads <> [newUnknownHeadState]
+ where
+  newUnknownHeadState =
+    HeadState
+      { headId
+      , seedTxIn = Unknown
+      , status = Open
+      , contestationPeriod = Unknown
+      , members = Unknown
+      , contestations = Seen 0
+      , snapshotNumber = Seen 0
+      , contestationDeadline = Unknown
+      , point = point
+      , blockNo = blockNo
+      }
+
+aggregateRecoverObservation :: HeadId -> ChainPoint -> BlockNo -> [HeadState] -> [HeadState]
+aggregateRecoverObservation headId point blockNo currentHeads =
+  case findHeadState headId currentHeads of
+    Just headState ->
+      let newHeadState = headState{status = Open}
+       in replaceHeadState newHeadState currentHeads
+    Nothing -> currentHeads <> [newUnknownHeadState]
+ where
+  newUnknownHeadState =
+    HeadState
+      { headId
+      , seedTxIn = Unknown
+      , status = Open
+      , contestationPeriod = Unknown
+      , members = Unknown
+      , contestations = Seen 0
+      , snapshotNumber = Seen 0
+      , contestationDeadline = Unknown
+      , point = point
+      , blockNo = blockNo
+      }
+
+aggregateIncrementObservation :: HeadId -> ChainPoint -> BlockNo -> [HeadState] -> [HeadState]
+aggregateIncrementObservation headId point blockNo currentHeads =
+  case findHeadState headId currentHeads of
+    Just headState ->
+      let newHeadState = headState{status = Open}
+       in replaceHeadState newHeadState currentHeads
+    Nothing -> currentHeads <> [newUnknownHeadState]
+ where
+  newUnknownHeadState =
+    HeadState
+      { headId
+      , seedTxIn = Unknown
+      , status = Open
+      , contestationPeriod = Unknown
+      , members = Unknown
+      , contestations = Seen 0
+      , snapshotNumber = Seen 0
+      , contestationDeadline = Unknown
+      , point = point
+      , blockNo = blockNo
+      }
+
+aggregateDecrementObservation :: HeadId -> ChainPoint -> BlockNo -> [HeadState] -> [HeadState]
+aggregateDecrementObservation headId point blockNo currentHeads =
+  case findHeadState headId currentHeads of
+    Just headState ->
+      let newHeadState = headState{status = Open}
+       in replaceHeadState newHeadState currentHeads
+    Nothing -> currentHeads <> [newUnknownHeadState]
+ where
+  newUnknownHeadState =
+    HeadState
+      { headId
+      , seedTxIn = Unknown
+      , status = Open
+      , contestationPeriod = Unknown
+      , members = Unknown
+      , contestations = Seen 0
+      , snapshotNumber = Seen 0
+      , contestationDeadline = Unknown
+      , point = point
+      , blockNo = blockNo
+      }
+
 aggregateCloseObservation :: HeadId -> ChainPoint -> BlockNo -> SnapshotNumber -> UTCTime -> [HeadState] -> [HeadState]
 aggregateCloseObservation headId point blockNo (UnsafeSnapshotNumber sn) contestationDeadline currentHeads =
   case findHeadState headId currentHeads of
@@ -339,6 +428,26 @@ aggregateHeadObservations observations explorerState =
       HeadObservation{point, blockNo, onChainTx = OnCollectComTx{headId}} ->
         ExplorerState
           { heads = aggregateCollectComObservation headId point blockNo heads
+          , tick = TickState point blockNo
+          }
+      HeadObservation{point, blockNo, onChainTx = OnDepositTx{headId}} ->
+        ExplorerState
+          { heads = aggregateDepositObservation headId point blockNo heads
+          , tick = TickState point blockNo
+          }
+      HeadObservation{point, blockNo, onChainTx = OnRecoverTx{headId}} ->
+        ExplorerState
+          { heads = aggregateRecoverObservation headId point blockNo heads
+          , tick = TickState point blockNo
+          }
+      HeadObservation{point, blockNo, onChainTx = OnIncrementTx{headId}} ->
+        ExplorerState
+          { heads = aggregateIncrementObservation headId point blockNo heads
+          , tick = TickState point blockNo
+          }
+      HeadObservation{point, blockNo, onChainTx = OnDecrementTx{headId}} ->
+        ExplorerState
+          { heads = aggregateDecrementObservation headId point blockNo heads
           , tick = TickState point blockNo
           }
       HeadObservation{point, blockNo, onChainTx = OnCloseTx{headId, snapshotNumber, contestationDeadline}} ->

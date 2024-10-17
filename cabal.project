@@ -22,11 +22,12 @@ source-repository-package
   tag: d55c4efb896273dc39d4bdc4fc83ec361de55f73
   --sha256: sha256-LziIjrdjMA8dVPKMwKskLyjlnx5HhpDwTjC9sek5Bfo=
   subdir:
-    hydra-prelude
     hydra-cardano-api
+    hydra-chain-observer
+    hydra-cluster
+    hydra-node 
     hydra-plutus
     hydra-plutus-extras
+    hydra-prelude
     hydra-test-utils
     hydra-tx
-    hydra-node 
-    hydra-cluster

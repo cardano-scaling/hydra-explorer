@@ -7,7 +7,6 @@ copyright:     2023 IOG
 license:       Apache-2.0
 license-files:
   LICENSE
-  NOTICE
 
 source-repository head
   type:     git
@@ -47,6 +46,7 @@ library
     , base
     , hydra-cardano-api
     , hydra-chain-observer
+    , hydra-tx
     , hydra-node
     , hydra-prelude
     , io-classes
