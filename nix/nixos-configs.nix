@@ -6,7 +6,7 @@
       modules = [
         {
           _module.args.nixinate = {
-            host = "explorer.hydra.family";
+            host = "13.38.81.225";
             sshUser = "root";
             buildOn = "local";
             substituteOnTarget = true;
