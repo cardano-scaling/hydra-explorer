@@ -1,12 +1,15 @@
-{ inputs, ... }:
-{ config, pkgs, lib, ... }:
+{ hydra-explorer }:
+{ config
+, pkgs
+, lib
+, ...
+}:
 
 with builtins;
 with lib;
 
 let cfg = config.services.hydra-explorer;
 in
-
 
 {
   options = {
@@ -20,7 +23,7 @@ in
       };
       package = mkOption {
         type = types.package;
-        default = inputs.self.packages.x86_64-linux.hydra-explorer;
+        default = hydra-explorer;
         description = ''
           The hydra-explorer package to use.
         '';
@@ -59,6 +62,8 @@ in
   config = mkIf cfg.enable {
     systemd.services.hydra-explorer = {
       after = [ "cardano-node.service" ];
+      requires = [ "cardano-node.service" ];
+      wantedBy = [ "multi-user.target" ];
       enable = true;
       description = "Hydra Explorer";
       unitConfig = {
@@ -70,7 +75,6 @@ in
         User = cfg.user;
         Group = cfg.group;
       };
-      wantedBy = [ "multi-user.target" ];
     };
   };
 }

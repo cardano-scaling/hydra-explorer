@@ -28,6 +28,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    nixos-generators = {
+      url = "github:nix-community/nixos-generators";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nixinate.url = "github:MatthewCroughan/nixinate";
 
     nixpkgs.follows = "haskell-nix/nixpkgs";
@@ -43,12 +48,23 @@
       ];
     in
     inputs.iogx.lib.mkFlake {
+
+      nixpkgsArgs.overlays = [
+        (final: prev: {
+          hydra-explorer = builtins.throw "Bleh";
+        })
+      ];
+
       inherit inputs;
       inherit systems;
+
       repoRoot = ./.;
-      flake = args: {
-        nixosConfigurations = import ./nix/nixos-configs.nix args;
+
+      flake = _: {
+        nixosConfigurations.hydra-explorer =
+          import ./nix/hydra-explorer-aws.nix { inherit inputs; };
       };
+
       outputs = import ./nix/outputs.nix;
     };
 
