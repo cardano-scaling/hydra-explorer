@@ -10,8 +10,6 @@ on:
     - master
     - release
   pull_request:
-  schedule:
-    - cron: "0 4 * * *"
 
 permissions:
   checks: write
@@ -39,8 +37,12 @@ jobs:
         name: cardano-scaling
         authToken: '${{ secrets.CACHIX_CARDANO_SCALING_AUTH_TOKEN }}'
 
-    - name: ❓ Test
+    - name: ❓ Build and test
       run: |
-        nix build github:srid/devour-flake \
-           -L --no-link --print-out-paths \
-           --override-input flake .
+        nix run .#apps.x86_64-linux.hydra-explorer -- --help
+
+        # Note: The tests need to find `json-schemas/hydra-explorer-api.yaml`;
+        # so they need to be run in this specific folder.
+        cd hydra-explorer
+        nix run .#apps.x86_64-linux.tests
+

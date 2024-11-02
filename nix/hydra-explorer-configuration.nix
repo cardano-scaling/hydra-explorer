@@ -31,18 +31,16 @@
 
   services.cardano-node = {
     enable = true;
-    environment = "preprod";
-    socketPath = "/run/cardano-node/node.socket";
+    environment = "preview";
+    hostAddr = "0.0.0.0";
     port = 3002;
-    extraServiceConfig = _:
-    {
-      serviceConfig.Environment = ["CARDANO_NODE_NETWORK_ID=2"];
-    };
+    socketPath = "/run/cardano-node/node.socket";
   };
 
   services.hydra-explorer = {
     enable = true;
     socketPath = "/run/cardano-node/node.socket";
+    networkArg = "--testnet-magic 2";
   };
 
   services.openssh = {

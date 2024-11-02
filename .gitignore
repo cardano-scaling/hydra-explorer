@@ -1,2 +1,7 @@
 dist-newstyle
 result*
+
+test-results.xml
+hspec-results.md
+
+.pre-commit-config.yaml

@@ -37,9 +37,9 @@ in
       };
       port = mkOption {
         type = types.port;
-        default = 9081;
+        default = 8080;
         description = ''
-          The port to run on
+          The api port to run on
         '';
       };
       user = mkOption {
@@ -56,6 +56,13 @@ in
           The group to run the systemd service.
         '';
       };
+      networkArg = mkOption {
+        type = types.str;
+        default = "--testnet-magic 2";
+        description = ''
+          A network argument,like '--testnet-magic 2'
+        '';
+      };
     };
   };
 
@@ -70,7 +77,7 @@ in
         Type = "simple";
       };
       serviceConfig = {
-        ExecStart = "${cfg.package}/bin/hydra-explorer --node-socket ${cfg.socketPath} --port ${toString cfg.port}";
+        ExecStart = "${cfg.package}/bin/hydra-explorer direct --node-socket ${cfg.socketPath} --api-port ${toString cfg.port} ${cfg.networkArg}";
         Restart = "on-failure";
         User = cfg.user;
         Group = cfg.group;

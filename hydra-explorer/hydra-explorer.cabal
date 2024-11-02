@@ -92,6 +92,7 @@ test-suite tests
     , openapi3
     , QuickCheck
     , yaml
+    , hydra-tx
 
   other-modules:
     Hydra.Explorer.ExplorerStateSpec

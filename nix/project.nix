@@ -17,7 +17,7 @@ let
         "https://chap.intersectmbo.org/" = inputs.iogx.inputs.CHaP;
       };
 
-      name = "my-project";
+      name = "hydra-explorer";
 
       compiler-nix-name = lib.mkDefault "ghc96";
 
