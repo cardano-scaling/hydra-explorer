@@ -78,7 +78,7 @@ apiServerSpec = do
               Wai.get "tick"
                 `shouldRespondWith` matchingJSONSchema componentSchemas tickSchema
  where
-  webServer = httpApp nullTracer getRandomExplorerState
+  webServer = httpApp nullTracer "static" getRandomExplorerState
 
   getRandomExplorerState = generate arbitrary
 
