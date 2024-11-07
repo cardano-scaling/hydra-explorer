@@ -35,6 +35,8 @@
 
     nixinate.url = "github:MatthewCroughan/nixinate";
 
+    nix-npm-buildpackage.url = "github:serokell/nix-npm-buildpackage";
+
     nixpkgs.follows = "haskell-nix/nixpkgs";
   };
 
@@ -50,9 +52,7 @@
     inputs.iogx.lib.mkFlake {
 
       nixpkgsArgs.overlays = [
-        (final: prev: {
-          hydra-explorer = builtins.throw "Bleh";
-        })
+        inputs.nix-npm-buildpackage.overlays.default
       ];
 
       inherit inputs;

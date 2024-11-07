@@ -6,7 +6,7 @@ inputs.nixpkgs.lib.nixosSystem
   modules = [
     {
       _module.args.nixinate = {
-        host = "13.38.81.225";
+        host = "explorer.hydra.family";
         sshUser = "root";
         buildOn = "local";
         substituteOnTarget = true;
@@ -19,6 +19,7 @@ inputs.nixpkgs.lib.nixosSystem
         (import ./hydra-explorer-configuration.nix {
           cardano-node-module = inputs.cardano-node.nixosModules.cardano-node;
           hydra-explorer = inputs.self.packages.x86_64-linux.hydra-explorer;
+          hydra-explorer-web = inputs.self.packages.x86_64-linux.hydra-explorer-web;
         })
       ];
     }

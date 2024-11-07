@@ -1,4 +1,4 @@
-{ hydra-explorer }:
+{ hydra-explorer, hydra-explorer-web }:
 { config
 , pkgs
 , lib
@@ -26,6 +26,13 @@ in
         default = hydra-explorer;
         description = ''
           The hydra-explorer package to use.
+        '';
+      };
+      static-assets-path = mkOption {
+        type = types.package;
+        default = hydra-explorer-web;
+        description = ''
+          The hydra-explorer-web package to use.
         '';
       };
       socketPath = mkOption {
@@ -63,6 +70,12 @@ in
           A network argument,like '--testnet-magic 2'
         '';
       };
+      startChainFrom = mkOption {
+        type = types.str;
+        description = ''
+          Block in which current master scripts were published
+        '';
+      };
     };
   };
 
@@ -73,11 +86,15 @@ in
       wantedBy = [ "multi-user.target" ];
       enable = true;
       description = "Hydra Explorer";
-      unitConfig = {
-        Type = "simple";
-      };
       serviceConfig = {
-        ExecStart = "${cfg.package}/bin/hydra-explorer direct --node-socket ${cfg.socketPath} --api-port ${toString cfg.port} ${cfg.networkArg}";
+        WorkingDirectory = "/";
+        ExecStart = ''${cfg.package}/bin/hydra-explorer direct \
+          --static-path ${hydra-explorer-web.out} \
+          --node-socket ${cfg.socketPath} \
+          --api-port ${toString cfg.port} \
+          ${cfg.networkArg} \
+          --start-chain-from ${cfg.startChainFrom}
+        '';
         Restart = "on-failure";
         User = cfg.user;
         Group = cfg.group;

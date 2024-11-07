@@ -27,6 +27,7 @@ import Options.Applicative (
   progDesc,
   showDefault,
   value,
+  str
  )
 
 data DirectOptions = DirectOptions
@@ -34,6 +35,7 @@ data DirectOptions = DirectOptions
   , port :: PortNumber
   , nodeSocket :: SocketPath
   , startChainFrom :: Maybe ChainPoint
+  , staticFilePath :: FilePath
   }
   deriving stock (Show, Eq)
 
@@ -41,6 +43,7 @@ data BlockfrostOptions = BlockfrostOptions
   { port :: PortNumber
   , projectPath :: FilePath
   , startChainFrom :: Maybe ChainPoint
+  , staticFilePath :: FilePath
   }
   deriving stock (Show, Eq)
 
@@ -58,6 +61,17 @@ apiPortParser =
         <> help "Listen port for incoming client API connections."
     )
 
+staticFilePathParser :: Parser FilePath
+staticFilePathParser =
+  option
+    str
+    ( long "static-path"
+        <> value "static"
+        <> showDefault
+        <> metavar "PATH"
+        <> help "Path to static files."
+    )
+
 directOptionsParser :: Parser Options
 directOptionsParser =
   DirectOpts
@@ -66,6 +80,7 @@ directOptionsParser =
             <*> apiPortParser
             <*> nodeSocketParser
             <*> optional startChainFromParser
+            <*> staticFilePathParser
         )
 
 blockfrostOptionsParser :: Parser Options
@@ -75,6 +90,7 @@ blockfrostOptionsParser =
             <$> apiPortParser
             <*> projectPathParser
             <*> optional startChainFromParser
+            <*> staticFilePathParser
         )
 
 directOptionsInfo :: ParserInfo Options

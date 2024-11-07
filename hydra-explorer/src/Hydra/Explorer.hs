@@ -25,12 +25,13 @@ type API =
     :<|> Raw
 
 server ::
+  FilePath ->
   GetExplorerState ->
   Server API
-server getExplorerState =
+server staticPath getExplorerState =
   handleGetHeads getExplorerState
     :<|> handleGetTick getExplorerState
-    :<|> serveDirectoryFileServer "static"
+    :<|> serveDirectoryFileServer staticPath
 
 handleGetHeads ::
   GetExplorerState ->
@@ -54,12 +55,12 @@ logMiddleware tracer app' req sendResponse = do
         }
   app' req sendResponse
 
-httpApp :: Tracer IO APIServerLog -> GetExplorerState -> Application
-httpApp tracer getExplorerState =
+httpApp :: Tracer IO APIServerLog -> FilePath -> GetExplorerState -> Application
+httpApp tracer staticPath getExplorerState =
   logMiddleware tracer
     . simpleCors
     . serve (Proxy @API)
-    $ server getExplorerState
+    $ server staticPath getExplorerState
 
 observerHandler :: ModifyExplorerState -> [ChainObservation] -> IO ()
 observerHandler modifyExplorerState observations = do
@@ -98,8 +99,12 @@ run opts = do
       ( withArgs chainObserverArgs $
           Hydra.ChainObserver.main (observerHandler modifyExplorerState)
       )
-      (Warp.runSettings (settings tracer) (httpApp tracer getExplorerState))
+      (Warp.runSettings (settings tracer) (httpApp tracer staticPath getExplorerState))
  where
+  staticPath =
+    case opts of
+      DirectOpts DirectOptions{staticFilePath} -> staticFilePath
+      BlockfrostOpts BlockfrostOptions{staticFilePath} -> staticFilePath
   portToBind =
     case opts of
       DirectOpts DirectOptions{port} -> port

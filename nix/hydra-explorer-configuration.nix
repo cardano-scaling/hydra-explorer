@@ -1,4 +1,4 @@
-{ cardano-node-module, hydra-explorer }:
+{ cardano-node-module, hydra-explorer, hydra-explorer-web }:
 { pkgs
 , lib
 , inputs
@@ -7,7 +7,7 @@
 {
   imports = [
     cardano-node-module
-    (import ./nixosModule.nix { inherit hydra-explorer; })
+    (import ./nixosModule.nix { inherit hydra-explorer hydra-explorer-web; })
   ];
 
   networking = {
@@ -22,6 +22,7 @@
     initialPassword = ""; # No password
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIATz/Jv+AnBft+9Q01UF07OydvgTTaTdCa+nMqabkUNl" # noonio
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEMuBv9vXsKsOsjS7B6zMOpuLw+gGGHR6hADuTeiNfKO" # locallycompact
     ];
   };
 
@@ -41,6 +42,8 @@
     enable = true;
     socketPath = "/run/cardano-node/node.socket";
     networkArg = "--testnet-magic 2";
+    port = 80;
+    startChainFrom = "49533501.e364500a42220ea47314215679b7e42e9bbb81fa69d1366fe738d8aef900f7ee";
   };
 
   services.openssh = {
