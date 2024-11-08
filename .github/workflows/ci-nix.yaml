@@ -44,5 +44,5 @@ jobs:
         # Note: The tests need to find `json-schemas/hydra-explorer-api.yaml`;
         # so they need to be run in this specific folder.
         cd hydra-explorer
-        nix run .#apps.x86_64-linux.tests
+        nix develop -c nix run .#apps.x86_64-linux.tests
 
