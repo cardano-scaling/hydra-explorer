@@ -18,24 +18,7 @@ let
       };
 
       name = "hydra-explorer";
-
       compiler-nix-name = lib.mkDefault "ghc96";
-
-      # flake.variants.profiled = {
-      #   modules = [{
-      #     enableProfiling = true;
-      #     enableLibraryProfiling = true;
-      #   }];
-      # };
-
-      # flake.variants.ghc928 = {
-      #   compiler-nix-name = "ghc928";
-      # };
-
-      # flake.variants.ghc8107 = {
-      #   compiler-nix-name = "ghc8107";
-      # };
-
       modules =
         [
           {
@@ -56,22 +39,6 @@ let
     inherit cabalProject;
 
     shellArgs = repoRoot.nix.shell;
-
-    # includeMingwW64HydraJobs = false;
-
-    # includeProfiledHydraJobs = false;
-
-    # readTheDocs = {
-    #   enable = false;
-    #   siteFolder = "doc/read-the-docs-site";
-    #   sphinxToolchain = null;
-    # };
-
-    # combinedHaddock = {
-    #   enable = false;
-    #   prologue = "";
-    #   packages = [];
-    # };
   };
 
 in
