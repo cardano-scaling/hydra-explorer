@@ -93,9 +93,16 @@ test-suite tests
     , QuickCheck
     , yaml
     , hydra-tx
+    , http-conduit
+    , process
+    , hydra-cluster
+    , http-client
+    , lens-aeson
+    , hydra-cardano-api
 
   other-modules:
     Hydra.Explorer.ExplorerStateSpec
+    Hydra.Explorer.HydraExplorerSpec
     Hydra.ExplorerSpec
     Spec
 

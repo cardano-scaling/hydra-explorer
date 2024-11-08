@@ -4,35 +4,29 @@
 { repoRoot, inputs, pkgs, lib, system }:
 
 # Each flake variant defined in your project.nix project will yield a separate
-# shell. If no flake variants are defined, then cabalProject is the original 
+# shell. If no flake variants are defined, then cabalProject is the original
 # project.
 cabalProject:
 
 {
   name = "nix-shell";
 
-  # prompt = null;
+  packages = [
+    pkgs.cardano-cli
+    pkgs.cardano-node
+    pkgs.hydra-node
+  ];
 
-  # welcomeMessage = null;
-
-  # packages = [];
-
-  # scripts = {
-  #   foo = {
-  #      description = "";
-  #      group = "general";
-  #      enabled = true;
-  #      exec = ''
-  #        echo "Hello, World!"
-  #      '';
-  #    };
-  # };
-
-  # env = {
-  #   KEY = "VALUE";
-  # };
-
-  # shellHook = "";
+  scripts = {
+    # Hack: We don't want to
+    hydra-explorer = {
+       description = "Wrapped version of hydra-explorer to be run via nix";
+       group = "general";
+       exec = ''
+        nix run .#hydra-explorer -- $@
+       '';
+     };
+  };
 
   tools = {
     # haskellCompilerVersion = cabalProject.args.compiler-nix-name;
@@ -51,28 +45,4 @@ cabalProject:
     # optipng = null;
     # purs-tidy = null;
   };
-
-  # preCommit = {
-  #   cabal-fmt.enable = false;
-  #   cabal-fmt.extraOptions = "";
-  #   stylish-haskell.enable = false;
-  #   stylish-haskell.extraOptions = "";
-  #   fourmolu.enable = false;
-  #   fourmolu.extraOptions = "";
-  #   hlint.enable = false;
-  #   hlint.extraOptions = "";
-  #   shellcheck.enable = false;
-  #   shellcheck.extraOptions = "";
-  #   prettier.enable = false;
-  #   prettier.extraOptions = "";
-  #   editorconfig-checker.enable = false;
-  #   editorconfig-checker.extraOptions = "";
-  #   nixpkgs-fmt.enable = false;
-  #   nixpkgs-fmt.extraOptions = "";
-  #   optipng.enable = false;
-  #   optipng.extraOptions = "";
-  #   purs-tidy.enable = false;
-  #   purs-tidy.extraOptions = "";
-  # };
 }
- 

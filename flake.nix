@@ -9,6 +9,7 @@
     };
 
     cardano-node.url = "github:IntersectMBO/cardano-node/9.2.0";
+    hydra-node.url = "github:cardano-scaling/hydra/d55c4efb896273dc39d4bdc4fc83ec361de55f73";
 
     hackage = {
       url = "github:input-output-hk/hackage.nix";
@@ -53,6 +54,11 @@
 
       nixpkgsArgs.overlays = [
         inputs.nix-npm-buildpackage.overlays.default
+        (final: prev: {
+          cardano-node = inputs.cardano-node.packages.${final.system}.cardano-node;
+          cardano-cli = inputs.cardano-node.packages.${final.system}.cardano-cli;
+          hydra-node = inputs.hydra-node.packages.${final.system}.hydra-node;
+        })
       ];
 
       inherit inputs;
