@@ -106,4 +106,6 @@ test-suite tests
     Hydra.ExplorerSpec
     Spec
 
-  build-tool-depends: hspec-discover:hspec-discover
+  build-tool-depends:
+    , hspec-discover:hspec-discover
+    , hydra-explorer:hydra-explorer

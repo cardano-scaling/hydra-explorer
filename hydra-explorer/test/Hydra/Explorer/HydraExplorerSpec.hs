@@ -149,9 +149,8 @@ withHydraExplorer cardanoNode mStartChainFrom action =
 
   process =
     proc
-      "cabal"
-      $ [ "run", "hydra-explorer", "--"]
-        <> ["direct"]
+      "hydra-explorer"
+        $ ["direct"]
         <> Options.toArgNodeSocket nodeSocket
         <> Options.toArgNetworkId networkId
         <> Options.toArgApiPort 9090
