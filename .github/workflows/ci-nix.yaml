@@ -46,4 +46,5 @@ jobs:
         cd hydra-explorer
 
         # We need the packages in the shell to run the tests
+        nix develop -c cabal update
         nix develop -c nix run .#apps.x86_64-linux.tests
