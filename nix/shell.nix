@@ -17,17 +17,6 @@ cabalProject:
     pkgs.hydra-node
   ];
 
-  scripts = {
-    # Hack: We don't want to
-    hydra-explorer = {
-       description = "Wrapped version of hydra-explorer to be run via nix";
-       group = "general";
-       exec = ''
-        nix run .#hydra-explorer -- $@
-       '';
-     };
-  };
-
   tools = {
     # haskellCompilerVersion = cabalProject.args.compiler-nix-name;
     # cabal-fmt = null;
