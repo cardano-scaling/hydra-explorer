@@ -16,7 +16,7 @@ const HeadsDashboard = () => {
             {error ? (
                 <p className="text-red-500">{error}</p>
             ) : (
-                <div className="bg-gray-800 shadow-md rounded-lg p-6">
+                <div className="shadow-md rounded-lg p-6">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="border p-4">
                             <h3 className="text-center text-lg font-semibold mb-2">Total Heads</h3>

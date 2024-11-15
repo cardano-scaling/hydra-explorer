@@ -1,0 +1,50 @@
+name: "CI"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+on:
+  merge_group:
+  push:
+    branches:
+    - master
+    - release
+  pull_request:
+
+permissions:
+  checks: write
+  pull-requests: write
+
+jobs:
+  build-test:
+    name: "Build & test"
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v4
+
+    - name: ❄ Prepare nix
+      uses: cachix/install-nix-action@v30
+      with:
+        extra_nix_config: |
+          accept-flake-config = true
+          log-lines = 1000
+
+    - name: ❄ Cachix cache of nix derivations
+      uses: cachix/cachix-action@v15
+      with:
+        name: cardano-scaling
+        authToken: '${{ secrets.CACHIX_CARDANO_SCALING_AUTH_TOKEN }}'
+
+    - name: ❓ Build and test
+      run: |
+        nix run .#apps.x86_64-linux.hydra-explorer -- --help
+
+        # Note: The tests need to find `json-schemas/hydra-explorer-api.yaml`;
+        # so they need to be run in this specific folder.
+        cd hydra-explorer
+
+        # We need the packages in the shell to run the tests
+        nix develop -c cabal update
+        nix develop -c cabal test all

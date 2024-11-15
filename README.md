@@ -1,16 +1,18 @@
-# Hydra Explorer
+# hydra-explorer
 
-A small executable which connects to a chain like the `hydra-node`, but puts any
-observations as traces onto `stdout`.
+This is the system image repository for the hydra-explorer service.
 
-To run, pass a `--node-socket` and the corresponding network id. For example:
+## Deployment
 
-``` shell
-hydra-explorer \
-  --node-socket testnets/preprod/node.socket \
-  --testnet-magic 1
+```sh
+nix run .#apps.x86_64-linux.nixinate.hydra-explorer
 ```
 
-Note: this assumes you are running a cardano-node in preprod.
+## Testing locally
 
-By definition, hydra-explorer will bind port 9090.
+```sh
+nix build .#qemu
+cp result/nixos.qcow2 .
+chmod 755 nixos.qcow2
+qemu-system-x86_64 -enable-kvm -m 8000 -drive file=nixos.qcow2,media=disk,if=virtio -nic user,model=virtio
+```

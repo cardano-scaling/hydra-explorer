@@ -7,7 +7,6 @@ copyright:     2023 IOG
 license:       Apache-2.0
 license-files:
   LICENSE
-  NOTICE
 
 source-repository head
   type:     git
@@ -47,6 +46,7 @@ library
     , base
     , hydra-cardano-api
     , hydra-chain-observer
+    , hydra-tx
     , hydra-node
     , hydra-prelude
     , io-classes
@@ -92,10 +92,20 @@ test-suite tests
     , openapi3
     , QuickCheck
     , yaml
+    , hydra-tx
+    , http-conduit
+    , process
+    , hydra-cluster
+    , http-client
+    , lens-aeson
+    , hydra-cardano-api
 
   other-modules:
     Hydra.Explorer.ExplorerStateSpec
+    Hydra.Explorer.HydraExplorerSpec
     Hydra.ExplorerSpec
     Spec
 
-  build-tool-depends: hspec-discover:hspec-discover
+  build-tool-depends:
+    , hspec-discover:hspec-discover
+    , hydra-explorer:hydra-explorer
