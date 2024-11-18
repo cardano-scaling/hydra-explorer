@@ -5,7 +5,7 @@ This is the system image repository for the hydra-explorer service.
 ## Deployment
 
 ```sh
-nix run .#apps.x86_64-linux.nixinate.hydra-explorer
+nixos-rebuild switch --target-host root@explorer.hydra.family --flake .#hydra-explorer --use-remote-sudo
 ```
 
 ## Testing locally

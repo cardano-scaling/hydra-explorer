@@ -3777,24 +3777,6 @@
         "type": "github"
       }
     },
-    "nixinate": {
-      "inputs": {
-        "nixpkgs": "nixpkgs_24"
-      },
-      "locked": {
-        "lastModified": 1708891350,
-        "narHash": "sha256-VOQrKK7Df/IVuNki+NshVuGkTa/Tw0GigPjWcZff6kk=",
-        "owner": "MatthewCroughan",
-        "repo": "nixinate",
-        "rev": "452f33c60df5b72ad0858f5f2cf224bdf1f17746",
-        "type": "github"
-      },
-      "original": {
-        "owner": "MatthewCroughan",
-        "repo": "nixinate",
-        "type": "github"
-      }
-    },
     "nixlib": {
       "locked": {
         "lastModified": 1731805462,
@@ -4769,22 +4751,6 @@
         "type": "indirect"
       }
     },
-    "nixpkgs_24": {
-      "locked": {
-        "lastModified": 1653060744,
-        "narHash": "sha256-kfRusllRumpt33J1hPV+CeCCylCXEU7e0gn2/cIM7cY=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "dfd82985c273aac6eced03625f454b334daae2e8",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs_3": {
       "locked": {
         "lastModified": 1665087388,
@@ -5166,7 +5132,6 @@
         "hydra-node": "hydra-node",
         "iogx": "iogx",
         "nix-npm-buildpackage": "nix-npm-buildpackage_2",
-        "nixinate": "nixinate",
         "nixos-generators": "nixos-generators",
         "nixpkgs": [
           "haskell-nix",

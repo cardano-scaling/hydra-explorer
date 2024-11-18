@@ -5,8 +5,6 @@ let
 in
 [
   {
-    apps = inputs.nixinate.nixinate."x86_64-linux" inputs.self;
-
     packages.hydra-explorer-web = import ../hydra-explorer/web/hydra-explorer.nix { inherit pkgs; };
 
     # A place to hack on the image to see how it works.
