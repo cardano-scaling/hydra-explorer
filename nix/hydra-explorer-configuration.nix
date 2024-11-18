@@ -13,9 +13,18 @@
   networking = {
     hostName = "hydra-explorer";
     firewall = {
-      allowedTCPPorts = [ 25 80 443 ];
-      enable = false;
+      allowedTCPPorts = [ 22 80 443 ];
+      enable = true;
     };
+  };
+
+  nix = {
+    settings.trusted-users = [ "root" ];
+    extraOptions = ''
+      experimental-features = nix-command flakes recursive-nix ca-derivations
+      log-lines = 300
+      warn-dirty = false
+    '';
   };
 
   users.users.root = {
@@ -30,7 +39,6 @@
 
   services.getty.autologinUser = "root";
 
-  nix.settings.trusted-users = [ "root" ];
 
   services.cardano-node = {
     enable = true;
