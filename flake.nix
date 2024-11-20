@@ -34,8 +34,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nixinate.url = "github:MatthewCroughan/nixinate";
-
     nix-npm-buildpackage.url = "github:serokell/nix-npm-buildpackage";
 
     nixpkgs.follows = "haskell-nix/nixpkgs";
@@ -68,7 +66,23 @@
 
       flake = _: {
         nixosConfigurations.hydra-explorer =
-          import ./nix/hydra-explorer-aws.nix { inherit inputs; };
+          inputs.nixpkgs.lib.nixosSystem
+          {
+            system = "x86_64-linux";
+            specialArgs = inputs;
+            modules = [
+              {
+                imports = [
+                  "${inputs.nixpkgs}/nixos/modules/virtualisation/amazon-image.nix"
+                  (import ./nix/hydra-explorer-configuration.nix {
+                    cardano-node-module = inputs.cardano-node.nixosModules.cardano-node;
+                    hydra-explorer = inputs.self.packages.x86_64-linux.hydra-explorer;
+                    hydra-explorer-web = inputs.self.packages.x86_64-linux.hydra-explorer-web;
+                  })
+                ];
+              }
+            ];
+          };
       };
 
       outputs = import ./nix/outputs.nix;
