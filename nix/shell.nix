@@ -11,6 +11,5 @@ cabalProject:
   packages = [
     pkgs.cardano-cli
     pkgs.cardano-node
-    pkgs.hydra-node
   ];
 }
