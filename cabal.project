@@ -11,21 +11,22 @@ repository cardano-haskell-packages
 
 index-state:
   , hackage.haskell.org 2024-10-14T02:12:15Z
-  , cardano-haskell-packages 2024-10-14T23:19:53Z
+  , cardano-haskell-packages 2024-10-21T14:11:57Z
 
 packages:
+
   hydra-explorer
 
 source-repository-package
   type: git
   location: https://github.com/cardano-scaling/hydra
-  tag: d55c4efb896273dc39d4bdc4fc83ec361de55f73
-  --sha256: sha256-LziIjrdjMA8dVPKMwKskLyjlnx5HhpDwTjC9sek5Bfo=
+  tag: db9730f8258a65f2b49de5b32229e1df226c0cda
+  --sha256: sha256-upFDrB0S67e8pqUAOQT42ewHWoq+fyd5BuJYTjx0vlg=
   subdir:
     hydra-cardano-api
     hydra-chain-observer
     hydra-cluster
-    hydra-node 
+    hydra-node
     hydra-plutus
     hydra-plutus-extras
     hydra-prelude
