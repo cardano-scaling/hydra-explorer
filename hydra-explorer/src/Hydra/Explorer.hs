@@ -10,62 +10,75 @@ import Hydra.Explorer.ExplorerState (ExplorerState (..), HeadState, TickState, a
 import Hydra.Explorer.Options (BlockfrostOptions (..), DirectOptions (..), Options (..), toArgProjectPath, toArgStartChainFrom)
 import Hydra.Logging (Tracer, Verbosity (..), traceWith, withTracer)
 import Hydra.Options qualified as Options
+import Hydra.Tx.ScriptRegistry (serialisedScriptRegistry)
 import Network.Wai (Middleware, Request (..))
 import Network.Wai.Handler.Warp qualified as Warp
 import Network.Wai.Middleware.Cors (simpleCors)
-import Servant (serveDirectoryFileServer)
-import Servant.API (Get, JSON, Raw, (:<|>) (..), (:>))
+import Servant (err404, errBody, serveDirectoryFileServer, throwError)
+import Servant.API (Capture, Get, JSON, Raw, (:<|>) (..), (:>))
 import Servant.Server (Application, Handler, Server, serve)
 import System.Environment (withArgs)
 
 type API :: Type
 type API =
-  "heads" :> Get '[JSON] [HeadState]
-    :<|> "tick" :> Get '[JSON] TickState
-    :<|> Raw
+    "heads" :> Capture "headId" String :> Get '[JSON] [HeadState]
+        :<|> "tick" :> Capture "headId" String :> Get '[JSON] TickState
+        :<|> Raw
 
 server ::
-  FilePath ->
-  GetExplorerState ->
-  Server API
-server staticPath getExplorerState =
-  handleGetHeads getExplorerState
-    :<|> handleGetTick getExplorerState
-    :<|> serveDirectoryFileServer staticPath
+    FilePath ->
+    [(String, GetExplorerState)] ->
+    Server API
+server staticPath getExplorerStates =
+    handleGetHeads getExplorerStates
+        :<|> handleGetTick getExplorerStates
+        :<|> serveDirectoryFileServer staticPath
 
 handleGetHeads ::
-  GetExplorerState ->
-  Handler [HeadState]
-handleGetHeads getExplorerState =
-  liftIO getExplorerState <&> \ExplorerState{heads} -> heads
+    [(String, GetExplorerState)] ->
+    String ->
+    Handler [HeadState]
+handleGetHeads getExplorerStates headId =
+    case mGetExplorerState of
+        Just getExplorerState ->
+            liftIO getExplorerState <&> \ExplorerState{heads} -> heads
+        Nothing -> throwError err404{errBody = "Head ID not found"}
+  where
+    mGetExplorerState = snd <$> find (\(i, _) -> i == headId) getExplorerStates
 
 handleGetTick ::
-  GetExplorerState ->
-  Handler TickState
-handleGetTick getExplorerState = do
-  liftIO getExplorerState <&> \ExplorerState{tick} -> tick
+    [(String, GetExplorerState)] ->
+    String ->
+    Handler TickState
+handleGetTick getExplorerStates headId = do
+    case mGetExplorerState of
+        Just getExplorerState ->
+            liftIO getExplorerState <&> \ExplorerState{tick} -> tick
+        Nothing -> throwError err404{errBody = "Head ID not found"}
+  where
+    mGetExplorerState = snd <$> find (\(i, _) -> i == headId) getExplorerStates
 
 logMiddleware :: Tracer IO APIServerLog -> Middleware
 logMiddleware tracer app' req sendResponse = do
-  liftIO $
-    traceWith tracer $
-      APIHTTPRequestReceived
-        { method = Method $ requestMethod req
-        , path = PathInfo $ rawPathInfo req
-        }
-  app' req sendResponse
+    liftIO
+        $ traceWith tracer
+        $ APIHTTPRequestReceived
+            { method = Method $ requestMethod req
+            , path = PathInfo $ rawPathInfo req
+            }
+    app' req sendResponse
 
-httpApp :: Tracer IO APIServerLog -> FilePath -> GetExplorerState -> Application
-httpApp tracer staticPath getExplorerState =
-  logMiddleware tracer
-    . simpleCors
-    . serve (Proxy @API)
-    $ server staticPath getExplorerState
+httpApp :: Tracer IO APIServerLog -> FilePath -> [(String, GetExplorerState)] -> Application
+httpApp tracer staticPath getExplorerStates =
+    logMiddleware tracer
+        . simpleCors
+        . serve (Proxy @API)
+        $ server staticPath getExplorerStates
 
 observerHandler :: ModifyExplorerState -> [ChainObservation] -> IO ()
 observerHandler modifyExplorerState observations = do
-  modifyExplorerState $
-    aggregateHeadObservations observations
+    modifyExplorerState
+        $ aggregateHeadObservations observations
 
 type GetExplorerState = IO ExplorerState
 
@@ -73,46 +86,62 @@ type ModifyExplorerState = (ExplorerState -> ExplorerState) -> IO ()
 
 createExplorerState :: IO (GetExplorerState, ModifyExplorerState)
 createExplorerState = do
-  v <- newTVarIO (ExplorerState [] initialTickState)
-  pure (getExplorerState v, modifyExplorerState v)
- where
-  getExplorerState = readTVarIO
-  modifyExplorerState v = atomically . modifyTVar' v
+    v <- newTVarIO (ExplorerState [] initialTickState)
+    pure (getExplorerState v, modifyExplorerState v)
+  where
+    getExplorerState = readTVarIO
+    modifyExplorerState v = atomically . modifyTVar' v
 
 run :: Options -> IO ()
 run opts = do
-  withTracer (Verbose "hydra-explorer") $ \tracer -> do
-    (getExplorerState, modifyExplorerState) <- createExplorerState
+    withTracer (Verbose "hydra-explorer") $ \tracer -> do
+        let chainObserverArgs =
+                case opts of
+                    DirectOpts DirectOptions{networkId, nodeSocket, startChainFrom} ->
+                        ["direct"]
+                            <> Options.toArgNodeSocket nodeSocket
+                            <> Options.toArgNetworkId networkId
+                            <> toArgStartChainFrom startChainFrom
+                    BlockfrostOpts BlockfrostOptions{projectPath, startChainFrom} ->
+                        ["blockfrost"]
+                            <> toArgProjectPath projectPath
+                            <> toArgStartChainFrom startChainFrom
 
-    let chainObserverArgs =
-          case opts of
-            DirectOpts DirectOptions{networkId, nodeSocket, startChainFrom} ->
-              ["direct"]
-                <> Options.toArgNodeSocket nodeSocket
-                <> Options.toArgNetworkId networkId
-                <> toArgStartChainFrom startChainFrom
-            BlockfrostOpts BlockfrostOptions{projectPath, startChainFrom} ->
-              ["blockfrost"]
-                <> toArgProjectPath projectPath
-                <> toArgStartChainFrom startChainFrom
-    race_
-      ( withArgs chainObserverArgs $
-          Hydra.ChainObserver.main (observerHandler modifyExplorerState)
-      )
-      (Warp.runSettings (settings tracer) (httpApp tracer staticPath getExplorerState))
- where
-  staticPath =
-    case opts of
-      DirectOpts DirectOptions{staticFilePath} -> staticFilePath
-      BlockfrostOpts BlockfrostOptions{staticFilePath} -> staticFilePath
-  portToBind =
-    case opts of
-      DirectOpts DirectOptions{port} -> port
-      BlockfrostOpts BlockfrostOptions{port} -> port
+            versions :: [String]
+            versions = ["1"]
+            registries = versions `zip` [serialisedScriptRegistry]
 
-  settings tracer =
-    Warp.defaultSettings
-      & Warp.setPort (fromIntegral portToBind)
-      & Warp.setHost "0.0.0.0"
-      & Warp.setBeforeMainLoop (traceWith tracer $ APIServerStarted portToBind)
-      & Warp.setOnException (\_ e -> traceWith tracer $ APIConnectionError{reason = show e})
+        stateRegistries <-
+            mapM
+                ( \registry -> do
+                    (getExplorerState, modifyExplorerState) <- createExplorerState
+                    pure (getExplorerState, modifyExplorerState, registry)
+                )
+                registries
+
+        let getExplorerStates = fmap (\(g, _, (i, _)) -> (i, g)) stateRegistries
+        race_
+            ( mapM
+                ( \(_, modifyExplorerState, (_, registry)) ->
+                    withArgs chainObserverArgs
+                        $ Hydra.ChainObserver.main registry (observerHandler modifyExplorerState)
+                )
+                stateRegistries
+            )
+            (Warp.runSettings (settings tracer) (httpApp tracer staticPath getExplorerStates))
+  where
+    staticPath =
+        case opts of
+            DirectOpts DirectOptions{staticFilePath} -> staticFilePath
+            BlockfrostOpts BlockfrostOptions{staticFilePath} -> staticFilePath
+    portToBind =
+        case opts of
+            DirectOpts DirectOptions{port} -> port
+            BlockfrostOpts BlockfrostOptions{port} -> port
+
+    settings tracer =
+        Warp.defaultSettings
+            & Warp.setPort (fromIntegral portToBind)
+            & Warp.setHost "0.0.0.0"
+            & Warp.setBeforeMainLoop (traceWith tracer $ APIServerStarted portToBind)
+            & Warp.setOnException (\_ e -> traceWith tracer $ APIConnectionError{reason = show e})

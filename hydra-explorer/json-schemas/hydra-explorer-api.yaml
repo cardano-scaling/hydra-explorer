@@ -3,9 +3,37 @@ info:
   title: Head Explorer API
   version: 1.0.0
 paths:
-  /tick:
+  /heads/{headId}:
     get:
-      summary: Get the latest point in time obseverd on chain by the explorer
+      summary: Get a list of head states for the specified headId
+      parameters:
+        - name: headId
+          in: path
+          required: true
+          description: The ID of the head to retrieve states for
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HeadState'
+        '404':
+          description: Head ID not found
+  /tick/{headId}:
+    get:
+      summary: Get the latest point in time observed on-chain by the explorer for the specified headId
+      parameters:
+        - name: headId
+          in: path
+          required: true
+          description: The ID of the head to retrieve the tick state for
+          schema:
+            type: string
       responses:
         '200':
           description: Successful response
@@ -21,19 +49,8 @@ paths:
                     $ref: '#/components/schemas/ChainPoint'
                   blockNo:
                     type: integer
-  /heads:
-    get:
-      summary: Get a list of head states
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/HeadState'
-
+        '404':
+          description: Head ID not found
 components:
   schemas:
     OnChainId:
