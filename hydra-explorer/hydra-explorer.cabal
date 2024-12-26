@@ -5,8 +5,7 @@ synopsis:      Hydra Explorer
 author:        IOG
 copyright:     2023 IOG
 license:       Apache-2.0
-license-files:
-  LICENSE
+license-files: LICENSE
 
 source-repository head
   type:     git
@@ -44,11 +43,13 @@ library
   build-depends:
     , aeson
     , base
+    , base16-bytestring
     , hydra-cardano-api
     , hydra-chain-observer
-    , hydra-tx
     , hydra-node
+    , hydra-plutus
     , hydra-prelude
+    , hydra-tx
     , io-classes
     , optparse-applicative
     , servant
@@ -80,25 +81,26 @@ test-suite tests
   type:               exitcode-stdio-1.0
   build-depends:
     , aeson
+    , bytestring
     , filepath
     , hspec
     , hspec-wai
+    , http-client
+    , http-conduit
+    , hydra-cardano-api
     , hydra-chain-observer
+    , hydra-cluster
     , hydra-explorer
     , hydra-node
     , hydra-prelude
     , hydra-test-utils
+    , hydra-tx
     , lens
+    , lens-aeson
     , openapi3
+    , process
     , QuickCheck
     , yaml
-    , hydra-tx
-    , http-conduit
-    , process
-    , hydra-cluster
-    , http-client
-    , lens-aeson
-    , hydra-cardano-api
 
   other-modules:
     Hydra.Explorer.ExplorerStateSpec

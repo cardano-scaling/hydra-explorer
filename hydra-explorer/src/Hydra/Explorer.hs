@@ -1,16 +1,21 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
+
 module Hydra.Explorer where
 
 import Hydra.ChainObserver qualified
 import Hydra.Prelude
 
 import Control.Concurrent.Class.MonadSTM (modifyTVar', newTVarIO, readTVarIO)
+import Control.Monad.Class.MonadAsync (forConcurrently_)
+import Data.Aeson (eitherDecodeFileStrict', withObject, (.:))
+import Data.ByteString.Base16 qualified as Base16
 import Hydra.API.APIServerLog (APIServerLog (..), Method (..), PathInfo (..))
 import Hydra.ChainObserver.NodeClient (ChainObservation)
 import Hydra.Explorer.ExplorerState (ExplorerState (..), HeadState, TickState, aggregateHeadObservations, initialTickState)
 import Hydra.Explorer.Options (BlockfrostOptions (..), DirectOptions (..), Options (..), toArgProjectPath, toArgStartChainFrom)
 import Hydra.Logging (Tracer, Verbosity (..), traceWith, withTracer)
 import Hydra.Options qualified as Options
-import Hydra.Tx.ScriptRegistry (serialisedScriptRegistry)
+import Hydra.SerialisedScriptRegistry (SerialisedScriptRegistry (..), cborHexToSerialisedScript, serialisedScriptFromText)
 import Network.Wai (Middleware, Request (..))
 import Network.Wai.Handler.Warp qualified as Warp
 import Network.Wai.Middleware.Cors (simpleCors)
@@ -92,9 +97,38 @@ createExplorerState = do
     getExplorerState = readTVarIO
     modifyExplorerState v = atomically . modifyTVar' v
 
+type ScriptsRegistry = [(String, SerialisedScriptRegistry)]
+
+instance FromJSON SerialisedScriptRegistry where
+    parseJSON = withObject "ScriptsRegistry" $ \o -> do
+        initialScript <- o .: "initialScript"
+        commitScript <- o .: "commitScript"
+        headScript :: Text <- o .: "headScript"
+        depositScript :: Text <- o .: "depositScript"
+        headScriptBytes <- either fail pure $ Base16.decode $ encodeUtf8 headScript
+        depositScriptBytes <- either fail pure $ Base16.decode $ encodeUtf8 depositScript
+        pure
+            $ SerialisedScriptRegistry
+                { initialScriptValidator = serialisedScriptFromText initialScript
+                , commitScriptValidator = serialisedScriptFromText commitScript
+                , headScriptValidator = cborHexToSerialisedScript headScriptBytes
+                , depositScriptValidator = cborHexToSerialisedScript depositScriptBytes
+                }
+
+scriptsRegistryFromFile :: FilePath -> IO ScriptsRegistry
+scriptsRegistryFromFile fp = do
+    putStrLn $ "Reading dataset from: " <> fp
+    eitherDecodeFileStrict' fp >>= either (die . show) pure
+
 run :: Options -> IO ()
 run opts = do
     withTracer (Verbose "hydra-explorer") $ \tracer -> do
+        let scriptsRegistryFilePath = case opts of
+                DirectOpts DirectOptions{scriptsRegistry} -> scriptsRegistry
+                BlockfrostOpts BlockfrostOptions{scriptsRegistry} -> scriptsRegistry
+
+        registries <- scriptsRegistryFromFile scriptsRegistryFilePath
+
         let chainObserverArgs =
                 case opts of
                     DirectOpts DirectOptions{networkId, nodeSocket, startChainFrom} ->
@@ -107,10 +141,6 @@ run opts = do
                             <> toArgProjectPath projectPath
                             <> toArgStartChainFrom startChainFrom
 
-            versions :: [String]
-            versions = ["1"]
-            registries = versions `zip` [serialisedScriptRegistry]
-
         stateRegistries <-
             mapM
                 ( \registry -> do
@@ -121,12 +151,12 @@ run opts = do
 
         let getExplorerStates = fmap (\(g, _, (i, _)) -> (i, g)) stateRegistries
         race_
-            ( mapM
-                ( \(_, modifyExplorerState, (_, registry)) ->
-                    withArgs chainObserverArgs
-                        $ Hydra.ChainObserver.main registry (observerHandler modifyExplorerState)
-                )
-                stateRegistries
+            ( forConcurrently_ stateRegistries
+                $ \(_, modifyExplorerState, (_, registry)) ->
+                    do
+                        withArgs chainObserverArgs
+                        $ Hydra.ChainObserver.main registry
+                        $ observerHandler modifyExplorerState
             )
             (Warp.runSettings (settings tracer) (httpApp tracer staticPath getExplorerStates))
   where
