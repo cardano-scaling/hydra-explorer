@@ -6,7 +6,7 @@ observations as traces onto `stdout`.
 To run, pass a `--node-socket` and the corresponding network id. For example:
 
 ``` shell
-hydra-explorer \
+hydra-explorer direct \
   --node-socket testnets/preprod/node.socket \
   --testnet-magic 1
 ```

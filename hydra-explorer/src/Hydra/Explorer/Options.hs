@@ -67,8 +67,8 @@ scriptsRegistryFilePathParser :: Parser FilePath
 scriptsRegistryFilePathParser =
     option
         str
-        ( long "static-path"
-            <> value "scripts-registry"
+        ( long "scripts-registry"
+            <> value "registry.json"
             <> showDefault
             <> metavar "PATH"
             <> help "Path to scripts registry file."

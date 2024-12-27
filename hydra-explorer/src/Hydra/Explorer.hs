@@ -7,15 +7,13 @@ import Hydra.Prelude
 
 import Control.Concurrent.Class.MonadSTM (modifyTVar', newTVarIO, readTVarIO)
 import Control.Monad.Class.MonadAsync (forConcurrently_)
-import Data.Aeson (eitherDecodeFileStrict', withObject, (.:))
-import Data.ByteString.Base16 qualified as Base16
 import Hydra.API.APIServerLog (APIServerLog (..), Method (..), PathInfo (..))
 import Hydra.ChainObserver.NodeClient (ChainObservation)
 import Hydra.Explorer.ExplorerState (ExplorerState (..), HeadState, TickState, aggregateHeadObservations, initialTickState)
 import Hydra.Explorer.Options (BlockfrostOptions (..), DirectOptions (..), Options (..), toArgProjectPath, toArgStartChainFrom)
+import Hydra.Explorer.ScriptsRegistry (HydraScriptRegistry (..), scriptsRegistryFromFile)
 import Hydra.Logging (Tracer, Verbosity (..), traceWith, withTracer)
 import Hydra.Options qualified as Options
-import Hydra.SerialisedScriptRegistry (SerialisedScriptRegistry (..), cborHexToSerialisedScript, serialisedScriptFromText)
 import Network.Wai (Middleware, Request (..))
 import Network.Wai.Handler.Warp qualified as Warp
 import Network.Wai.Middleware.Cors (simpleCors)
@@ -97,37 +95,12 @@ createExplorerState = do
     getExplorerState = readTVarIO
     modifyExplorerState v = atomically . modifyTVar' v
 
-type ScriptsRegistry = [(String, SerialisedScriptRegistry)]
-
-instance FromJSON SerialisedScriptRegistry where
-    parseJSON = withObject "ScriptsRegistry" $ \o -> do
-        initialScript <- o .: "initialScript"
-        commitScript <- o .: "commitScript"
-        headScript :: Text <- o .: "headScript"
-        depositScript :: Text <- o .: "depositScript"
-        headScriptBytes <- either fail pure $ Base16.decode $ encodeUtf8 headScript
-        depositScriptBytes <- either fail pure $ Base16.decode $ encodeUtf8 depositScript
-        pure
-            $ SerialisedScriptRegistry
-                { initialScriptValidator = serialisedScriptFromText initialScript
-                , commitScriptValidator = serialisedScriptFromText commitScript
-                , headScriptValidator = cborHexToSerialisedScript headScriptBytes
-                , depositScriptValidator = cborHexToSerialisedScript depositScriptBytes
-                }
-
-scriptsRegistryFromFile :: FilePath -> IO ScriptsRegistry
-scriptsRegistryFromFile fp = do
-    putStrLn $ "Reading dataset from: " <> fp
-    eitherDecodeFileStrict' fp >>= either (die . show) pure
-
 run :: Options -> IO ()
 run opts = do
     withTracer (Verbose "hydra-explorer") $ \tracer -> do
-        let scriptsRegistryFilePath = case opts of
-                DirectOpts DirectOptions{scriptsRegistry} -> scriptsRegistry
-                BlockfrostOpts BlockfrostOptions{scriptsRegistry} -> scriptsRegistry
-
         registries <- scriptsRegistryFromFile scriptsRegistryFilePath
+
+        print registries
 
         let chainObserverArgs =
                 case opts of
@@ -149,10 +122,13 @@ run opts = do
                 )
                 registries
 
-        let getExplorerStates = fmap (\(g, _, (i, _)) -> (i, g)) stateRegistries
+        let getExplorerStates =
+                fmap
+                    (\(g, _, HydraScriptRegistry{version}) -> (version, g))
+                    stateRegistries
         race_
             ( forConcurrently_ stateRegistries
-                $ \(_, modifyExplorerState, (_, registry)) ->
+                $ \(_, modifyExplorerState, HydraScriptRegistry{registry}) ->
                     do
                         withArgs chainObserverArgs
                         $ Hydra.ChainObserver.main registry
@@ -168,10 +144,13 @@ run opts = do
         case opts of
             DirectOpts DirectOptions{port} -> port
             BlockfrostOpts BlockfrostOptions{port} -> port
-
+    scriptsRegistryFilePath =
+        case opts of
+            DirectOpts DirectOptions{scriptsRegistry} -> scriptsRegistry
+            BlockfrostOpts BlockfrostOptions{scriptsRegistry} -> scriptsRegistry
     settings tracer =
         Warp.defaultSettings
             & Warp.setPort (fromIntegral portToBind)
             & Warp.setHost "0.0.0.0"
             & Warp.setBeforeMainLoop (traceWith tracer $ APIServerStarted portToBind)
-            & Warp.setOnException (\_ e -> traceWith tracer $ APIConnectionError{reason = show e})
+            & Warp.setOnException (\_ e -> traceWith tracer $ APIConnectionError{reason = Hydra.Prelude.show e})
