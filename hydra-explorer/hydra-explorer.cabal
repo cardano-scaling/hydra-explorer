@@ -43,7 +43,6 @@ library
   build-depends:
     , aeson
     , base
-    , base16-bytestring
     , hydra-cardano-api
     , hydra-chain-observer
     , hydra-node

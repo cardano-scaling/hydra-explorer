@@ -5,7 +5,6 @@ module Hydra.Explorer.ScriptsRegistry where
 import Hydra.Prelude
 
 import Data.Aeson (eitherDecodeFileStrict', withObject, (.:))
-import Data.ByteString.Base16 qualified as Base16
 import Hydra.SerialisedScriptRegistry (SerialisedScriptRegistry (..), cborHexToSerialisedScript, serialisedScriptFromText)
 import Text.Show (Show (..))
 
@@ -15,14 +14,12 @@ instance FromJSON SerialisedScriptRegistry where
         commitScript <- r .: "commitScript"
         headScript :: Text <- r .: "headScript"
         depositScript :: Text <- r .: "depositScript"
-        headScriptBytes <- either fail pure $ Base16.decode $ encodeUtf8 headScript
-        depositScriptBytes <- either fail pure $ Base16.decode $ encodeUtf8 depositScript
         pure
-            $ SerialisedScriptRegistry
+            SerialisedScriptRegistry
                 { initialScriptValidator = serialisedScriptFromText initialScript
                 , commitScriptValidator = serialisedScriptFromText commitScript
-                , headScriptValidator = cborHexToSerialisedScript headScriptBytes
-                , depositScriptValidator = cborHexToSerialisedScript depositScriptBytes
+                , headScriptValidator = cborHexToSerialisedScript (encodeUtf8 headScript)
+                , depositScriptValidator = cborHexToSerialisedScript (encodeUtf8 depositScript)
                 }
 
 data HydraScriptRegistry = HydraScriptRegistry
