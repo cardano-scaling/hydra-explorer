@@ -24,45 +24,46 @@ import System.Environment (withArgs)
 
 type API :: Type
 type API =
-    "heads" :> Capture "headId" String :> Get '[JSON] [HeadState]
-        :<|> "tick" :> Capture "headId" String :> Get '[JSON] TickState
+    "heads" :> Capture "hydraVersion" Text :> Get '[JSON] [HeadState]
+        :<|> "tick" :> Capture "hydraVersion" Text :> Get '[JSON] TickState
         :<|> Raw
 
 server ::
     FilePath ->
-    [(String, GetExplorerState)] ->
+    [(Text, GetExplorerState)] ->
     Server API
-server staticPath getExplorerStates =
+server staticPath getExplorerStates = do
     handleGetHeads getExplorerStates
         :<|> handleGetTick getExplorerStates
         :<|> serveDirectoryFileServer staticPath
 
 handleGetHeads ::
-    [(String, GetExplorerState)] ->
-    String ->
+    [(Text, GetExplorerState)] ->
+    Text ->
     Handler [HeadState]
-handleGetHeads getExplorerStates headId =
+handleGetHeads getExplorerStates hydraVersion =
     case mGetExplorerState of
         Just getExplorerState ->
             liftIO getExplorerState <&> \ExplorerState{heads} -> heads
-        Nothing -> throwError err404{errBody = "Head ID not found"}
+        Nothing -> throwError err404{errBody = "Head version not found"}
   where
-    mGetExplorerState = snd <$> find (\(i, _) -> i == headId) getExplorerStates
+    mGetExplorerState = snd <$> find (\(i, _) -> i == hydraVersion) getExplorerStates
 
 handleGetTick ::
-    [(String, GetExplorerState)] ->
-    String ->
+    [(Text, GetExplorerState)] ->
+    Text ->
     Handler TickState
-handleGetTick getExplorerStates headId = do
+handleGetTick getExplorerStates hydraVersion =
     case mGetExplorerState of
         Just getExplorerState ->
             liftIO getExplorerState <&> \ExplorerState{tick} -> tick
-        Nothing -> throwError err404{errBody = "Head ID not found"}
+        Nothing -> throwError err404{errBody = "Head version not found"}
   where
-    mGetExplorerState = snd <$> find (\(i, _) -> i == headId) getExplorerStates
+    mGetExplorerState = snd <$> find (\(i, _) -> i == hydraVersion) getExplorerStates
 
 logMiddleware :: Tracer IO APIServerLog -> Middleware
 logMiddleware tracer app' req sendResponse = do
+    liftIO $ putStrLn $ "Request received: " ++ show (rawPathInfo req)
     liftIO
         $ traceWith tracer
         $ APIHTTPRequestReceived
@@ -71,7 +72,7 @@ logMiddleware tracer app' req sendResponse = do
             }
     app' req sendResponse
 
-httpApp :: Tracer IO APIServerLog -> FilePath -> [(String, GetExplorerState)] -> Application
+httpApp :: Tracer IO APIServerLog -> FilePath -> [(Text, GetExplorerState)] -> Application
 httpApp tracer staticPath getExplorerStates =
     logMiddleware tracer
         . simpleCors

@@ -23,7 +23,7 @@ instance FromJSON SerialisedScriptRegistry where
                 }
 
 data HydraScriptRegistry = HydraScriptRegistry
-    { version :: String
+    { version :: Text
     , registry :: SerialisedScriptRegistry
     }
     deriving stock (Eq, Generic)

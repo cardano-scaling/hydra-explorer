@@ -37,14 +37,14 @@ apiServerSpec = do
     Wai.with (return webServer)
         $ describe "API should respond correctly"
         $ do
-            describe "GET /heads/{headId}"
+            describe "GET /heads/{hydraVersion}"
                 $ it "matches schema"
                 $ do
                     let openApiSchema = "json-schemas" </> "hydra-explorer-api.yaml"
                     openApi <- liftIO $ Yaml.decodeFileThrow @_ @OpenApi openApiSchema
                     let componentSchemas = openApi ^?! components . schemas
                     let maybeHeadsSchema = do
-                            path <- openApi ^. paths . at "/heads/1"
+                            path <- openApi ^. paths . at "/heads/{hydraVersion}"
                             endpoint <- path ^. get
                             res <- endpoint ^. responses . at 200
                             -- XXX: _Inline here assumes that no $ref is used within the
@@ -59,14 +59,14 @@ apiServerSpec = do
                             Wai.get "heads/1"
                                 `shouldRespondWith` matchingJSONSchema componentSchemas headsSchema
 
-            describe "GET /tick/{headId}"
+            describe "GET /tick/{hydraVersion}"
                 $ it "matches schema"
                 $ do
                     let openApiSchema = "json-schemas" </> "hydra-explorer-api.yaml"
                     openApi <- liftIO $ Yaml.decodeFileThrow @_ @OpenApi openApiSchema
                     let componentSchemas = openApi ^?! components . schemas
                     let maybeTickSchema = do
-                            path <- openApi ^. paths . at "/tick/1"
+                            path <- openApi ^. paths . at "/tick/{hydraVersion}"
                             endpoint <- path ^. get
                             res <- endpoint ^. responses . at 200
                             -- XXX: _Inline here assumes that no $ref is used within the
@@ -84,6 +84,14 @@ apiServerSpec = do
     webServer = httpApp nullTracer "static" [("1", getRandomExplorerState)]
 
     getRandomExplorerState = generate arbitrary
+
+-- paramHeadId =
+--     mempty
+--         & (name .~ "headId")
+--         & (in_ .~ ParamPath)
+--         & (required .~ True)
+--         & (description ?~ "The ID of the head")
+--         & ((schema . type_) ?~ OpenApiString)
 
 matchingJSONSchema :: Definitions Schema -> Schema -> ResponseMatcher
 matchingJSONSchema definitions s =

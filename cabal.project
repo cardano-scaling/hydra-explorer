@@ -20,8 +20,8 @@ packages:
 source-repository-package
   type: git
   location: https://github.com/cardano-scaling/hydra
-  tag: 9cb6d7a6218e8b2d27c5efd9e54f8aaa9dcc2229
-  --sha256: sha256-lX/H/x8ooeB3MrtrirqxJHO8m76SJD2cu0YZax/igRk=
+  tag: 99f3406de61d291ea954f9e2940cf5a66bfa0401
+  --sha256: sha256-5rgwTW9hURC35oe93TexI+hMKylRZrC1OjOoiwfT+p0=
   subdir:
     hydra-cardano-api
     hydra-chain-observer

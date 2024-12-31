@@ -3,14 +3,14 @@ info:
   title: Head Explorer API
   version: 1.0.0
 paths:
-  /heads/{headId}:
+  /heads/{hydraVersion}:
     get:
-      summary: Get a list of head states for the specified headId
+      summary: Get a list of head states for the specified hydra version
       parameters:
-        - name: headId
+        - name: hydraVersion
           in: path
           required: true
-          description: The ID of the head to retrieve states for
+          description: The version of the head to retrieve states for
           schema:
             type: string
       responses:
@@ -23,15 +23,15 @@ paths:
                 items:
                   $ref: '#/components/schemas/HeadState'
         '404':
-          description: Head ID not found
-  /tick/{headId}:
+          description: Head version not found
+  /tick/{hydraVersion}:
     get:
-      summary: Get the latest point in time observed on-chain by the explorer for the specified headId
+      summary: Get the latest point in time observed on-chain by the explorer for the specified hydra version
       parameters:
-        - name: headId
+        - name: hydraVersion
           in: path
           required: true
-          description: The ID of the head to retrieve the tick state for
+          description: The version of the head to retrieve the tick state for
           schema:
             type: string
       responses:
