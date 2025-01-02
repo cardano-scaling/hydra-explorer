@@ -36,7 +36,7 @@ data DirectOptions = DirectOptions
     , nodeSocket :: SocketPath
     , startChainFrom :: Maybe ChainPoint
     , staticFilePath :: FilePath
-    , scriptsRegistry :: FilePath
+    , scriptsRegistry :: Maybe FilePath
     }
     deriving stock (Show, Eq)
 
@@ -45,7 +45,7 @@ data BlockfrostOptions = BlockfrostOptions
     , projectPath :: FilePath
     , startChainFrom :: Maybe ChainPoint
     , staticFilePath :: FilePath
-    , scriptsRegistry :: FilePath
+    , scriptsRegistry :: Maybe FilePath
     }
     deriving stock (Show, Eq)
 
@@ -68,10 +68,11 @@ scriptsRegistryFilePathParser =
     option
         str
         ( long "scripts-registry"
-            <> value "registry.json"
-            <> showDefault
             <> metavar "PATH"
-            <> help "Path to scripts registry file."
+            <> help "Path to scripts registry file. (default: \"using latest from hydra-plutus lib dependency\")"
+            <> help
+                "Path to scripts registry file. \
+                \By default: using \"latest\" from hydra-plutus lib dependency."
         )
 
 staticFilePathParser :: Parser FilePath
@@ -94,7 +95,7 @@ directOptionsParser =
                 <*> nodeSocketParser
                 <*> optional startChainFromParser
                 <*> staticFilePathParser
-                <*> scriptsRegistryFilePathParser
+                <*> optional scriptsRegistryFilePathParser
             )
 
 blockfrostOptionsParser :: Parser Options
@@ -105,7 +106,7 @@ blockfrostOptionsParser =
                 <*> projectPathParser
                 <*> optional startChainFromParser
                 <*> staticFilePathParser
-                <*> scriptsRegistryFilePathParser
+                <*> optional scriptsRegistryFilePathParser
             )
 
 directOptionsInfo :: ParserInfo Options

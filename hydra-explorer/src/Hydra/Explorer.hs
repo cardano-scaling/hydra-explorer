@@ -14,6 +14,7 @@ import Hydra.Explorer.Options (BlockfrostOptions (..), DirectOptions (..), Optio
 import Hydra.Explorer.ScriptsRegistry (HydraScriptRegistry (..), scriptsRegistryFromFile)
 import Hydra.Logging (Tracer, Verbosity (..), traceWith, withTracer)
 import Hydra.Options qualified as Options
+import Hydra.SerialisedScriptRegistry (serialisedScriptRegistry)
 import Network.Wai (Middleware, Request (..))
 import Network.Wai.Handler.Warp qualified as Warp
 import Network.Wai.Middleware.Cors (simpleCors)
@@ -99,7 +100,13 @@ createExplorerState = do
 run :: Options -> IO ()
 run opts = do
     withTracer (Verbose "hydra-explorer") $ \tracer -> do
-        registries <- scriptsRegistryFromFile scriptsRegistryFilePath
+        let latest =
+                HydraScriptRegistry
+                    { version = "latest"
+                    , registry = serialisedScriptRegistry
+                    }
+        mRegistries <- mapM scriptsRegistryFromFile scriptsRegistryFilePath
+        let registries = fromMaybe [latest] mRegistries
 
         print registries
 

@@ -53,10 +53,10 @@ apiServerSpec = do
                             s <- jsonContent ^. schema
                             pure $ s ^. _Inline
                     case maybeHeadsSchema of
-                        Nothing -> liftIO . failure $ "Failed to find schema for GET /heads/1 endpoint"
+                        Nothing -> liftIO . failure $ "Failed to find schema for GET /heads/latest endpoint"
                         Just headsSchema -> do
                             liftIO $ headsSchema `shouldNotBe` mempty
-                            Wai.get "heads/1"
+                            Wai.get "heads/latest"
                                 `shouldRespondWith` matchingJSONSchema componentSchemas headsSchema
 
             describe "GET /tick/{hydraVersion}"
@@ -75,23 +75,15 @@ apiServerSpec = do
                             s <- jsonContent ^. schema
                             pure $ s ^. _Inline
                     case maybeTickSchema of
-                        Nothing -> liftIO . failure $ "Failed to find schema for GET /tick/1 endpoint"
+                        Nothing -> liftIO . failure $ "Failed to find schema for GET /tick/latest endpoint"
                         Just tickSchema -> do
                             liftIO $ tickSchema `shouldNotBe` mempty
-                            Wai.get "tick/1"
+                            Wai.get "tick/latest"
                                 `shouldRespondWith` matchingJSONSchema componentSchemas tickSchema
   where
-    webServer = httpApp nullTracer "static" [("1", getRandomExplorerState)]
+    webServer = httpApp nullTracer "static" [("latest", getRandomExplorerState)]
 
     getRandomExplorerState = generate arbitrary
-
--- paramHeadId =
---     mempty
---         & (name .~ "headId")
---         & (in_ .~ ParamPath)
---         & (required .~ True)
---         & (description ?~ "The ID of the head")
---         & ((schema . type_) ?~ OpenApiString)
 
 matchingJSONSchema :: Definitions Schema -> Schema -> ResponseMatcher
 matchingJSONSchema definitions s =

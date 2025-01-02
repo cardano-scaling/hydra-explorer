@@ -147,9 +147,9 @@ withHydraExplorer cardanoNode mStartChainFrom action =
                 )
                 <&> either absurd id
   where
-    getHeads = responseBody <$> (parseRequestThrow "http://127.0.0.1:9090/heads" >>= httpJSON)
+    getHeads = responseBody <$> (parseRequestThrow "http://127.0.0.1:9090/heads/latest" >>= httpJSON)
 
-    getTick = responseBody <$> (parseRequestThrow "http://127.0.0.1:9090/tick" >>= httpJSON)
+    getTick = responseBody <$> (parseRequestThrow "http://127.0.0.1:9090/tick/latest" >>= httpJSON)
 
     process =
         proc

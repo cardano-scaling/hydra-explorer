@@ -50,7 +50,7 @@ paths:
                   blockNo:
                     type: integer
         '404':
-          description: Head ID not found
+          description: Head version not found
 components:
   schemas:
     OnChainId:
