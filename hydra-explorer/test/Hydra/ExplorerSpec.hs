@@ -37,14 +37,14 @@ apiServerSpec = do
     Wai.with (return webServer)
         $ describe "API should respond correctly"
         $ do
-            describe "GET /heads/{hydraVersion}"
+            describe "GET /heads/latest"
                 $ it "matches schema"
                 $ do
                     let openApiSchema = "json-schemas" </> "hydra-explorer-api.yaml"
                     openApi <- liftIO $ Yaml.decodeFileThrow @_ @OpenApi openApiSchema
                     let componentSchemas = openApi ^?! components . schemas
                     let maybeHeadsSchema = do
-                            path <- openApi ^. paths . at "/heads/{hydraVersion}"
+                            path <- openApi ^. paths . at "/heads/latest"
                             endpoint <- path ^. get
                             res <- endpoint ^. responses . at 200
                             -- XXX: _Inline here assumes that no $ref is used within the
@@ -59,14 +59,14 @@ apiServerSpec = do
                             Wai.get "heads/latest"
                                 `shouldRespondWith` matchingJSONSchema componentSchemas headsSchema
 
-            describe "GET /tick/{hydraVersion}"
+            describe "GET /tick/latest"
                 $ it "matches schema"
                 $ do
                     let openApiSchema = "json-schemas" </> "hydra-explorer-api.yaml"
                     openApi <- liftIO $ Yaml.decodeFileThrow @_ @OpenApi openApiSchema
                     let componentSchemas = openApi ^?! components . schemas
                     let maybeTickSchema = do
-                            path <- openApi ^. paths . at "/tick/{hydraVersion}"
+                            path <- openApi ^. paths . at "/tick/latest"
                             endpoint <- path ^. get
                             res <- endpoint ^. responses . at 200
                             -- XXX: _Inline here assumes that no $ref is used within the

@@ -25,8 +25,10 @@ import System.Environment (withArgs)
 
 type API :: Type
 type API =
-    "heads" :> Capture "hydraVersion" Text :> Get '[JSON] [HeadState]
-        :<|> "tick" :> Capture "hydraVersion" Text :> Get '[JSON] TickState
+    "heads" :> Capture "major" Text :> Capture "minor" Text :> Capture "patch" Text :> Get '[JSON] [HeadState]
+        :<|> "heads" :> "latest" :> Get '[JSON] [HeadState]
+        :<|> "tick" :> Capture "major" Text :> Capture "minor" Text :> Capture "patch" Text :> Get '[JSON] TickState
+        :<|> "tick" :> "latest" :> Get '[JSON] TickState
         :<|> Raw
 
 server ::
@@ -35,32 +37,62 @@ server ::
     Server API
 server staticPath getExplorerStates = do
     handleGetHeads getExplorerStates
+        :<|> handleGetLatestHead getExplorerStates
         :<|> handleGetTick getExplorerStates
+        :<|> handleGetLatestTick getExplorerStates
         :<|> serveDirectoryFileServer staticPath
 
 handleGetHeads ::
     [(Text, GetExplorerState)] ->
     Text ->
+    Text ->
+    Text ->
     Handler [HeadState]
-handleGetHeads getExplorerStates hydraVersion =
+handleGetHeads getExplorerStates major minor patch =
     case mGetExplorerState of
         Just getExplorerState ->
             liftIO getExplorerState <&> \ExplorerState{heads} -> heads
         Nothing -> throwError err404{errBody = "Head version not found"}
   where
+    hydraVersion = unwords [major, ".", minor, ".", patch]
     mGetExplorerState = snd <$> find (\(i, _) -> i == hydraVersion) getExplorerStates
+
+handleGetLatestHead ::
+    [(Text, GetExplorerState)] ->
+    Handler [HeadState]
+handleGetLatestHead getExplorerStates =
+    case mGetExplorerState of
+        Just getExplorerState ->
+            liftIO getExplorerState <&> \ExplorerState{heads} -> heads
+        Nothing -> throwError err404{errBody = "Head latest version not found"}
+  where
+    mGetExplorerState = snd <$> listToMaybe (reverse $ sortOn fst getExplorerStates)
 
 handleGetTick ::
     [(Text, GetExplorerState)] ->
     Text ->
+    Text ->
+    Text ->
     Handler TickState
-handleGetTick getExplorerStates hydraVersion =
+handleGetTick getExplorerStates major minor patch =
     case mGetExplorerState of
         Just getExplorerState ->
             liftIO getExplorerState <&> \ExplorerState{tick} -> tick
         Nothing -> throwError err404{errBody = "Head version not found"}
   where
+    hydraVersion = unwords [major, ".", minor, ".", patch]
     mGetExplorerState = snd <$> find (\(i, _) -> i == hydraVersion) getExplorerStates
+
+handleGetLatestTick ::
+    [(Text, GetExplorerState)] ->
+    Handler TickState
+handleGetLatestTick getExplorerStates =
+    case mGetExplorerState of
+        Just getExplorerState ->
+            liftIO getExplorerState <&> \ExplorerState{tick} -> tick
+        Nothing -> throwError err404{errBody = "Head latest version not found"}
+  where
+    mGetExplorerState = snd <$> listToMaybe (reverse $ sortOn fst getExplorerStates)
 
 logMiddleware :: Tracer IO APIServerLog -> Middleware
 logMiddleware tracer app' req sendResponse = do

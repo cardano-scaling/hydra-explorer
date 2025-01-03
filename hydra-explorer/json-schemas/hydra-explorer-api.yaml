@@ -3,14 +3,40 @@ info:
   title: Head Explorer API
   version: 1.0.0
 paths:
-  /heads/{hydraVersion}:
+  /heads/latest:
+    get:
+      summary: Get a list of head states for the specified hydra version
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HeadState'
+        '404':
+          description: Head latest version not found
+  /heads/{major}/{minor}/{patch}:
     get:
       summary: Get a list of head states for the specified hydra version
       parameters:
-        - name: hydraVersion
+        - name: major
           in: path
           required: true
-          description: The version of the head to retrieve states for
+          description: The MAJOR version of the head to retrieve states for
+          schema:
+            type: string
+        - name: minor
+          in: path
+          required: true
+          description: The MINOR version of the head to retrieve states for
+          schema:
+            type: string
+        - name: patch
+          in: path
+          required: true
+          description: The PATCH version of the head to retrieve states for
           schema:
             type: string
       responses:
@@ -24,14 +50,46 @@ paths:
                   $ref: '#/components/schemas/HeadState'
         '404':
           description: Head version not found
-  /tick/{hydraVersion}:
+  /tick/latest:
+    get:
+      summary: Get the latest point in time observed on-chain by the explorer for the specified hydra version
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - point
+                  - blockNo
+                properties:
+                  point:
+                    $ref: '#/components/schemas/ChainPoint'
+                  blockNo:
+                    type: integer
+        '404':
+          description: Head latest version not found
+  /tick/{major}/{minor}/{patch}:
     get:
       summary: Get the latest point in time observed on-chain by the explorer for the specified hydra version
       parameters:
-        - name: hydraVersion
+        - name: major
           in: path
           required: true
-          description: The version of the head to retrieve the tick state for
+          description: The MAJOR version of the head to retrieve the tick state for
+          schema:
+            type: string
+        - name: minor
+          in: path
+          required: true
+          description: The MINOR version of the head to retrieve the tick state for
+          schema:
+            type: string
+        - name: patch
+          in: path
+          required: true
+          description: The PATCH version of the head to retrieve the tick state for
           schema:
             type: string
       responses:
