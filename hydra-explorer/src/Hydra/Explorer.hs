@@ -54,7 +54,7 @@ handleGetHeads getExplorerStates major minor patch =
             liftIO getExplorerState <&> \ExplorerState{heads} -> heads
         Nothing -> throwError err404{errBody = "Head version not found"}
   where
-    hydraVersion = unwords [major, ".", minor, ".", patch]
+    hydraVersion = major <> "." <> minor <> "." <> patch
     mGetExplorerState = snd <$> find (\(i, _) -> i == hydraVersion) getExplorerStates
 
 handleGetLatestHead ::
@@ -80,7 +80,7 @@ handleGetTick getExplorerStates major minor patch =
             liftIO getExplorerState <&> \ExplorerState{tick} -> tick
         Nothing -> throwError err404{errBody = "Head version not found"}
   where
-    hydraVersion = unwords [major, ".", minor, ".", patch]
+    hydraVersion = major <> "." <> minor <> "." <> patch
     mGetExplorerState = snd <$> find (\(i, _) -> i == hydraVersion) getExplorerStates
 
 handleGetLatestTick ::
