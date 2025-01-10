@@ -8,7 +8,7 @@ import Hydra.Prelude
 import Control.Concurrent.Class.MonadSTM (modifyTVar', newTVarIO, readTVarIO)
 import Control.Monad.Class.MonadAsync (forConcurrently_)
 import Hydra.API.APIServerLog (APIServerLog (..), Method (..), PathInfo (..))
-import Hydra.ChainObserver.NodeClient (ChainObservation)
+import Hydra.ChainObserver.NodeClient (ChainObservation (..))
 import Hydra.Explorer.ExplorerState (ExplorerState (..), HeadState, TickState, aggregateHeadObservations, initialTickState)
 import Hydra.Explorer.Options (BlockfrostOptions (..), DirectOptions (..), Options (..), toArgProjectPath, toArgStartChainFrom)
 import Hydra.Explorer.ScriptsRegistry (HydraScriptRegistry (..), scriptsRegistryFromFile)
@@ -22,6 +22,8 @@ import Servant (err404, errBody, serveDirectoryFileServer, throwError)
 import Servant.API (Capture, Get, JSON, Raw, (:<|>) (..), (:>))
 import Servant.Server (Application, Handler, Server, serve)
 import System.Environment (withArgs)
+import Test.QuickCheck (choose, elements, oneof, suchThat)
+import Test.QuickCheck.Instances ()
 
 type API :: Type
 type API =
@@ -158,6 +160,8 @@ run opts = do
             mapM
                 ( \registry -> do
                     (getExplorerState, modifyExplorerState) <- createExplorerState
+                    let obs = arbitrary `generateWith` 42
+                    observerHandler modifyExplorerState [obs]
                     pure (getExplorerState, modifyExplorerState, registry)
                 )
                 registries
@@ -166,15 +170,16 @@ run opts = do
                 fmap
                     (\(g, _, HydraScriptRegistry{version}) -> (version, g))
                     stateRegistries
-        race_
-            ( forConcurrently_ stateRegistries
-                $ \(_, modifyExplorerState, HydraScriptRegistry{registry}) ->
-                    do
-                        withArgs chainObserverArgs
-                        $ Hydra.ChainObserver.main registry
-                        $ observerHandler modifyExplorerState
-            )
-            (Warp.runSettings (settings tracer) (httpApp tracer staticPath getExplorerStates))
+        -- race_
+        --     ( forConcurrently_ stateRegistries
+        --         $ \(_, modifyExplorerState, HydraScriptRegistry{registry}) ->
+        --             do
+        --                 withArgs chainObserverArgs
+        --                 $ Hydra.ChainObserver.main registry
+        --                 $ observerHandler modifyExplorerState
+        --     )
+        --     ()
+        Warp.runSettings (settings tracer) (httpApp tracer staticPath getExplorerStates)
   where
     staticPath =
         case opts of

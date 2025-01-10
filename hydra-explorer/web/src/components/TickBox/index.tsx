@@ -4,13 +4,16 @@ import { TickState } from "@/app/model"
 import useDataFetcher from "@/hooks/DataFetcher"
 import { useCardanoExplorer } from "@/providers/CardanoExplorer"
 import { useState } from "react"
+import { useVersionContext } from "@/providers/VersionProvider"
 
 const TickBox = () => {
     const [tick, setTick] = useState<TickState | null>(null)
     const [error, setError] = useState<string | null>(null)
 
+    const { currentVersion } = useVersionContext()
+
     useDataFetcher<TickState>({
-        url: '/tick',
+        url: `http://localhost:9090/tick/${currentVersion}`,
         setFetchedData: setTick,
         setError,
     })

@@ -23,7 +23,7 @@ export const useIntervalContext = () => {
 const IntervalSettingProvider: React.FC<any> = ({
     children
 }) => {
-    const [intervalTime, setIntervalTime] = useState(1000)
+    const [intervalTime, setIntervalTime] = useState(10000)
     const [isAutoUpdateOn, setAutoUpdate] = useState(true)
 
     const handleToggleAutoUpdate = () => {
