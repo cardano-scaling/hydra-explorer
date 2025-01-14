@@ -10,8 +10,8 @@ repository cardano-haskell-packages
     d4a35cd3121aa00d18544bb0ac01c3e1691d618f462c46129271bccf39f7e8ee
 
 index-state:
-  , hackage.haskell.org 2024-10-14T02:12:15Z
-  , cardano-haskell-packages 2024-10-14T23:19:53Z
+  , hackage.haskell.org 2024-11-22T14:59:16Z
+  , cardano-haskell-packages 2024-12-20T15:52:56Z
 
 packages:
   -- TODO: why subdir?
@@ -26,3 +26,6 @@ source-repository-package
   subdir:
     hydra-prelude
     hydra-test-utils
+    hydra-tx
+    hydra-plutus
+    hydra-cardano-api

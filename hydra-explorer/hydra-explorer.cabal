@@ -44,6 +44,7 @@ library
     , aeson
     , base
     , hydra-prelude
+    , hydra-tx
     , io-classes
     , network
     , optparse-applicative
