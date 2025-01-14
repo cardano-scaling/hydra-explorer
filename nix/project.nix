@@ -19,15 +19,7 @@ let
 
       name = "hydra-explorer";
       compiler-nix-name = lib.mkDefault "ghc96";
-      modules =
-        [
-          {
-            packages = { };
-          }
-          {
-            packages = { };
-          }
-        ];
+      modules = [ ];
     });
 
 

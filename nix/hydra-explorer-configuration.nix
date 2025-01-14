@@ -58,6 +58,7 @@
   virtualisation.podman.dockerCompat = true;
 
   # Cardano node used by Hydra smoke tests and explorer instance
+  # TODO: add multiple instances of cardano-node and hydra-chain-observer
   # TODO: initialize /data/cardano/preview correctly on a fresh machine
   virtualisation.oci-containers.containers.cardano-node-preview = {
     image = "ghcr.io/intersectmbo/cardano-node:10.1.3";

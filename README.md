@@ -1,6 +1,16 @@
 # hydra-explorer
 
-This is the system image repository for the hydra-explorer service.
+Contains the backend and frontend serving https://explorer.hydra.family, as well as a NixOS-based system image to deploy the service.
+
+## Build & test
+
+In the `nix develop` shell or with `cabal` and `ghc` installed:
+
+``` sh
+cabal update
+cabal build
+cabal test
+```
 
 ## Deployment
 

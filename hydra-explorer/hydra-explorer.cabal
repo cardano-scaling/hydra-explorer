@@ -44,10 +44,6 @@ library
   build-depends:
     , aeson
     , base
-    , hydra-cardano-api
-    , hydra-chain-observer
-    , hydra-tx
-    , hydra-node
     , hydra-prelude
     , io-classes
     , optparse-applicative
@@ -83,22 +79,17 @@ test-suite tests
     , filepath
     , hspec
     , hspec-wai
-    , hydra-chain-observer
     , hydra-explorer
-    , hydra-node
     , hydra-prelude
     , hydra-test-utils
     , lens
     , openapi3
     , QuickCheck
     , yaml
-    , hydra-tx
     , http-conduit
     , process
-    , hydra-cluster
     , http-client
     , lens-aeson
-    , hydra-cardano-api
 
   other-modules:
     Hydra.Explorer.ExplorerStateSpec
