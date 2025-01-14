@@ -2,63 +2,52 @@ module Hydra.Explorer.Options where
 
 import Hydra.Prelude
 
-import Hydra.Cardano.Api (ChainPoint (..), NetworkId, SlotNo (..), SocketPath, serialiseToRawBytesHexText)
-import Hydra.ChainObserver.Options (projectPathParser)
-import Hydra.Network (PortNumber, readPort)
-import Hydra.Options (
-  networkIdParser,
-  nodeSocketParser,
-  startChainFromParser,
- )
+import Network.Socket (PortNumber)
 import Options.Applicative (
   Parser,
   ParserInfo,
-  command,
+  auto,
   fullDesc,
   header,
   help,
   helper,
-  hsubparser,
   info,
   long,
-  maybeReader,
   metavar,
   option,
   progDesc,
   showDefault,
+  str,
   value,
-  str
  )
 
-data DirectOptions = DirectOptions
-  { networkId :: NetworkId
-  , port :: PortNumber
-  , nodeSocket :: SocketPath
-  , startChainFrom :: Maybe ChainPoint
+data Options = Options
+  { clientPort :: PortNumber
+  , observerPort :: PortNumber
   , staticFilePath :: FilePath
   }
   deriving stock (Show, Eq)
 
-data BlockfrostOptions = BlockfrostOptions
-  { port :: PortNumber
-  , projectPath :: FilePath
-  , startChainFrom :: Maybe ChainPoint
-  , staticFilePath :: FilePath
-  }
-  deriving stock (Show, Eq)
-
-data Options = DirectOpts DirectOptions | BlockfrostOpts BlockfrostOptions
-  deriving stock (Show, Eq)
-
-apiPortParser :: Parser PortNumber
-apiPortParser =
+clientPortParser :: Parser PortNumber
+clientPortParser =
   option
-    (maybeReader readPort)
-    ( long "api-port"
+    auto
+    ( long "client-port"
         <> value 9090
         <> showDefault
         <> metavar "PORT"
-        <> help "Listen port for incoming client API connections."
+        <> help "Port to serve client REST API on."
+    )
+
+observerPortParser :: Parser PortNumber
+observerPortParser =
+  option
+    auto
+    ( long "observer-port"
+        <> value 8080
+        <> showDefault
+        <> metavar "PORT"
+        <> help "Port to serve observer REST API on."
     )
 
 staticFilePathParser :: Parser FilePath
@@ -72,62 +61,18 @@ staticFilePathParser =
         <> help "Path to static files."
     )
 
-directOptionsParser :: Parser Options
-directOptionsParser =
-  DirectOpts
-    <$> ( DirectOptions
-            <$> networkIdParser
-            <*> apiPortParser
-            <*> nodeSocketParser
-            <*> optional startChainFromParser
-            <*> staticFilePathParser
-        )
-
-blockfrostOptionsParser :: Parser Options
-blockfrostOptionsParser =
-  BlockfrostOpts
-    <$> ( BlockfrostOptions
-            <$> apiPortParser
-            <*> projectPathParser
-            <*> optional startChainFromParser
-            <*> staticFilePathParser
-        )
-
-directOptionsInfo :: ParserInfo Options
-directOptionsInfo =
-  info
-    directOptionsParser
-    (progDesc "Direct Mode")
-
-blockfrostOptionsInfo :: ParserInfo Options
-blockfrostOptionsInfo =
-  info
-    blockfrostOptionsParser
-    (progDesc "Blockfrost Mode")
+optionsParser :: Parser Options
+optionsParser =
+  Options
+    <$> clientPortParser
+    <*> observerPortParser
+    <*> staticFilePathParser
 
 hydraExplorerOptions :: ParserInfo Options
 hydraExplorerOptions =
   info
-    ( hsubparser
-        ( command "direct" directOptionsInfo
-            <> command "blockfrost" blockfrostOptionsInfo
-        )
-        <**> helper
-    )
+    (optionsParser <**> helper)
     ( fullDesc
-        <> progDesc "Explore hydra heads from chain."
+        <> progDesc "Explore Hydra heads."
         <> header "hydra-explorer"
     )
-
-toArgStartChainFrom :: Maybe ChainPoint -> [String]
-toArgStartChainFrom = \case
-  Just ChainPointAtGenesis ->
-    ["--start-chain-from", "0"]
-  Just (ChainPoint (SlotNo slotNo) headerHash) ->
-    let headerHashBase16 = toString (serialiseToRawBytesHexText headerHash)
-     in ["--start-chain-from", show slotNo <> "." <> headerHashBase16]
-  Nothing ->
-    []
-
-toArgProjectPath :: FilePath -> [String]
-toArgProjectPath projectPath = ["--project-path", projectPath]

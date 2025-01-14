@@ -5,8 +5,7 @@ synopsis:      Hydra Explorer
 author:        IOG
 copyright:     2023 IOG
 license:       Apache-2.0
-license-files:
-  LICENSE
+license-files: LICENSE
 
 source-repository head
   type:     git
@@ -46,6 +45,7 @@ library
     , base
     , hydra-prelude
     , io-classes
+    , network
     , optparse-applicative
     , servant
     , servant-server
@@ -79,17 +79,17 @@ test-suite tests
     , filepath
     , hspec
     , hspec-wai
+    , http-client
+    , http-conduit
     , hydra-explorer
     , hydra-prelude
     , hydra-test-utils
     , lens
+    , lens-aeson
     , openapi3
+    , process
     , QuickCheck
     , yaml
-    , http-conduit
-    , process
-    , http-client
-    , lens-aeson
 
   other-modules:
     Hydra.Explorer.ExplorerStateSpec
