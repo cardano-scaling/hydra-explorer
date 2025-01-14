@@ -14,6 +14,7 @@ index-state:
   , cardano-haskell-packages 2024-10-14T23:19:53Z
 
 packages:
+  -- TODO: why subdir?
   hydra-explorer
 
 -- TODO: publish these to CHaP?

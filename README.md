@@ -2,6 +2,22 @@
 
 Contains the backend and frontend serving https://explorer.hydra.family, as well as a NixOS-based system image to deploy the service.
 
+The backend `hydra-explorer` service aggregates data from multiple `hydra-chain-observer` instances - of different hydra versions and from different cardano networks - into a single REST API.
+
+## Getting started
+
+```shell
+hydra-explorer
+```
+
+By default, hydra-explorer will bind onto all interfaces using hostname `0.0.0.0` and uses port `8080` for the **observer API** and port `9090` for the **client API**. To configure:
+
+```shell
+hydra-explorer \
+  --observer-port 8000
+  --client-port 9000
+```
+
 ## Build & test
 
 In the `nix develop` shell or with `cabal` and `ghc` installed:
