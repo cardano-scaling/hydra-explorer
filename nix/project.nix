@@ -11,7 +11,7 @@ let
     {
       src = ../.;
 
-      shell.withHoogle = false;
+      shell.withHoogle = true;
 
       inputMap = {
         "https://chap.intersectmbo.org/" = inputs.iogx.inputs.CHaP;
