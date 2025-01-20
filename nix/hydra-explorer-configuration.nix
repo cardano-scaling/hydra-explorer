@@ -19,11 +19,13 @@
   };
 
   nix = {
-    settings.trusted-users = [ "root" ];
+    settings.trusted-users = [ "root" "runner" ];
     extraOptions = ''
       experimental-features = nix-command flakes recursive-nix ca-derivations
       log-lines = 300
       warn-dirty = false
+      allow-import-from-derivation = true
+      accept-flake-config = true
     '';
   };
 
