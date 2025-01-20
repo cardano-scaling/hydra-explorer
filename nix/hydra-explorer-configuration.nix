@@ -58,6 +58,12 @@
     replace = true;
     extraLabels = [ "nixos" "self-hosted" "explorer" "cardano" ];
     user = "runner";
+    serviceOverrides = {
+      # See: https://discourse.nixos.org/t/github-runners-cp-read-only-filesystem/36513/2
+      ReadWritePaths = [
+        "/data/cardano"
+      ];
+    };
   };
 
   services.cardano-node = {
