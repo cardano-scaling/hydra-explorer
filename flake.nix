@@ -75,11 +75,7 @@
                 {
                   imports = [
                     "${inputs.nixpkgs}/nixos/modules/virtualisation/amazon-image.nix"
-                    (import ./nix/hydra-explorer-configuration.nix {
-                      cardano-node-module = inputs.cardano-node.nixosModules.cardano-node;
-                      hydra-explorer = inputs.self.packages.x86_64-linux.hydra-explorer;
-                      hydra-explorer-web = inputs.self.packages.x86_64-linux.hydra-explorer-web;
-                    })
+                    (import ./nix/hydra-explorer-configuration.nix)
                   ];
                 }
                 inputs.agenix.nixosModules.default

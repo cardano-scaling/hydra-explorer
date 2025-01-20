@@ -1,15 +1,5 @@
-{ cardano-node-module, hydra-explorer, hydra-explorer-web }:
-{ pkgs
-, lib
-, inputs
-, ...
-}:
+{ pkgs, lib, inputs, ... }:
 {
-  imports = [
-    cardano-node-module
-    (import ./nixosModule.nix { inherit hydra-explorer hydra-explorer-web; })
-  ];
-
   networking = {
     hostName = "hydra-explorer";
     firewall = {
@@ -42,7 +32,6 @@
 
   services.getty.autologinUser = "root";
 
-
   # Github runner registered with cardano-scaling organization
   users.users.runner = {
     isNormalUser = true;
@@ -66,21 +55,40 @@
     };
   };
 
-  services.cardano-node = {
-    enable = true;
-    environment = "preview";
-    hostAddr = "0.0.0.0";
-    port = 3002;
-    socketPath = "/run/cardano-node/node.socket";
+  # Cardano node used by Hydra smoke tests and explorer instance
+  # TODO: initialize /data/cardano/preview correctly on a fresh machine
+  virtualisation.oci-containers.containers.cardano-node-preview = {
+    image = "ghcr.io/intersectmbo/cardano-node:10.1.3";
+    volumes = [
+      "/data/cardano/preview:/data"
+    ];
+    cmd = [ "run" ];
+    environment = {
+      CARDANO_CONFIG = "/data/config.json";
+      CARDANO_TOPOLOGY = "/data/topology.json";
+      CARDANO_DATABASE_PATH = "/data/db";
+      CARDANO_SOCKET_PATH = "/data/node.socket"; # used by cardano-node
+      CARDANO_NODE_SOCKET_PATH = "/data/node.socket"; # used by cardano-cli
+      CARDANO_LOG_DIR = "/data/logs";
+    };
   };
 
-  # services.hydra-explorer = {
-  #   enable = true;
-  #   socketPath = "/run/cardano-node/node.socket";
-  #   networkArg = "--testnet-magic 2";
-  #   port = 80;
-  #   startChainFrom = "49533501.e364500a42220ea47314215679b7e42e9bbb81fa69d1366fe738d8aef900f7ee";
-  # };
+  virtualisation.oci-containers.containers.hydra-explorer = {
+    image = "ghcr.io/cardano-scaling/hydra-explorer:0.19.0";
+    volumes = [
+      "/data/cardano/preview:/data"
+    ];
+    ports = [
+      "80:8080"
+    ];
+    cmd = builtins.concatLists [
+      [ "--node-socket" "/data/node.socket" ]
+      [ "--testnet-magic" "2" ]
+      [ "--api-port" "8080" ]
+      # NOTE: Block in which current master scripts were published
+      [ "--start-chain-from" "49533501.e364500a42220ea47314215679b7e42e9bbb81fa69d1366fe738d8aef900f7ee" ]
+    ];
+  };
 
   services.openssh = {
     settings.PasswordAuthentication = false;
