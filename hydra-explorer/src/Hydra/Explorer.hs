@@ -2,16 +2,20 @@ module Hydra.Explorer where
 
 import Hydra.Prelude
 
+-- XXX: Depends on hydra-node
+import Hydra.API.APIServerLog (APIServerLog (..), Method (..), PathInfo (..))
+import Hydra.Logging (Tracer, Verbosity (..), traceWith, withTracer)
+
 import Control.Concurrent.Class.MonadSTM (modifyTVar', newTVarIO, readTVarIO)
-import Hydra.Explorer.ExplorerState (ExplorerState (..), HeadState, TickState, aggregateHeadObservations, initialTickState)
-import Hydra.Explorer.Options (BlockfrostOptions (..), DirectOptions (..), Options (..), toArgProjectPath, toArgStartChainFrom)
+import Hydra.Explorer.ExplorerState (ExplorerState (..), HeadState, TickState, aggregateObservations, initialTickState)
+import Hydra.Explorer.Observer.Api (Observation)
+import Hydra.Explorer.Options (Options (..))
 import Network.Wai (Middleware, Request (..))
 import Network.Wai.Handler.Warp qualified as Warp
 import Network.Wai.Middleware.Cors (simpleCors)
 import Servant (serveDirectoryFileServer)
 import Servant.API (Get, JSON, Raw, (:<|>) (..), (:>))
 import Servant.Server (Application, Handler, Server, serve)
-import System.Environment (withArgs)
 
 type API :: Type
 type API =
@@ -40,27 +44,9 @@ handleGetTick ::
 handleGetTick getExplorerState = do
   liftIO getExplorerState <&> \ExplorerState{tick} -> tick
 
-logMiddleware :: Tracer IO APIServerLog -> Middleware
-logMiddleware tracer app' req sendResponse = do
-  liftIO $
-    traceWith tracer $
-      APIHTTPRequestReceived
-        { method = Method $ requestMethod req
-        , path = PathInfo $ rawPathInfo req
-        }
-  app' req sendResponse
-
-httpApp :: Tracer IO APIServerLog -> FilePath -> GetExplorerState -> Application
-httpApp tracer staticPath getExplorerState =
-  logMiddleware tracer
-    . simpleCors
-    . serve (Proxy @API)
-    $ server staticPath getExplorerState
-
-observerHandler :: ModifyExplorerState -> [ChainObservation] -> IO ()
+observerHandler :: ModifyExplorerState -> [Observation] -> IO ()
 observerHandler modifyExplorerState observations = do
-  modifyExplorerState $
-    aggregateHeadObservations observations
+  modifyExplorerState $ aggregateObservations observations
 
 type GetExplorerState = IO ExplorerState
 
@@ -74,40 +60,39 @@ createExplorerState = do
   getExplorerState = readTVarIO
   modifyExplorerState v = atomically . modifyTVar' v
 
+-- XXX: Depends on hydra-node for logging stuff, could replace with different
+-- (structured) logging tools
+
+httpApp :: Tracer IO APIServerLog -> FilePath -> GetExplorerState -> Application
+httpApp tracer staticPath getExplorerState =
+  logMiddleware tracer
+    . simpleCors
+    . serve (Proxy @API)
+    $ server staticPath getExplorerState
+
 run :: Options -> IO ()
 run opts = do
   withTracer (Verbose "hydra-explorer") $ \tracer -> do
-    (getExplorerState, modifyExplorerState) <- createExplorerState
-
-    let chainObserverArgs =
-          case opts of
-            DirectOpts DirectOptions{networkId, nodeSocket, startChainFrom} ->
-              ["direct"]
-                <> Options.toArgNodeSocket nodeSocket
-                <> Options.toArgNetworkId networkId
-                <> toArgStartChainFrom startChainFrom
-            BlockfrostOpts BlockfrostOptions{projectPath, startChainFrom} ->
-              ["blockfrost"]
-                <> toArgProjectPath projectPath
-                <> toArgStartChainFrom startChainFrom
-    race_
-      ( withArgs chainObserverArgs $
-          Hydra.ChainObserver.main (observerHandler modifyExplorerState)
-      )
-      (Warp.runSettings (settings tracer) (httpApp tracer staticPath getExplorerState))
+    (getExplorerState, _modifyExplorerState) <- createExplorerState
+    Warp.runSettings (settings tracer) (httpApp tracer staticFilePath getExplorerState)
  where
-  staticPath =
-    case opts of
-      DirectOpts DirectOptions{staticFilePath} -> staticFilePath
-      BlockfrostOpts BlockfrostOptions{staticFilePath} -> staticFilePath
-  portToBind =
-    case opts of
-      DirectOpts DirectOptions{port} -> port
-      BlockfrostOpts BlockfrostOptions{port} -> port
+  Options{staticFilePath, clientPort} = opts
 
   settings tracer =
     Warp.defaultSettings
-      & Warp.setPort (fromIntegral portToBind)
+      & Warp.setPort (fromIntegral clientPort)
       & Warp.setHost "0.0.0.0"
-      & Warp.setBeforeMainLoop (traceWith tracer $ APIServerStarted portToBind)
+      & Warp.setBeforeMainLoop (traceWith tracer $ APIServerStarted clientPort)
       & Warp.setOnException (\_ e -> traceWith tracer $ APIConnectionError{reason = show e})
+
+-- * Logging
+
+logMiddleware :: Tracer IO APIServerLog -> Middleware
+logMiddleware tracer app' req sendResponse = do
+  liftIO $
+    traceWith tracer $
+      APIHTTPRequestReceived
+        { method = Method $ requestMethod req
+        , path = PathInfo $ rawPathInfo req
+        }
+  app' req sendResponse

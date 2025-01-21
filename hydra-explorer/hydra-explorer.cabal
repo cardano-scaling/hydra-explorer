@@ -47,9 +47,11 @@ library
     , hydra-node
     , hydra-prelude
     , hydra-tx
+    , hydra-tx:testlib
     , io-classes
     , network
     , optparse-applicative
+    , QuickCheck
     , servant
     , servant-server
     , wai
