@@ -19,11 +19,13 @@
   };
 
   nix = {
-    settings.trusted-users = [ "root" ];
+    settings.trusted-users = [ "root" "runner" ];
     extraOptions = ''
       experimental-features = nix-command flakes recursive-nix ca-derivations
       log-lines = 300
       warn-dirty = false
+      allow-import-from-derivation = true
+      accept-flake-config = true
     '';
   };
 
@@ -41,6 +43,29 @@
   services.getty.autologinUser = "root";
 
 
+  # Github runner registered with cardano-scaling organization
+  users.users.runner = {
+    isNormalUser = true;
+    uid = 1001;
+    group = "users";
+    extraGroups = [ ];
+  };
+  age.secrets.github-runner-token.file = ../secrets/github-runner-token.age;
+  services.github-runners.explorer = {
+    enable = true;
+    url = "https://github.com/cardano-scaling";
+    tokenFile = "/run/agenix/github-runner-token";
+    replace = true;
+    extraLabels = [ "nixos" "self-hosted" "explorer" "cardano" ];
+    user = "runner";
+    serviceOverrides = {
+      # See: https://discourse.nixos.org/t/github-runners-cp-read-only-filesystem/36513/2
+      ReadWritePaths = [
+        "/data/cardano"
+      ];
+    };
+  };
+
   services.cardano-node = {
     enable = true;
     environment = "preview";
@@ -49,13 +74,13 @@
     socketPath = "/run/cardano-node/node.socket";
   };
 
-  services.hydra-explorer = {
-    enable = true;
-    socketPath = "/run/cardano-node/node.socket";
-    networkArg = "--testnet-magic 2";
-    port = 80;
-    startChainFrom = "49533501.e364500a42220ea47314215679b7e42e9bbb81fa69d1366fe738d8aef900f7ee";
-  };
+  # services.hydra-explorer = {
+  #   enable = true;
+  #   socketPath = "/run/cardano-node/node.socket";
+  #   networkArg = "--testnet-magic 2";
+  #   port = 80;
+  #   startChainFrom = "49533501.e364500a42220ea47314215679b7e42e9bbb81fa69d1366fe738d8aef900f7ee";
+  # };
 
   services.openssh = {
     settings.PasswordAuthentication = false;

@@ -2,6 +2,7 @@
   description = "hydra-explorer application and system image";
 
   inputs = {
+    nixpkgs.url = "nixpkgs/nixos-24.11";
 
     CHaP = {
       url = "github:IntersectMBO/cardano-haskell-packages?ref=repo";
@@ -26,7 +27,7 @@
       inputs.hackage.follows = "hackage";
       inputs.CHaP.follows = "CHaP";
       inputs.haskell-nix.follows = "haskell-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "haskell-nix/nixpkgs";
     };
 
     nixos-generators = {
@@ -36,7 +37,7 @@
 
     nix-npm-buildpackage.url = "github:serokell/nix-npm-buildpackage";
 
-    nixpkgs.follows = "haskell-nix/nixpkgs";
+    agenix.url = "github:ryantm/agenix";
   };
 
   outputs = inputs:
@@ -67,22 +68,23 @@
       flake = _: {
         nixosConfigurations.hydra-explorer =
           inputs.nixpkgs.lib.nixosSystem
-          {
-            system = "x86_64-linux";
-            specialArgs = inputs;
-            modules = [
-              {
-                imports = [
-                  "${inputs.nixpkgs}/nixos/modules/virtualisation/amazon-image.nix"
-                  (import ./nix/hydra-explorer-configuration.nix {
-                    cardano-node-module = inputs.cardano-node.nixosModules.cardano-node;
-                    hydra-explorer = inputs.self.packages.x86_64-linux.hydra-explorer;
-                    hydra-explorer-web = inputs.self.packages.x86_64-linux.hydra-explorer-web;
-                  })
-                ];
-              }
-            ];
-          };
+            {
+              system = "x86_64-linux";
+              specialArgs = inputs;
+              modules = [
+                {
+                  imports = [
+                    "${inputs.nixpkgs}/nixos/modules/virtualisation/amazon-image.nix"
+                    (import ./nix/hydra-explorer-configuration.nix {
+                      cardano-node-module = inputs.cardano-node.nixosModules.cardano-node;
+                      hydra-explorer = inputs.self.packages.x86_64-linux.hydra-explorer;
+                      hydra-explorer-web = inputs.self.packages.x86_64-linux.hydra-explorer-web;
+                    })
+                  ];
+                }
+                inputs.agenix.nixosModules.default
+              ];
+            };
       };
 
       outputs = import ./nix/outputs.nix;
