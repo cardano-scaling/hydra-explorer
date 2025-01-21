@@ -9,7 +9,7 @@
   };
 
   nix = {
-    settings.trusted-users = [ "root" "runner" ];
+    settings.trusted-users = [ "root" ];
     extraOptions = ''
       experimental-features = nix-command flakes recursive-nix ca-derivations
       log-lines = 300
@@ -33,20 +33,16 @@
   services.getty.autologinUser = "root";
 
   # Github runner registered with cardano-scaling organization
-  users.users.runner = {
-    isNormalUser = true;
-    uid = 1001;
-    group = "users";
-    extraGroups = [ ];
-  };
   age.secrets.github-runner-token.file = ../secrets/github-runner-token.age;
+
+  # TODO: Run this with 'runner' user? If yes, then we need to fix permissions
+  # on the /data paths and/or make the containers rootless (run by 'runner')?
   services.github-runners.explorer = {
     enable = true;
     url = "https://github.com/cardano-scaling";
     tokenFile = "/run/agenix/github-runner-token";
     replace = true;
     extraLabels = [ "nixos" "self-hosted" "explorer" "cardano" ];
-    user = "runner";
     serviceOverrides = {
       # See: https://discourse.nixos.org/t/github-runners-cp-read-only-filesystem/36513/2
       ReadWritePaths = [
