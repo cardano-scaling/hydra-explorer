@@ -87,7 +87,9 @@ test-suite tests
     , hspec-wai
     , http-client
     , http-conduit
+    , hydra-cluster
     , hydra-explorer
+    , hydra-node
     , hydra-prelude
     , hydra-test-utils
     , lens

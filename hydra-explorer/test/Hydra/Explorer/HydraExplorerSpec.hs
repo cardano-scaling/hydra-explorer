@@ -7,18 +7,17 @@ module Hydra.Explorer.HydraExplorerSpec where
 import Hydra.Prelude hiding (get)
 import Test.Hydra.Prelude
 
+-- XXX: Depends on hydra-node for this
+import Hydra.Logging (showLogsOnFailure)
+
 import CardanoClient (RunningNode (..), queryTip)
 import CardanoNode (NodeLog, withCardanoNodeDevnet)
 import Control.Lens ((^.), (^?))
 import Data.Aeson as Aeson
 import Data.Aeson.Lens (key, nth, _Array, _Number, _String)
-import Hydra.Cardano.Api (ChainPoint (..))
 import Hydra.Cluster.Faucet (FaucetLog, publishHydraScriptsAs, seedFromFaucet_)
 import Hydra.Cluster.Fixture (Actor (..), aliceSk, bobSk, cperiod)
 import Hydra.Cluster.Util (chainConfigFor, keysFor)
-import Hydra.Explorer.Options (toArgStartChainFrom)
-import Hydra.Logging (showLogsOnFailure)
-import Hydra.Options qualified as Options
 import HydraNode (HydraNodeLog, input, send, waitMatch, withHydraNode)
 import Network.HTTP.Client (responseBody)
 import Network.HTTP.Simple (httpJSON, parseRequestThrow)
@@ -50,7 +49,7 @@ spec = do
             seedFromFaucet_ cardanoNode bobCardanoVk 25_000_000 (contramap FromFaucet tracer)
             bobHeadId <- withHydraNode hydraTracer bobChainConfig tmpDir 2 bobSk [] [2] initHead
 
-            withHydraExplorer cardanoNode (Just ChainPointAtGenesis) $ \explorer -> do
+            withHydraExplorer $ \explorer -> do
               allHeads <- getHeads explorer
               length (allHeads ^. _Array) `shouldBe` 2
               allHeads ^. nth 0 . key "headId" . _String `shouldBe` aliceHeadId
@@ -65,7 +64,7 @@ spec = do
           withCardanoNodeDevnet (contramap FromCardanoNode tracer) tmpDir $ \cardanoNode@RunningNode{nodeSocket} -> do
             let hydraTracer = contramap FromHydraNode tracer
             hydraScriptsTxId <- publishHydraScriptsAs cardanoNode Faucet
-            withHydraExplorer cardanoNode Nothing $ \explorer -> do
+            withHydraExplorer $ \explorer -> do
               (aliceCardanoVk, _aliceCardanoSk) <- keysFor Alice
               aliceChainConfig <- chainConfigFor Alice tmpDir nodeSocket hydraScriptsTxId [] cperiod
               seedFromFaucet_ cardanoNode aliceCardanoVk 25_000_000 (contramap FromFaucet tracer)
@@ -105,8 +104,8 @@ spec = do
     failAfter 60 $
       showLogsOnFailure "HydraExplorerSpec" $ \tracer -> do
         withTempDir "hydra-explorer-get-tick" $ \tmpDir -> do
-          withCardanoNodeDevnet (contramap FromCardanoNode tracer) tmpDir $ \cardanoNode@RunningNode{nodeSocket, networkId} -> do
-            withHydraExplorer cardanoNode Nothing $ \explorer -> do
+          withCardanoNodeDevnet (contramap FromCardanoNode tracer) tmpDir $ \RunningNode{nodeSocket, networkId} -> do
+            withHydraExplorer $ \explorer -> do
               tip <- toJSON <$> queryTip networkId nodeSocket
               tick <- getTick explorer
 
@@ -130,30 +129,19 @@ data HydraExplorerLog
   deriving (Eq, Show, Generic)
   deriving anyclass (ToJSON)
 
--- | Starts a 'hydra-explorer' on some Cardano network.
-withHydraExplorer :: RunningNode -> Maybe ChainPoint -> (HydraExplorerHandle -> IO ()) -> IO ()
-withHydraExplorer cardanoNode mStartChainFrom action =
+-- | Starts a 'hydra-explorer'.
+withHydraExplorer :: (HydraExplorerHandle -> IO ()) -> IO ()
+withHydraExplorer action =
   withCreateProcess process{std_out = CreatePipe, std_err = CreatePipe} $
     \_in _stdOut err processHandle ->
-      race
-        (checkProcessHasNotDied "hydra-explorer" processHandle err)
-        ( -- XXX: wait for the http server to be listening on port
-          threadDelay 3
-            *> action HydraExplorerHandle{getHeads, getTick}
-        )
-        <&> either absurd id
+      race_ (checkProcessHasNotDied "hydra-explorer" processHandle err) $ do
+        -- XXX: wait for the http server to be listening on port
+        threadDelay 3
+        action HydraExplorerHandle{getHeads, getTick}
  where
   getHeads = responseBody <$> (parseRequestThrow "http://127.0.0.1:9090/heads" >>= httpJSON)
 
   getTick = responseBody <$> (parseRequestThrow "http://127.0.0.1:9090/tick" >>= httpJSON)
 
   process =
-    proc
-      "hydra-explorer"
-        $ ["direct"]
-        <> Options.toArgNodeSocket nodeSocket
-        <> Options.toArgNetworkId networkId
-        <> Options.toArgApiPort 9090
-        <> toArgStartChainFrom mStartChainFrom
-
-  RunningNode{nodeSocket, networkId} = cardanoNode
+    proc "hydra-explorer" ["--client-port", "9090"]

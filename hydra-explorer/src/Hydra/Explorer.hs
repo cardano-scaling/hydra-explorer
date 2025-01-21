@@ -32,6 +32,10 @@ server staticPath getExplorerState =
     :<|> handleGetTick getExplorerState
     :<|> serveDirectoryFileServer staticPath
 
+serverApplication :: FilePath -> GetExplorerState -> Application
+serverApplication staticPath getExplorerState =
+  serve (Proxy @API) $ server staticPath getExplorerState
+
 handleGetHeads ::
   GetExplorerState ->
   Handler [HeadState]
@@ -62,19 +66,14 @@ createExplorerState = do
 
 -- XXX: Depends on hydra-node for logging stuff, could replace with different
 -- (structured) logging tools
-
-httpApp :: Tracer IO APIServerLog -> FilePath -> GetExplorerState -> Application
-httpApp tracer staticPath getExplorerState =
-  logMiddleware tracer
-    . simpleCors
-    . serve (Proxy @API)
-    $ server staticPath getExplorerState
-
 run :: Options -> IO ()
 run opts = do
   withTracer (Verbose "hydra-explorer") $ \tracer -> do
     (getExplorerState, _modifyExplorerState) <- createExplorerState
-    Warp.runSettings (settings tracer) (httpApp tracer staticFilePath getExplorerState)
+    Warp.runSettings (settings tracer)
+      . logMiddleware tracer
+      . simpleCors
+      $ serverApplication staticFilePath getExplorerState
  where
   Options{staticFilePath, clientPort} = opts
 

@@ -1,5 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+-- | Tests that the hydra-explorer client API endpoints correspond to the
+-- advertised openapi specification.
 module Hydra.ExplorerSpec where
 
 import Hydra.Prelude hiding (get)
@@ -22,8 +24,7 @@ import Data.OpenApi (
   _Inline,
  )
 import Data.Yaml qualified as Yaml
-import Hydra.Explorer (httpApp)
-import Hydra.Logging (nullTracer)
+import Hydra.Explorer (serverApplication)
 import System.FilePath ((</>))
 import Test.Hspec.Wai (MatchBody (..), ResponseMatcher (ResponseMatcher), shouldRespondWith, (<:>))
 import Test.Hspec.Wai qualified as Wai
@@ -78,7 +79,7 @@ apiServerSpec = do
               Wai.get "tick"
                 `shouldRespondWith` matchingJSONSchema componentSchemas tickSchema
  where
-  webServer = httpApp nullTracer "static" getRandomExplorerState
+  webServer = serverApplication "static" getRandomExplorerState
 
   getRandomExplorerState = generate arbitrary
 
