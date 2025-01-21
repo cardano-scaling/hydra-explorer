@@ -25,6 +25,10 @@ import System.Process (CreateProcess (..), StdStream (..), proc, withCreateProce
 
 spec :: Spec
 spec = do
+  -- TODO: simplify scenarios! We are only interested in the end-to-end
+  -- integration and not whether the hydra-chain-observer really works (that is
+  -- to be covered in the main hydra repo)
+
   it "can observe hydra transactions created by multiple hydra-nodes" $
     failAfter 60 $
       showLogsOnFailure "HydraExplorerSpec" $ \tracer -> do
@@ -117,27 +121,22 @@ spec = do
                   tickBlockHash = tick ^? key "point" . key "blockHash" . _String
               tipBlockHash `shouldBe` tickBlockHash
 
-data HydraExplorerHandle = HydraExplorerHandle
+-- * Running hydra-explorer
+
+data HydraExplorerClient = HydraExplorerClient
   { getHeads :: IO Value
   , getTick :: IO Value
   }
 
-data HydraExplorerLog
-  = FromCardanoNode NodeLog
-  | FromHydraNode HydraNodeLog
-  | FromFaucet FaucetLog
-  deriving (Eq, Show, Generic)
-  deriving anyclass (ToJSON)
-
 -- | Starts a 'hydra-explorer'.
-withHydraExplorer :: (HydraExplorerHandle -> IO ()) -> IO ()
+withHydraExplorer :: (HydraExplorerClient -> IO ()) -> IO ()
 withHydraExplorer action =
   withCreateProcess process{std_out = CreatePipe, std_err = CreatePipe} $
     \_in _stdOut err processHandle ->
       race_ (checkProcessHasNotDied "hydra-explorer" processHandle err) $ do
         -- XXX: wait for the http server to be listening on port
         threadDelay 3
-        action HydraExplorerHandle{getHeads, getTick}
+        action HydraExplorerClient{getHeads, getTick}
  where
   getHeads = responseBody <$> (parseRequestThrow "http://127.0.0.1:9090/heads" >>= httpJSON)
 
@@ -145,3 +144,12 @@ withHydraExplorer action =
 
   process =
     proc "hydra-explorer" ["--client-port", "9090"]
+
+-- * Logging
+
+data IntegrationTestLog
+  = FromCardanoNode NodeLog
+  | FromHydraNode HydraNodeLog
+  | FromFaucet FaucetLog
+  deriving (Eq, Show, Generic)
+  deriving anyclass (ToJSON)

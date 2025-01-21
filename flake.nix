@@ -10,7 +10,7 @@
     };
 
     cardano-node.url = "github:IntersectMBO/cardano-node/9.2.0";
-    hydra-node.url = "github:cardano-scaling/hydra/d55c4efb896273dc39d4bdc4fc83ec361de55f73";
+    hydra-node.url = "github:cardano-scaling/hydra/3f255770ad1d8e7dc4d55dd2587f187fd943d0d2";
 
     hackage = {
       url = "github:input-output-hk/hackage.nix";
@@ -56,6 +56,7 @@
         (final: prev: {
           cardano-node = inputs.cardano-node.packages.${final.system}.cardano-node;
           cardano-cli = inputs.cardano-node.packages.${final.system}.cardano-cli;
+          hydra-chain-observer = inputs.hydra-node.packages.${final.system}.hydra-chain-observer;
           hydra-node = inputs.hydra-node.packages.${final.system}.hydra-node;
         })
       ];

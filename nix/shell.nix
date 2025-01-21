@@ -7,5 +7,10 @@ cabalProject:
 
 {
   name = "nix-shell";
-  packages = [ ];
+  packages = [
+    pkgs.cardano-cli
+    pkgs.cardano-node
+    pkgs.hydra-chain-observer
+    pkgs.hydra-node
+  ];
 }
