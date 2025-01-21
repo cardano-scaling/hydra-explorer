@@ -1,7 +1,15 @@
 openapi: 3.0.0
 info:
-  title: Head Explorer API
+  title: Head Explorer Client API
   version: 1.0.0
+  description: |-
+    API to be used by clients to query information from a hydra-explorer instance.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+externalDocs:
+  description: More information about the Hydra protocol
+  url: http://hydra.family
 paths:
   /tick:
     get:
@@ -34,6 +42,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/HeadState'
 
+# TODO: re-use these across hydra-explorer (and hydra)
 components:
   schemas:
     OnChainId:

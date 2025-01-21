@@ -4,15 +4,16 @@ import Hydra.Prelude
 
 import Data.Aeson (Value (..))
 import Hydra.Cardano.Api (BlockNo, ChainPoint (..), TxIn, UTxO)
-import Hydra.Chain (OnChainTx (..))
-import Hydra.Chain.Direct.Tx (headSeedToTxIn)
-import Hydra.ChainObserver.NodeClient (ChainObservation (..))
 import Hydra.Tx.ContestationPeriod (ContestationPeriod, toNominalDiffTime)
-import Hydra.Tx.HeadId (HeadId (..), HeadSeed)
+import Hydra.Tx.HeadId (HeadId (..), HeadSeed, headSeedToTxIn)
 import Hydra.Tx.HeadParameters (HeadParameters (..))
 import Hydra.Tx.OnChainId (OnChainId)
 import Hydra.Tx.Party (Party)
 import Hydra.Tx.Snapshot (SnapshotNumber (..))
+
+-- XXX: This is the only dependency onto hydra-node. Should factor this into a
+-- hydra-chain package with smaller dependency footprint.
+import Hydra.Chain (OnChainTx (..))
 
 data HeadMember = HeadMember
   { party :: Party

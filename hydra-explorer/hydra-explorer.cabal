@@ -43,6 +43,8 @@ library
   build-depends:
     , aeson
     , base
+    , hydra-cardano-api
+    , hydra-node
     , hydra-prelude
     , hydra-tx
     , io-classes
@@ -57,6 +59,7 @@ library
   exposed-modules:
     Hydra.Explorer
     Hydra.Explorer.ExplorerState
+    Hydra.Explorer.Observer.Api
     Hydra.Explorer.Options
 
 executable hydra-explorer

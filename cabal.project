@@ -30,3 +30,5 @@ source-repository-package
     hydra-plutus-extras
     hydra-plutus
     hydra-tx
+    -- XXX: Only needed for OnChainTx type
+    hydra-node
