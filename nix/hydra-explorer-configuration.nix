@@ -51,6 +51,10 @@
     };
   };
 
+  # Use podman to manage containers
+  virtualisation.podman.enable = true;
+  virtualisation.podman.dockerCompat = true;
+
   # Cardano node used by Hydra smoke tests and explorer instance
   # TODO: initialize /data/cardano/preview correctly on a fresh machine
   virtualisation.oci-containers.containers.cardano-node-preview = {
