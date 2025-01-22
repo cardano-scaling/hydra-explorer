@@ -30,13 +30,16 @@ paths:
         - in: path
           name: network
           schema:
-            type: string
-            enum:
-              - mainnet
-              - preprod
-              - preview
+            oneof:
+              - title: Mainnet
+                type: string
+                enum: ["mainnet"]
+              - title: Testnet
+                type: number
           required: true
-          description: Cardano network on which the observation was made
+          description: |
+            Cardano network id on which the observation was made. This is either
+            "mainnet" or a testnet magic number.
         - in: path
           name: version
           schema:
