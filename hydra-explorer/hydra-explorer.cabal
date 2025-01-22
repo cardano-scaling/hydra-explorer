@@ -88,6 +88,7 @@ test-suite tests
     , hspec-wai
     , http-client
     , http-conduit
+    , hydra-cardano-api
     , hydra-cluster
     , hydra-explorer
     , hydra-node
@@ -96,8 +97,8 @@ test-suite tests
     , lens
     , lens-aeson
     , openapi3
-    , process
     , QuickCheck
+    , typed-process
     , yaml
 
   other-modules:

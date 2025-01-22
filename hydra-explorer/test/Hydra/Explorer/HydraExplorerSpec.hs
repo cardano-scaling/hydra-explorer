@@ -15,6 +15,7 @@ import CardanoNode (NodeLog, withCardanoNodeDevnet)
 import Control.Lens ((^.), (^?))
 import Data.Aeson as Aeson
 import Data.Aeson.Lens (key, nth, _Array, _Number, _String)
+import Hydra.Cardano.Api (NetworkId (..), NetworkMagic (..), unFile)
 import Hydra.Cluster.Faucet (FaucetLog, publishHydraScriptsAs, seedFromFaucet_)
 import Hydra.Cluster.Fixture (Actor (..), aliceSk, bobSk, cperiod)
 import Hydra.Cluster.Scenarios (EndToEndLog, singlePartyHeadFullLifeCycle)
@@ -22,7 +23,7 @@ import Hydra.Cluster.Util (chainConfigFor, keysFor)
 import HydraNode (HydraNodeLog, input, send, waitMatch, withHydraNode)
 import Network.HTTP.Client (responseBody)
 import Network.HTTP.Simple (httpJSON, parseRequestThrow)
-import System.Process (CreateProcess (..), StdStream (..), proc, withCreateProcess)
+import System.Process.Typed (Process, ProcessConfig, createPipe, getStderr, proc, setStderr, unsafeProcessHandle, withProcessWait_)
 
 spec :: Spec
 spec = do
@@ -35,12 +36,13 @@ spec = do
         withTempDir "hydra-explorer-history" $ \tmpDir -> do
           withCardanoNodeDevnet (contramap FromCardanoNode tracer) tmpDir $ \node -> do
             hydraScriptsTxId <- publishHydraScriptsAs node Faucet
-            withHydraExplorer $ \explorer -> do
-              -- Open and close a head
-              singlePartyHeadFullLifeCycle (contramap FromScenario tracer) tmpDir node hydraScriptsTxId
-              -- Query client api
-              allHeads <- getHeads explorer
-              length (allHeads ^. _Array) `shouldBe` 1
+            withChainObserver node $ do
+              withHydraExplorer $ \explorer -> do
+                -- Open and close a head
+                singlePartyHeadFullLifeCycle (contramap FromScenario tracer) tmpDir node hydraScriptsTxId
+                -- Query client api
+                allHeads <- getHeads explorer
+                length (allHeads ^. _Array) `shouldBe` 1
 
   -- TODO: simplify scenarios! We are only interested in the end-to-end
   -- integration and not whether the hydra-chain-observer really works (that is
@@ -147,12 +149,10 @@ data HydraExplorerClient = HydraExplorerClient
 -- | Starts a 'hydra-explorer'.
 withHydraExplorer :: (HydraExplorerClient -> IO ()) -> IO ()
 withHydraExplorer action =
-  withCreateProcess process{std_out = CreatePipe, std_err = CreatePipe} $
-    \_in _stdOut err processHandle ->
-      race_ (checkProcessHasNotDied "hydra-explorer" processHandle err) $ do
-        -- XXX: wait for the http server to be listening on port
-        threadDelay 3
-        action HydraExplorerClient{getHeads, getTick}
+  withProcessExpect process $ \_p -> do
+    -- XXX: wait for the http server to be listening on port
+    threadDelay 3
+    action HydraExplorerClient{getHeads, getTick}
  where
   getHeads = responseBody <$> (parseRequestThrow "http://127.0.0.1:9090/heads" >>= httpJSON)
 
@@ -170,3 +170,38 @@ data IntegrationTestLog
   | FromScenario EndToEndLog
   deriving (Eq, Show, Generic)
   deriving anyclass (ToJSON)
+
+-- * Chain observer glue
+
+-- TODO: DRY with hydra-chain-observer integration tests in hydra-cluster?
+
+-- | Starts a 'hydra-chain-observer' on some Cardano network and have it connect to given 'hydra-explorer' port.
+withChainObserver :: RunningNode -> IO () -> IO ()
+withChainObserver cardanoNode action =
+  withProcessExpect process $ const action
+ where
+  process =
+    proc
+      "hydra-chain-observer"
+      $ ["--node-socket", unFile nodeSocket]
+        <> case networkId of
+          Mainnet -> ["--mainnet"]
+          Testnet (NetworkMagic magic) -> ["--testnet-magic", show magic]
+        -- TODO: configurable port number
+        <> ["--explorer", "http://localhost:8080"]
+
+  RunningNode{nodeSocket, networkId} = cardanoNode
+
+-- * Helpers
+
+-- | Starts a process like 'withProcessWait_', but captures stderr and does
+-- 'checkProcessHasNotDied'.
+withProcessExpect ::
+  ProcessConfig stdin stdout stderr ->
+  (Process stdin stdout Handle -> IO ()) ->
+  IO ()
+withProcessExpect pc action =
+  withProcessWait_ (setStderr createPipe pc) $ \p ->
+    race_ (check p) (action p)
+ where
+  check p = checkProcessHasNotDied (show pc) (unsafeProcessHandle p) (Just $ getStderr p)
