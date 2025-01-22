@@ -23,7 +23,7 @@ import Hydra.Cluster.Util (chainConfigFor, keysFor)
 import HydraNode (HydraNodeLog, input, send, waitMatch, withHydraNode)
 import Network.HTTP.Simple (getResponseBody, httpJSON, parseRequestThrow)
 import Network.Socket (PortNumber)
-import System.Process.Typed (Process, ProcessConfig, createPipe, getStderr, proc, setStderr, unsafeProcessHandle, withProcessWait_)
+import System.Process.Typed (Process, ProcessConfig, createPipe, getStderr, proc, setStderr, unsafeProcessHandle, withProcessTerm)
 import Test.Network.Ports (withFreePort)
 
 spec :: Spec
@@ -206,14 +206,16 @@ withChainObserver cardanoNode HydraExplorerClient{observerPort} action =
 
 -- * Helpers
 
--- | Starts a process like 'withProcessWait_', but captures stderr and does
+-- | Starts a process like 'withProcessTerm', but captures stderr and does
 -- 'checkProcessHasNotDied'.
 withProcessExpect ::
   ProcessConfig stdin stdout stderr ->
   (Process stdin stdout Handle -> IO ()) ->
   IO ()
 withProcessExpect pc action =
-  withProcessWait_ (setStderr createPipe pc) $ \p ->
+  -- NOTE: Not using withProcessTerm_ as we want the sub-process to exit upon
+  -- completion of acion, but not fail in that case.
+  withProcessTerm (setStderr createPipe pc) $ \p ->
     race_ (check p) (action p)
  where
   check p = checkProcessHasNotDied (show pc) (unsafeProcessHandle p) (Just $ getStderr p)

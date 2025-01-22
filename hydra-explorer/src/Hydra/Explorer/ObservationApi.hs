@@ -15,7 +15,7 @@ data Observation = Observation
   deriving stock (Eq, Show, Generic)
   deriving anyclass (FromJSON)
 
--- | New type wrapper for defining API instances.
+-- | New type wrapper for defining API instances over a 'NetworkId'.
 newtype NetworkParam = NetworkParam NetworkId
 
 instance FromHttpApiData NetworkParam where

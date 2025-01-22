@@ -410,71 +410,71 @@ replaceHeadState newHeadState@HeadState{headId = newHeadStateId} currentHeads =
 
 aggregateObservations :: [Observation] -> ExplorerState -> ExplorerState
 aggregateObservations observations explorerState =
-  foldl' aggregateOnChainTx explorerState observations
- where
-  aggregateOnChainTx :: ExplorerState -> Observation -> ExplorerState
-  aggregateOnChainTx ExplorerState{heads} Observation{point, blockNo, observedTx} =
-    case observedTx of
-      Nothing ->
-        ExplorerState
-          { heads
-          , tick = TickState point blockNo
-          }
-      Just OnInitTx{headId, headSeed, headParameters, participants} ->
-        ExplorerState
-          { heads = aggregateInitObservation headId point blockNo headSeed headParameters participants heads
-          , tick = TickState point blockNo
-          }
-      Just OnAbortTx{headId} ->
-        ExplorerState
-          { heads = aggregateAbortObservation headId point blockNo heads
-          , tick = TickState point blockNo
-          }
-      Just OnCommitTx{headId, party, committed} ->
-        ExplorerState
-          { heads = aggregateCommitObservation headId point blockNo party committed heads
-          , tick = TickState point blockNo
-          }
-      Just OnCollectComTx{headId} ->
-        ExplorerState
-          { heads = aggregateCollectComObservation headId point blockNo heads
-          , tick = TickState point blockNo
-          }
-      Just OnDepositTx{headId} ->
-        ExplorerState
-          { heads = aggregateDepositObservation headId point blockNo heads
-          , tick = TickState point blockNo
-          }
-      Just OnRecoverTx{headId} ->
-        ExplorerState
-          { heads = aggregateRecoverObservation headId point blockNo heads
-          , tick = TickState point blockNo
-          }
-      Just OnIncrementTx{headId} ->
-        ExplorerState
-          { heads = aggregateIncrementObservation headId point blockNo heads
-          , tick = TickState point blockNo
-          }
-      Just OnDecrementTx{headId} ->
-        ExplorerState
-          { heads = aggregateDecrementObservation headId point blockNo heads
-          , tick = TickState point blockNo
-          }
-      Just OnCloseTx{headId, snapshotNumber, contestationDeadline} ->
-        ExplorerState
-          { heads = aggregateCloseObservation headId point blockNo snapshotNumber contestationDeadline heads
-          , tick = TickState point blockNo
-          }
-      Just OnContestTx{headId, snapshotNumber} ->
-        ExplorerState
-          { heads = aggregateContestObservation headId point blockNo snapshotNumber heads
-          , tick = TickState point blockNo
-          }
-      Just OnFanoutTx{headId} ->
-        ExplorerState
-          { heads = aggregateFanoutObservation headId point blockNo heads
-          , tick = TickState point blockNo
-          }
+  foldr aggregateObservation explorerState observations
+
+aggregateObservation :: Observation -> ExplorerState -> ExplorerState
+aggregateObservation Observation{point, blockNo, observedTx} ExplorerState{heads} =
+  case observedTx of
+    Nothing ->
+      ExplorerState
+        { heads
+        , tick = TickState point blockNo
+        }
+    Just OnInitTx{headId, headSeed, headParameters, participants} ->
+      ExplorerState
+        { heads = aggregateInitObservation headId point blockNo headSeed headParameters participants heads
+        , tick = TickState point blockNo
+        }
+    Just OnAbortTx{headId} ->
+      ExplorerState
+        { heads = aggregateAbortObservation headId point blockNo heads
+        , tick = TickState point blockNo
+        }
+    Just OnCommitTx{headId, party, committed} ->
+      ExplorerState
+        { heads = aggregateCommitObservation headId point blockNo party committed heads
+        , tick = TickState point blockNo
+        }
+    Just OnCollectComTx{headId} ->
+      ExplorerState
+        { heads = aggregateCollectComObservation headId point blockNo heads
+        , tick = TickState point blockNo
+        }
+    Just OnDepositTx{headId} ->
+      ExplorerState
+        { heads = aggregateDepositObservation headId point blockNo heads
+        , tick = TickState point blockNo
+        }
+    Just OnRecoverTx{headId} ->
+      ExplorerState
+        { heads = aggregateRecoverObservation headId point blockNo heads
+        , tick = TickState point blockNo
+        }
+    Just OnIncrementTx{headId} ->
+      ExplorerState
+        { heads = aggregateIncrementObservation headId point blockNo heads
+        , tick = TickState point blockNo
+        }
+    Just OnDecrementTx{headId} ->
+      ExplorerState
+        { heads = aggregateDecrementObservation headId point blockNo heads
+        , tick = TickState point blockNo
+        }
+    Just OnCloseTx{headId, snapshotNumber, contestationDeadline} ->
+      ExplorerState
+        { heads = aggregateCloseObservation headId point blockNo snapshotNumber contestationDeadline heads
+        , tick = TickState point blockNo
+        }
+    Just OnContestTx{headId, snapshotNumber} ->
+      ExplorerState
+        { heads = aggregateContestObservation headId point blockNo snapshotNumber heads
+        , tick = TickState point blockNo
+        }
+    Just OnFanoutTx{headId} ->
+      ExplorerState
+        { heads = aggregateFanoutObservation headId point blockNo heads
+        , tick = TickState point blockNo
+        }
 
 findHeadState :: HeadId -> [HeadState] -> Maybe HeadState
 findHeadState idToFind = find (\HeadState{headId} -> headId == idToFind)

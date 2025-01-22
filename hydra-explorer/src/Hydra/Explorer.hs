@@ -6,9 +6,10 @@ import Hydra.Prelude
 import Hydra.API.APIServerLog (APIServerLog (..), Method (..), PathInfo (..))
 import Hydra.Logging (Tracer, Verbosity (..), traceWith, withTracer)
 
-import Control.Concurrent.Class.MonadSTM (modifyTVar', newTVarIO, readTVarIO)
-import Hydra.Explorer.ExplorerState (ExplorerState (..), HeadState, TickState, aggregateObservations, initialTickState)
-import Hydra.Explorer.ObservationApi (NetworkParam, Observation, ObservationApi)
+import Control.Concurrent.Class.MonadSTM (modifyTVar', newTBQueueIO, newTVarIO, readTBQueue, readTVarIO, writeTBQueue)
+import Hydra.Cardano.Api (NetworkId)
+import Hydra.Explorer.ExplorerState (ExplorerState (..), HeadState, TickState, aggregateObservation, initialTickState)
+import Hydra.Explorer.ObservationApi (NetworkParam (..), Observation, ObservationApi)
 import Hydra.Explorer.Options (Options (..))
 import Network.Wai (Middleware, Request (..))
 import Network.Wai.Handler.Warp qualified as Warp
@@ -20,17 +21,20 @@ import Servant.Server (Application, Handler, serve)
 -- * Observer-side API
 
 -- | WAI application serving the 'ObservationApi'.
-observationApi :: Application
-observationApi =
+observationApi :: PushObservation -> Application
+observationApi pushObservation =
   serve (Proxy @ObservationApi) server
  where
-  server = handlePostObservation
+  server = handlePostObservation pushObservation
 
-handlePostObservation :: NetworkParam -> Text -> Observation -> Handler ()
-handlePostObservation network version observation =
-  liftIO $ do
-    print "not implemented"
-    print observation
+handlePostObservation ::
+  PushObservation ->
+  NetworkParam ->
+  Text ->
+  Observation ->
+  Handler ()
+handlePostObservation pushObservation (NetworkParam networkId) version observation =
+  liftIO $ pushObservation (networkId, version, observation)
 
 -- * Client-side API
 
@@ -61,14 +65,13 @@ handleGetTick ::
 handleGetTick getExplorerState = do
   liftIO getExplorerState <&> \ExplorerState{tick} -> tick
 
-observerHandler :: ModifyExplorerState -> [Observation] -> IO ()
-observerHandler modifyExplorerState observations = do
-  modifyExplorerState $ aggregateObservations observations
+-- * Agreggator
 
 type GetExplorerState = IO ExplorerState
 
 type ModifyExplorerState = (ExplorerState -> ExplorerState) -> IO ()
 
+-- | In-memory 'ExplorerState' that can be queried or modified.
 createExplorerState :: IO (GetExplorerState, ModifyExplorerState)
 createExplorerState = do
   v <- newTVarIO (ExplorerState [] initialTickState)
@@ -76,6 +79,30 @@ createExplorerState = do
  where
   getExplorerState = readTVarIO
   modifyExplorerState v = atomically . modifyTVar' v
+
+type PushObservation = (NetworkId, Text, Observation) -> IO ()
+
+type PopObservation = IO (NetworkId, Text, Observation)
+
+-- | Bounded queue to process observations.
+createObservationQueue :: IO (PushObservation, PopObservation)
+createObservationQueue = do
+  q <- newTBQueueIO 10
+  pure (pushObservation q, popObservation q)
+ where
+  pushObservation q = atomically . writeTBQueue q
+
+  popObservation = atomically . readTBQueue
+
+-- | Worker that continously pops observations and updates the in-memory
+-- 'ExplorerState'.
+aggregator :: PopObservation -> ModifyExplorerState -> IO ()
+aggregator popObservation modifyExplorerState =
+  forever $ do
+    -- TODO: IO does not compose as well as STM
+    -- TODO: use network and version
+    (_, _, observation) <- popObservation
+    modifyExplorerState $ aggregateObservation observation
 
 -- * Main
 
@@ -85,11 +112,11 @@ createExplorerState = do
 run :: Options -> IO ()
 run opts = do
   withTracer (Verbose "hydra-explorer") $ \tracer -> do
-    -- FIXME: create channels to tie things together
-    (getExplorerState, _modifyExplorerState) <- createExplorerState
-    race_
-      (observationServer tracer observationApi)
-      (clientServer tracer $ clientApi staticFilePath getExplorerState)
+    (pushObservation, popObservation) <- createObservationQueue
+    (getExplorerState, modifyExplorerState) <- createExplorerState
+    race_ (observationServer tracer $ observationApi pushObservation) $
+      race_ (clientServer tracer $ clientApi staticFilePath getExplorerState) $
+        aggregator popObservation modifyExplorerState
  where
   Options{staticFilePath, clientPort, observerPort} = opts
 
