@@ -24,7 +24,7 @@ import Data.OpenApi (
   _Inline,
  )
 import Data.Yaml qualified as Yaml
-import Hydra.Explorer (serverApplication)
+import Hydra.Explorer (clientApi)
 import System.FilePath ((</>))
 import Test.Hspec.Wai (MatchBody (..), ResponseMatcher (ResponseMatcher), shouldRespondWith, (<:>))
 import Test.Hspec.Wai qualified as Wai
@@ -79,7 +79,7 @@ apiServerSpec = do
               Wai.get "tick"
                 `shouldRespondWith` matchingJSONSchema componentSchemas tickSchema
  where
-  webServer = serverApplication "static" getRandomExplorerState
+  webServer = clientApi "static" getRandomExplorerState
 
   getRandomExplorerState = generate arbitrary
 

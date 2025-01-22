@@ -8,44 +8,46 @@ import Hydra.Logging (Tracer, Verbosity (..), traceWith, withTracer)
 
 import Control.Concurrent.Class.MonadSTM (modifyTVar', newTVarIO, readTVarIO)
 import Hydra.Explorer.ExplorerState (ExplorerState (..), HeadState, TickState, aggregateObservations, initialTickState)
-import Hydra.Explorer.ObservationApi (Observation, ObservationApi)
+import Hydra.Explorer.ObservationApi (NetworkParam, Observation, ObservationApi)
 import Hydra.Explorer.Options (Options (..))
 import Network.Wai (Middleware, Request (..))
 import Network.Wai.Handler.Warp qualified as Warp
 import Network.Wai.Middleware.Cors (simpleCors)
 import Servant (serveDirectoryFileServer)
 import Servant.API (Get, JSON, Raw, (:<|>) (..), (:>))
-import Servant.Server (Application, Handler, Server, serve)
+import Servant.Server (Application, Handler, serve)
 
 -- * Observer-side API
 
-observationApplication :: Application
-observationApplication =
-  serve (Proxy @ObservationApi) observationServer
+-- | WAI application serving the 'ObservationApi'.
+observationApi :: Application
+observationApi =
+  serve (Proxy @ObservationApi) server
+ where
+  server = handlePostObservation
 
-observationServer :: Server ObservationApi
-observationServer = undefined
+handlePostObservation :: NetworkParam -> Text -> Observation -> Handler ()
+handlePostObservation network version observation =
+  liftIO $ do
+    print "not implemented"
+    print observation
 
 -- * Client-side API
 
-type API :: Type
-type API =
+type ClientApi =
   "heads" :> Get '[JSON] [HeadState]
     :<|> "tick" :> Get '[JSON] TickState
     :<|> Raw
 
-server ::
-  FilePath ->
-  GetExplorerState ->
-  Server API
-server staticPath getExplorerState =
-  handleGetHeads getExplorerState
-    :<|> handleGetTick getExplorerState
-    :<|> serveDirectoryFileServer staticPath
-
-serverApplication :: FilePath -> GetExplorerState -> Application
-serverApplication staticPath getExplorerState =
-  serve (Proxy @API) $ server staticPath getExplorerState
+-- | WAI application serving the 'ClientApi'.
+clientApi :: FilePath -> GetExplorerState -> Application
+clientApi staticPath getExplorerState =
+  serve (Proxy @ClientApi) server
+ where
+  server =
+    handleGetHeads getExplorerState
+      :<|> handleGetTick getExplorerState
+      :<|> serveDirectoryFileServer staticPath
 
 handleGetHeads ::
   GetExplorerState ->
@@ -79,23 +81,40 @@ createExplorerState = do
 
 -- XXX: Depends on hydra-node for logging stuff, could replace with different
 -- (structured) logging tools
+-- TODO: distinguish servers when logging
 run :: Options -> IO ()
 run opts = do
   withTracer (Verbose "hydra-explorer") $ \tracer -> do
+    -- FIXME: create channels to tie things together
     (getExplorerState, _modifyExplorerState) <- createExplorerState
-    Warp.runSettings (settings tracer)
+    race_
+      (observationServer tracer observationApi)
+      (clientServer tracer $ clientApi staticFilePath getExplorerState)
+ where
+  Options{staticFilePath, clientPort, observerPort} = opts
+
+  clientServer tracer app = do
+    let settings =
+          Warp.defaultSettings
+            & Warp.setPort (fromIntegral clientPort)
+            & Warp.setHost "0.0.0.0"
+            & Warp.setBeforeMainLoop (traceWith tracer $ APIServerStarted clientPort)
+            & Warp.setOnException (\_ e -> traceWith tracer $ APIConnectionError{reason = show e})
+    Warp.runSettings settings
       . logMiddleware tracer
       . simpleCors
-      $ serverApplication staticFilePath getExplorerState
- where
-  Options{staticFilePath, clientPort} = opts
+      $ app
 
-  settings tracer =
-    Warp.defaultSettings
-      & Warp.setPort (fromIntegral clientPort)
-      & Warp.setHost "0.0.0.0"
-      & Warp.setBeforeMainLoop (traceWith tracer $ APIServerStarted clientPort)
-      & Warp.setOnException (\_ e -> traceWith tracer $ APIConnectionError{reason = show e})
+  observationServer tracer app = do
+    let settings =
+          Warp.defaultSettings
+            & Warp.setPort (fromIntegral observerPort)
+            & Warp.setHost "0.0.0.0"
+            & Warp.setBeforeMainLoop (traceWith tracer $ APIServerStarted observerPort)
+            & Warp.setOnException (\_ e -> traceWith tracer $ APIConnectionError{reason = show e})
+    Warp.runSettings settings
+      . logMiddleware tracer
+      $ app
 
 -- * Logging
 
