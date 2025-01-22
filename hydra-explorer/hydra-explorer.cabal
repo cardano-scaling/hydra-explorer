@@ -86,7 +86,6 @@ test-suite tests
     , filepath
     , hspec
     , hspec-wai
-    , http-client
     , http-conduit
     , hydra-cardano-api
     , hydra-cluster
@@ -96,6 +95,7 @@ test-suite tests
     , hydra-test-utils
     , lens
     , lens-aeson
+    , network
     , openapi3
     , QuickCheck
     , typed-process

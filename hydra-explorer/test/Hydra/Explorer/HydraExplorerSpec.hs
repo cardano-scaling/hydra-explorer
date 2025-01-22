@@ -21,9 +21,10 @@ import Hydra.Cluster.Fixture (Actor (..), aliceSk, bobSk, cperiod)
 import Hydra.Cluster.Scenarios (EndToEndLog, singlePartyHeadFullLifeCycle)
 import Hydra.Cluster.Util (chainConfigFor, keysFor)
 import HydraNode (HydraNodeLog, input, send, waitMatch, withHydraNode)
-import Network.HTTP.Client (responseBody)
-import Network.HTTP.Simple (httpJSON, parseRequestThrow)
+import Network.HTTP.Simple (getResponseBody, httpJSON, parseRequestThrow)
+import Network.Socket (PortNumber)
 import System.Process.Typed (Process, ProcessConfig, createPipe, getStderr, proc, setStderr, unsafeProcessHandle, withProcessWait_)
+import Test.Network.Ports (withFreePort)
 
 spec :: Spec
 spec = do
@@ -36,8 +37,8 @@ spec = do
         withTempDir "hydra-explorer-history" $ \tmpDir -> do
           withCardanoNodeDevnet (contramap FromCardanoNode tracer) tmpDir $ \node -> do
             hydraScriptsTxId <- publishHydraScriptsAs node Faucet
-            withChainObserver node $ do
-              withHydraExplorer $ \explorer -> do
+            withHydraExplorer $ \explorer -> do
+              withChainObserver node explorer $ do
                 -- Open and close a head
                 singlePartyHeadFullLifeCycle (contramap FromScenario tracer) tmpDir node hydraScriptsTxId
                 -- Query client api
@@ -142,24 +143,36 @@ spec = do
 -- * Running hydra-explorer
 
 data HydraExplorerClient = HydraExplorerClient
-  { getHeads :: IO Value
+  { clientPort :: PortNumber
+  , observerPort :: PortNumber
+  , getHeads :: IO Value
   , getTick :: IO Value
   }
 
 -- | Starts a 'hydra-explorer'.
 withHydraExplorer :: (HydraExplorerClient -> IO ()) -> IO ()
 withHydraExplorer action =
-  withProcessExpect process $ \_p -> do
-    -- XXX: wait for the http server to be listening on port
-    threadDelay 3
-    action HydraExplorerClient{getHeads, getTick}
+  withFreePort $ \clientPort ->
+    withFreePort $ \observerPort -> do
+      let process =
+            proc "hydra-explorer" $
+              ["--client-port", show clientPort]
+                <> ["--observer-port", show observerPort]
+      withProcessExpect process $ \_p -> do
+        -- XXX: wait for the http server to be listening on port
+        threadDelay 3
+        action
+          HydraExplorerClient
+            { clientPort
+            , observerPort
+            , getHeads = getJSON clientPort "/heads"
+            , getTick = getJSON clientPort "/tick"
+            }
  where
-  getHeads = responseBody <$> (parseRequestThrow "http://127.0.0.1:9090/heads" >>= httpJSON)
-
-  getTick = responseBody <$> (parseRequestThrow "http://127.0.0.1:9090/tick" >>= httpJSON)
-
-  process =
-    proc "hydra-explorer" ["--client-port", "9090"]
+  getJSON port path =
+    parseRequestThrow ("http://127.0.0.1:" <> show port <> path)
+      >>= httpJSON
+      <&> getResponseBody
 
 -- * Logging
 
@@ -176,8 +189,8 @@ data IntegrationTestLog
 -- TODO: DRY with hydra-chain-observer integration tests in hydra-cluster?
 
 -- | Starts a 'hydra-chain-observer' on some Cardano network and have it connect to given 'hydra-explorer' port.
-withChainObserver :: RunningNode -> IO () -> IO ()
-withChainObserver cardanoNode action =
+withChainObserver :: RunningNode -> HydraExplorerClient -> IO () -> IO ()
+withChainObserver cardanoNode HydraExplorerClient{observerPort} action =
   withProcessExpect process $ const action
  where
   process =
@@ -187,8 +200,7 @@ withChainObserver cardanoNode action =
         <> case networkId of
           Mainnet -> ["--mainnet"]
           Testnet (NetworkMagic magic) -> ["--testnet-magic", show magic]
-        -- TODO: configurable port number
-        <> ["--explorer", "http://localhost:8080"]
+        <> ["--explorer", "http://127.0.0.1:" <> show observerPort]
 
   RunningNode{nodeSocket, networkId} = cardanoNode
 
