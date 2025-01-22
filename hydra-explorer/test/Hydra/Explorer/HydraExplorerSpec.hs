@@ -17,6 +17,7 @@ import Data.Aeson as Aeson
 import Data.Aeson.Lens (key, nth, _Array, _Number, _String)
 import Hydra.Cluster.Faucet (FaucetLog, publishHydraScriptsAs, seedFromFaucet_)
 import Hydra.Cluster.Fixture (Actor (..), aliceSk, bobSk, cperiod)
+import Hydra.Cluster.Scenarios (EndToEndLog, singlePartyHeadFullLifeCycle)
 import Hydra.Cluster.Util (chainConfigFor, keysFor)
 import HydraNode (HydraNodeLog, input, send, waitMatch, withHydraNode)
 import Network.HTTP.Client (responseBody)
@@ -25,10 +26,25 @@ import System.Process (CreateProcess (..), StdStream (..), proc, withCreateProce
 
 spec :: Spec
 spec = do
+  -- Simple end-to-end scenario with a cardano devnet and head opened/closed by
+  -- a hydra-node, which a hydra-chain-observer reports into a single
+  -- hydra-explorer.
+  it "aggregates observations" $
+    failAfter 60 $
+      showLogsOnFailure "HydraExplorerSpec" $ \tracer -> do
+        withTempDir "hydra-explorer-history" $ \tmpDir -> do
+          withCardanoNodeDevnet (contramap FromCardanoNode tracer) tmpDir $ \node -> do
+            hydraScriptsTxId <- publishHydraScriptsAs node Faucet
+            withHydraExplorer $ \explorer -> do
+              -- Open and close a head
+              singlePartyHeadFullLifeCycle (contramap FromScenario tracer) tmpDir node hydraScriptsTxId
+              -- Query client api
+              allHeads <- getHeads explorer
+              length (allHeads ^. _Array) `shouldBe` 1
+
   -- TODO: simplify scenarios! We are only interested in the end-to-end
   -- integration and not whether the hydra-chain-observer really works (that is
   -- to be covered in the main hydra repo)
-
   it "can observe hydra transactions created by multiple hydra-nodes" $
     failAfter 60 $
       showLogsOnFailure "HydraExplorerSpec" $ \tracer -> do
@@ -151,5 +167,6 @@ data IntegrationTestLog
   = FromCardanoNode NodeLog
   | FromHydraNode HydraNodeLog
   | FromFaucet FaucetLog
+  | FromScenario EndToEndLog
   deriving (Eq, Show, Generic)
   deriving anyclass (ToJSON)
