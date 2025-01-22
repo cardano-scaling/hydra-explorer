@@ -8,7 +8,7 @@ import Hydra.Logging (Tracer, Verbosity (..), traceWith, withTracer)
 
 import Control.Concurrent.Class.MonadSTM (modifyTVar', newTVarIO, readTVarIO)
 import Hydra.Explorer.ExplorerState (ExplorerState (..), HeadState, TickState, aggregateObservations, initialTickState)
-import Hydra.Explorer.Observer.Api (Observation)
+import Hydra.Explorer.ObservationApi (Observation, ObservationApi)
 import Hydra.Explorer.Options (Options (..))
 import Network.Wai (Middleware, Request (..))
 import Network.Wai.Handler.Warp qualified as Warp
@@ -16,6 +16,17 @@ import Network.Wai.Middleware.Cors (simpleCors)
 import Servant (serveDirectoryFileServer)
 import Servant.API (Get, JSON, Raw, (:<|>) (..), (:>))
 import Servant.Server (Application, Handler, Server, serve)
+
+-- * Observer-side API
+
+observationApplication :: Application
+observationApplication =
+  serve (Proxy @ObservationApi) observationServer
+
+observationServer :: Server ObservationApi
+observationServer = undefined
+
+-- * Client-side API
 
 type API :: Type
 type API =
@@ -63,6 +74,8 @@ createExplorerState = do
  where
   getExplorerState = readTVarIO
   modifyExplorerState v = atomically . modifyTVar' v
+
+-- * Main
 
 -- XXX: Depends on hydra-node for logging stuff, could replace with different
 -- (structured) logging tools

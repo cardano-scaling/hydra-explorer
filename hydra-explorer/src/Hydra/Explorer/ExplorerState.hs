@@ -11,7 +11,7 @@ import Test.Hydra.Tx.Gen (genUTxO)
 
 import Data.Aeson (Value (..))
 import Hydra.Cardano.Api (BlockNo, ChainPoint (..), TxIn, UTxO)
-import Hydra.Explorer.Observer.Api (Observation (..))
+import Hydra.Explorer.ObservationApi (Observation (..))
 import Hydra.Tx.ContestationPeriod (ContestationPeriod, toNominalDiffTime)
 import Hydra.Tx.HeadId (HeadId (..), HeadSeed, headSeedToTxIn)
 import Hydra.Tx.HeadParameters (HeadParameters (..))

@@ -10,7 +10,7 @@ import Hydra.Explorer.ExplorerState (
   aggregateObservations,
   initialTickState,
  )
-import Hydra.Explorer.Observer.Api (Observation (..))
+import Hydra.Explorer.ObservationApi (Observation (..))
 import Test.QuickCheck (forAll, listOf1, (=/=))
 
 spec :: Spec
