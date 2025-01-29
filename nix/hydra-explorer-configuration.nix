@@ -19,6 +19,10 @@
     '';
   };
 
+  environment.systemPackages = with pkgs; [
+    cachix
+  ];
+
   users.users.root = {
     initialPassword = ""; # No password
     openssh.authorizedKeys.keys = [
