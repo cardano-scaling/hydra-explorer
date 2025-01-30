@@ -73,6 +73,22 @@
     };
   };
 
+  virtualisation.oci-containers.containers.cardano-node-mainnet = {
+    image = "ghcr.io/intersectmbo/cardano-node:10.1.3";
+    volumes = [
+      "/data/cardano/mainnet:/data"
+    ];
+    cmd = [ "run" ];
+    environment = {
+      CARDANO_CONFIG = "/data/config.json";
+      CARDANO_TOPOLOGY = "/data/topology.json";
+      CARDANO_DATABASE_PATH = "/data/db";
+      CARDANO_SOCKET_PATH = "/data/node.socket"; # used by cardano-node
+      CARDANO_NODE_SOCKET_PATH = "/data/node.socket"; # used by cardano-cli
+      CARDANO_LOG_DIR = "/data/logs";
+    };
+  };
+
   virtualisation.oci-containers.containers.hydra-explorer = {
     image = "ghcr.io/cardano-scaling/hydra-explorer:0.19.0";
     volumes = [
