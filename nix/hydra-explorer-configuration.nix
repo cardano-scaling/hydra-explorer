@@ -42,6 +42,8 @@
     url = "https://github.com/cardano-scaling";
     tokenFile = "/run/agenix/github-runner-token";
     replace = true;
+    # Surprisingly required for this to be able to delete files owned by root.
+    user = "root";
     extraLabels = [ "nixos" "self-hosted" "explorer" "cardano" ];
     serviceOverrides = {
       # See: https://discourse.nixos.org/t/github-runners-cp-read-only-filesystem/36513/2
