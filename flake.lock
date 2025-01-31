@@ -2940,21 +2940,20 @@
           "haskellNix",
           "nixpkgs"
         ],
-        "nixpkgsLatest": "nixpkgsLatest",
         "process-compose-flake": "process-compose-flake"
       },
       "locked": {
-        "lastModified": 1737457242,
-        "narHash": "sha256-EzzFMZOoKAjeQNzC8Nqu5q+oSCldACzITMVnRhCeAsE=",
+        "lastModified": 1738337467,
+        "narHash": "sha256-5JH4p26wkTPuMj9+Eqoz4QC9yNLXpib5TINw69CurP4=",
         "owner": "cardano-scaling",
         "repo": "hydra",
-        "rev": "3f255770ad1d8e7dc4d55dd2587f187fd943d0d2",
+        "rev": "d3b3914643f8a1003ad6ed0ce50efd2e6d840b81",
         "type": "github"
       },
       "original": {
         "owner": "cardano-scaling",
         "repo": "hydra",
-        "rev": "3f255770ad1d8e7dc4d55dd2587f187fd943d0d2",
+        "rev": "d3b3914643f8a1003ad6ed0ce50efd2e6d840b81",
         "type": "github"
       }
     },
@@ -4594,22 +4593,6 @@
       "original": {
         "owner": "NixOS",
         "ref": "nixpkgs-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgsLatest": {
-      "locked": {
-        "lastModified": 1735563628,
-        "narHash": "sha256-OnSAY7XDSx7CtDoqNh8jwVwh4xNL/2HaJxGjryLWzX8=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "b134951a4c9f3c995fd7be05f3243f8ecd65d798",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixos-24.05",
         "repo": "nixpkgs",
         "type": "github"
       }

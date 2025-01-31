@@ -55,12 +55,15 @@ flowchart LR
 
   subgraph hydra-explorer 1.0.0
     explorer[hydra-explorer]
+    explorer -. GET /heads .-> hydra-explorer-web
   end
 
   observer-19-preview -. POST /v1/observations/preview/19 .-> explorer
   observer-19 -. POST /v1/observations/mainnet/19 .-> explorer
   observer-20 -. POST /v1/observations/mainnet/20 .-> explorer
 ```
+
+Clients to the explorer can then use the [Client REST API](../api/hydra-explorer-api.yaml) to query `/heads` for example.
 
 ## Build & test
 
