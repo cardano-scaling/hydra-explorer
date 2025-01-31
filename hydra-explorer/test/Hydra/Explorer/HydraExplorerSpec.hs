@@ -44,6 +44,7 @@ spec = do
                 singlePartyHeadFullLifeCycle (contramap FromScenario tracer) tmpDir node hydraScriptsTxId
                 -- Query client api
                 allHeads <- getHeads explorer
+                -- FIXME: should assert version and network here or in a different test
                 length (allHeads ^. _Array) `shouldBe` 1
 
   -- TODO: simplify scenarios! We are only interested in the end-to-end

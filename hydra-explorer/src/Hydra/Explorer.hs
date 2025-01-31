@@ -100,7 +100,7 @@ aggregator :: PopObservation -> ModifyExplorerState -> IO ()
 aggregator popObservation modifyExplorerState =
   forever $ do
     -- TODO: IO does not compose as well as STM
-    -- TODO: use network and version
+    -- FIXME: use network and version
     (_, _, observation) <- popObservation
     modifyExplorerState $ aggregateObservation observation
 
