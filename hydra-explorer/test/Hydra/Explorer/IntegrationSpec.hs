@@ -15,7 +15,7 @@ import CardanoNode (NodeLog, withCardanoNodeDevnet)
 import Control.Lens ((^.), (^?))
 import Data.Aeson as Aeson
 import Data.Aeson.Lens (key, nth, _Array, _Number, _String)
-import Hydra.Cardano.Api (NetworkId (..), NetworkMagic (..), unFile)
+import Hydra.Cardano.Api (NetworkId (..), NetworkMagic (..), toNetworkMagic, unFile)
 import Hydra.Cluster.Faucet (FaucetLog, publishHydraScriptsAs, seedFromFaucet_)
 import Hydra.Cluster.Fixture (Actor (..), aliceSk, bobSk, cperiod)
 import Hydra.Cluster.Scenarios (EndToEndLog, singlePartyHeadFullLifeCycle)
@@ -44,8 +44,11 @@ spec = do
                 singlePartyHeadFullLifeCycle (contramap FromScenario tracer) tmpDir node hydraScriptsTxId
                 -- Query client api
                 allHeads <- getHeads explorer
-                -- FIXME: should assert version and network here or in a different test
                 length (allHeads ^. _Array) `shouldBe` 1
+                allHeads ^? nth 0 . key "network" . _String `shouldBe` Just "testnet"
+                allHeads ^? nth 0 . key "networkMagic" . _String `shouldBe` Just (show . toNetworkMagic $ networkId node)
+                -- NOTE: This deliberately pins the latest version of hydra we test against.
+                allHeads ^? nth 0 . key "version" . _String `shouldBe` Just "0.19.0"
 
   -- TODO: simplify scenarios! We are only interested in the end-to-end
   -- integration and not whether the hydra-chain-observer really works (that is
