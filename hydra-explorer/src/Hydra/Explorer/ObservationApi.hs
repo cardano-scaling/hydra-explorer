@@ -25,10 +25,15 @@ instance FromHttpApiData NetworkParam where
       magic <- readMaybe $ toString t
       pure $ NetworkParam $ fromNetworkMagic $ NetworkMagic magic
 
+-- | Version of a hydra head as reported by chain observers.
+newtype HydraVersion = HydraVersion Text
+  deriving stock (Eq, Show, Generic)
+  deriving newtype (FromJSON, ToJSON, Arbitrary, FromHttpApiData)
+
 -- TODO: test correspondence with openapi
 type ObservationApi =
   "observations"
     :> Capture "network" NetworkParam
-    :> Capture "version" Text
+    :> Capture "version" HydraVersion
     :> ReqBody '[JSON] Observation
     :> Post '[JSON] ()

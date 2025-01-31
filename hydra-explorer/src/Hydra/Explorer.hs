@@ -9,7 +9,7 @@ import Hydra.Logging (Tracer, Verbosity (..), traceWith, withTracer)
 import Control.Concurrent.Class.MonadSTM (modifyTVar', newTBQueueIO, newTVarIO, readTBQueue, readTVarIO, writeTBQueue)
 import Hydra.Cardano.Api (NetworkId)
 import Hydra.Explorer.ExplorerState (ExplorerState (..), HeadState, TickState, aggregateObservation, initialTickState)
-import Hydra.Explorer.ObservationApi (NetworkParam (..), Observation, ObservationApi)
+import Hydra.Explorer.ObservationApi (HydraVersion, NetworkParam (..), Observation, ObservationApi)
 import Hydra.Explorer.Options (Options (..))
 import Network.Wai (Middleware, Request (..))
 import Network.Wai.Handler.Warp qualified as Warp
@@ -30,7 +30,7 @@ observationApi pushObservation =
 handlePostObservation ::
   PushObservation ->
   NetworkParam ->
-  Text ->
+  HydraVersion ->
   Observation ->
   Handler ()
 handlePostObservation pushObservation (NetworkParam networkId) version observation =
@@ -80,9 +80,9 @@ createExplorerState = do
   getExplorerState = readTVarIO
   modifyExplorerState v = atomically . modifyTVar' v
 
-type PushObservation = (NetworkId, Text, Observation) -> IO ()
+type PushObservation = (NetworkId, HydraVersion, Observation) -> IO ()
 
-type PopObservation = IO (NetworkId, Text, Observation)
+type PopObservation = IO (NetworkId, HydraVersion, Observation)
 
 -- | Bounded queue to process observations.
 createObservationQueue :: IO (PushObservation, PopObservation)
@@ -101,8 +101,8 @@ aggregator popObservation modifyExplorerState =
   forever $ do
     -- TODO: IO does not compose as well as STM
     -- FIXME: use network and version
-    (_, _, observation) <- popObservation
-    modifyExplorerState $ aggregateObservation observation
+    (network, version, observation) <- popObservation
+    modifyExplorerState $ aggregateObservation network version observation
 
 -- * Main
 

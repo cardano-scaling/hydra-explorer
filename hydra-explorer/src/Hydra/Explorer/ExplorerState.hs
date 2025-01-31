@@ -10,8 +10,9 @@ import Hydra.Chain (OnChainTx (..))
 import Test.Hydra.Tx.Gen (genUTxO)
 
 import Data.Aeson (Value (..))
-import Hydra.Cardano.Api (BlockNo, ChainPoint (..), TxIn, UTxO)
-import Hydra.Explorer.ObservationApi (Observation (..))
+import Hydra.Cardano.Api (BlockNo, ChainPoint (..), NetworkId, NetworkMagic, TxIn, UTxO)
+import Hydra.Cardano.Api.Network (Network)
+import Hydra.Explorer.ObservationApi (HydraVersion, Observation (..))
 import Hydra.Tx.ContestationPeriod (ContestationPeriod, toNominalDiffTime)
 import Hydra.Tx.HeadId (HeadId (..), HeadSeed, headSeedToTxIn)
 import Hydra.Tx.HeadParameters (HeadParameters (..))
@@ -67,7 +68,10 @@ instance Arbitrary a => Arbitrary (Observed a) where
 -- Additionally, this simplifies the API for clients, eliminating the need to match against
 -- different states.
 data HeadState = HeadState
-  { headId :: HeadId
+  { network :: Network
+  , networkMagic :: NetworkMagic
+  , version :: HydraVersion
+  , headId :: HeadId
   , seedTxIn :: Observed TxIn
   , status :: HeadStatus
   , contestationPeriod :: Observed ContestationPeriod
@@ -83,6 +87,7 @@ data HeadState = HeadState
 
 instance Arbitrary HeadState where
   arbitrary = genericArbitrary
+  shrink = genericShrink
 
 -- | Represents the latest point in time observed on chain.
 data TickState = TickState
@@ -409,12 +414,13 @@ replaceHeadState newHeadState@HeadState{headId = newHeadStateId} currentHeads =
         then newHeadState : tailStates
         else currentHeadState : replaceHeadState newHeadState tailStates
 
-aggregateObservations :: [Observation] -> ExplorerState -> ExplorerState
-aggregateObservations observations explorerState =
-  foldr aggregateObservation explorerState observations
-
-aggregateObservation :: Observation -> ExplorerState -> ExplorerState
-aggregateObservation Observation{point, blockNo, observedTx} ExplorerState{heads} =
+aggregateObservation ::
+  NetworkId ->
+  HydraVersion ->
+  Observation ->
+  ExplorerState ->
+  ExplorerState
+aggregateObservation networkId version Observation{point, blockNo, observedTx} ExplorerState{heads} =
   case observedTx of
     Nothing ->
       ExplorerState

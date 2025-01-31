@@ -14,10 +14,10 @@ externalDocs:
   description: More information about the Hydra protocol
 
 servers:
-  - url: "{host:port}/v1"
+  - url: "http://{host}:{port}"
     variables:
       host:
-        default: "http://0.0.0.0"
+        default: "localhost"
       port:
         default: "8080"
 
@@ -34,16 +34,15 @@ paths:
               - title: Mainnet
                 type: string
                 enum: ["mainnet"]
-              - title: Testnet
-                type: number
+              - title: Network magic
+                $ref: "#/components/schemas/NetworkMagic"
           required: true
           description: |
-            Cardano network id on which the observation was made. This is either
-            "mainnet" or a testnet magic number.
+            Cardano network on which the observation was made. Identified by the string "mainnet" or the network magic number. For example 764824073 for mainnet or 1 for preprod.
         - in: path
           name: version
           schema:
-            type: string
+            $ref: "#/components/schemas/HydraVersion"
           required: true
           description: Semantic version of the observer, currently corresponding to hydra protocol version.
       requestBody:
@@ -60,6 +59,10 @@ paths:
 
 components:
   schemas:
+    NetworkMagic:
+      $ref: "https://raw.githubusercontent.com/CardanoSolutions/cardanonical/refs/heads/main/cardano.json#definitions/NetworkMagic"
+    HydraVersion:
+      $ref: "https://raw.githubusercontent.com/cardano-scaling/hydra/http-chain-observer/hydra-node/json-schemas/common.yaml#definitions/HydraVersion"
     Observation:
       type: object
       properties:
