@@ -20,6 +20,7 @@ import Hydra.Cluster.Faucet (FaucetLog, publishHydraScriptsAs, seedFromFaucet_)
 import Hydra.Cluster.Fixture (Actor (..), aliceSk, bobSk, cperiod)
 import Hydra.Cluster.Scenarios (EndToEndLog, singlePartyHeadFullLifeCycle)
 import Hydra.Cluster.Util (chainConfigFor, keysFor)
+import Hydra.Tx.DepositDeadline (DepositDeadline (..))
 import HydraNode (HydraNodeLog, input, send, waitMatch, withHydraNode)
 import Network.HTTP.Simple (getResponseBody, httpJSON, parseRequestThrow)
 import Network.Socket (PortNumber)
@@ -62,13 +63,14 @@ spec = do
                     guard $ v ^? key "tag" == Just "HeadIsInitializing"
                     v ^? key "headId" . _String
 
+            let depositDeadline = UnsafeDepositDeadline 200
             (aliceCardanoVk, _aliceCardanoSk) <- keysFor Alice
-            aliceChainConfig <- chainConfigFor Alice tmpDir nodeSocket hydraScriptsTxId [] cperiod
+            aliceChainConfig <- chainConfigFor Alice tmpDir nodeSocket hydraScriptsTxId [] cperiod depositDeadline
             seedFromFaucet_ cardanoNode aliceCardanoVk 25_000_000 (contramap FromFaucet tracer)
             aliceHeadId <- withHydraNode hydraTracer aliceChainConfig tmpDir 1 aliceSk [] [1] initHead
 
             (bobCardanoVk, _bobCardanoSk) <- keysFor Bob
-            bobChainConfig <- chainConfigFor Bob tmpDir nodeSocket hydraScriptsTxId [] cperiod
+            bobChainConfig <- chainConfigFor Bob tmpDir nodeSocket hydraScriptsTxId [] cperiod depositDeadline
             seedFromFaucet_ cardanoNode bobCardanoVk 25_000_000 (contramap FromFaucet tracer)
             bobHeadId <- withHydraNode hydraTracer bobChainConfig tmpDir 2 bobSk [] [2] initHead
 
@@ -88,8 +90,9 @@ spec = do
             let hydraTracer = contramap FromHydraNode tracer
             hydraScriptsTxId <- publishHydraScriptsAs cardanoNode Faucet
             withHydraExplorer $ \explorer -> do
+              let depositDeadline = UnsafeDepositDeadline 200
               (aliceCardanoVk, _aliceCardanoSk) <- keysFor Alice
-              aliceChainConfig <- chainConfigFor Alice tmpDir nodeSocket hydraScriptsTxId [] cperiod
+              aliceChainConfig <- chainConfigFor Alice tmpDir nodeSocket hydraScriptsTxId [] cperiod depositDeadline
               seedFromFaucet_ cardanoNode aliceCardanoVk 25_000_000 (contramap FromFaucet tracer)
               aliceHeadId <- withHydraNode hydraTracer aliceChainConfig tmpDir 1 aliceSk [] [1] $ \hydraNode -> do
                 send hydraNode $ input "Init" []
@@ -99,7 +102,7 @@ spec = do
                   v ^? key "headId" . _String
 
               (bobCardanoVk, _bobCardanoSk) <- keysFor Bob
-              bobChainConfig <- chainConfigFor Bob tmpDir nodeSocket hydraScriptsTxId [] cperiod
+              bobChainConfig <- chainConfigFor Bob tmpDir nodeSocket hydraScriptsTxId [] cperiod depositDeadline
               seedFromFaucet_ cardanoNode bobCardanoVk 25_000_000 (contramap FromFaucet tracer)
               bobHeadId <- withHydraNode hydraTracer bobChainConfig tmpDir 2 bobSk [] [2] $ \hydraNode -> do
                 send hydraNode $ input "Init" []

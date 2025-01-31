@@ -93,6 +93,7 @@ test-suite tests
     , hydra-node
     , hydra-prelude
     , hydra-test-utils
+    , hydra-tx
     , lens
     , lens-aeson
     , network

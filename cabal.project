@@ -21,8 +21,8 @@ packages:
 source-repository-package
   type: git
   location: https://github.com/cardano-scaling/hydra
-  tag: 3f255770ad1d8e7dc4d55dd2587f187fd943d0d2
-  --sha256: sha256-EzzFMZOoKAjeQNzC8Nqu5q+oSCldACzITMVnRhCeAsE=
+  tag: d3b3914643f8a1003ad6ed0ce50efd2e6d840b81
+  --sha256: sha256-5JH4p26wkTPuMj9+Eqoz4QC9yNLXpib5TINw69CurP4=
   subdir:
     hydra-prelude
     hydra-test-utils
