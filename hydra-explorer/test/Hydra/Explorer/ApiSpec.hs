@@ -2,7 +2,7 @@
 
 -- | Tests that the hydra-explorer client API endpoints correspond to the
 -- advertised openapi specification.
-module Hydra.ExplorerSpec where
+module Hydra.Explorer.ApiSpec where
 
 import Hydra.Prelude hiding (get)
 import Test.Hydra.Prelude

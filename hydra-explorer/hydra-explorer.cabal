@@ -103,9 +103,9 @@ test-suite tests
     , yaml
 
   other-modules:
+    Hydra.Explorer.ApiSpec
     Hydra.Explorer.ExplorerStateSpec
-    Hydra.Explorer.HydraExplorerSpec
-    Hydra.ExplorerSpec
+    Hydra.Explorer.IntegrationSpec
     Spec
 
   build-tool-depends:
