@@ -3,6 +3,9 @@ module Hydra.Explorer.ObservationApi where
 
 import Hydra.Prelude
 
+-- XXX: Depending on hydra-tx:testlib feels wrong here.
+import Test.Hydra.Tx.Gen ()
+
 import Hydra.Cardano.Api (BlockNo, ChainPoint, NetworkId (..), NetworkMagic (..), Tx, fromNetworkMagic)
 import Hydra.Chain (OnChainTx)
 import Servant (Capture, FromHttpApiData (..), JSON, Post, ReqBody, (:>))
@@ -14,6 +17,9 @@ data Observation = Observation
   }
   deriving stock (Eq, Show, Generic)
   deriving anyclass (FromJSON)
+
+instance Arbitrary Observation where
+  arbitrary = Observation <$> arbitrary <*> arbitrary <*> arbitrary
 
 -- | New type wrapper for defining API instances over a 'NetworkId'.
 newtype NetworkParam = NetworkParam NetworkId
