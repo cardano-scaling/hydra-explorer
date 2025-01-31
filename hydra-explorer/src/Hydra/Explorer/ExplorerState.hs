@@ -2,8 +2,8 @@ module Hydra.Explorer.ExplorerState where
 
 import Hydra.Prelude
 
--- XXX: This is the only dependency onto hydra-node. Should factor this into a
--- hydra-chain package with smaller dependency footprint.
+-- XXX: This is the only proper dependency onto hydra-node. Should factor this
+-- into a hydra-chain package with smaller dependency footprint.
 import Hydra.Chain (OnChainTx (..))
 
 -- XXX: Need to depend on hydra-tx:testlib for generators?

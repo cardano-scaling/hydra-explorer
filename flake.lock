@@ -2943,17 +2943,17 @@
         "process-compose-flake": "process-compose-flake"
       },
       "locked": {
-        "lastModified": 1738337467,
-        "narHash": "sha256-5JH4p26wkTPuMj9+Eqoz4QC9yNLXpib5TINw69CurP4=",
+        "lastModified": 1738365502,
+        "narHash": "sha256-hSAo8eMdX5GfoHw/llJt/JlGoIqKGsfVFvHV7V6nBOM=",
         "owner": "cardano-scaling",
         "repo": "hydra",
-        "rev": "d3b3914643f8a1003ad6ed0ce50efd2e6d840b81",
+        "rev": "74990db6d825d9c4bcb8350ed67a06a559155184",
         "type": "github"
       },
       "original": {
         "owner": "cardano-scaling",
         "repo": "hydra",
-        "rev": "d3b3914643f8a1003ad6ed0ce50efd2e6d840b81",
+        "rev": "74990db6d825d9c4bcb8350ed67a06a559155184",
         "type": "github"
       }
     },

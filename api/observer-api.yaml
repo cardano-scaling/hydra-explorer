@@ -71,5 +71,4 @@ components:
         blockNo:
           type: integer
         observedTx:
-          # TODO: may be null
           $ref: "https://raw.githubusercontent.com/cardano-scaling/hydra/json-schema-update/hydra-node/json-schemas/common.yaml#definitions/OnChainTx"
