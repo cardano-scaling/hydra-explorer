@@ -226,14 +226,29 @@ components:
               type: integer
             blockHash:
               type: string
+    Network:
+      $ref: "https://raw.githubusercontent.com/CardanoSolutions/cardanonical/refs/heads/main/cardano.json#definitions/Network"
+    NetworkMagic:
+      $ref: "https://raw.githubusercontent.com/CardanoSolutions/cardanonical/refs/heads/main/cardano.json#definitions/NetworkMagic"
+    HydraVersion:
+      $ref: "https://raw.githubusercontent.com/cardano-scaling/hydra/http-chain-observer/hydra-node/json-schemas/common.yaml#definitions/HydraVersion"
     HeadState:
       type: object
       required:
+        - network
+        - networkMagic
+        - version
         - headId
         - status
         - point
         - blockNo
       properties:
+        network:
+          $ref: "#/components/schemas/Network"
+        networkMagic:
+          $ref: "#/components/schemas/NetworkMagic"
+        version:
+          $ref: "#/components/schemas/HydraVersion"
         headId:
           $ref: '#/components/schemas/HeadId'
         seedTxIn:

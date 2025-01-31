@@ -21,7 +21,7 @@ hydra-explorer \
 
 ## Architecture
 
-Multiple instances of `hydra-chain-observer`, each built against a specific version of the `hydra-plutus` scripts and `hydra-tx` off-chain (transaction structure), is reporting its observations to a single `hydra-explorer` instance via an [HTTP REST api](./api/observer.yaml).
+Multiple instances of `hydra-chain-observer`, each built against a specific version of the `hydra-plutus` scripts and `hydra-tx` off-chain (transaction structure), is reporting its observations to a single `hydra-explorer` instance via an [HTTP REST api](./api/observer-api.yaml).
 
 ``` mermaid
 flowchart LR
@@ -63,7 +63,7 @@ flowchart LR
   observer-20 -. POST /v1/observations/mainnet/20 .-> explorer
 ```
 
-Clients to the explorer can then use the [Client REST API](../api/hydra-explorer-api.yaml) to query `/heads` for example.
+Clients to the explorer can then use the [Client REST API](../api/client-api.yaml) to query `/heads` for example.
 
 ## Build & test
 

@@ -39,7 +39,7 @@ apiServerSpec = do
     describe "API should respond correctly" $ do
       describe "GET /heads" $
         it "matches schema" $ do
-          let openApiSchema = "json-schemas" </> "hydra-explorer-api.yaml"
+          let openApiSchema = "json-schemas" </> "client-api.yaml"
           openApi <- liftIO $ Yaml.decodeFileThrow @_ @OpenApi openApiSchema
           let componentSchemas = openApi ^?! components . schemas
           let maybeHeadsSchema = do
@@ -60,7 +60,7 @@ apiServerSpec = do
 
       describe "GET /tick" $
         it "matches schema" $ do
-          let openApiSchema = "json-schemas" </> "hydra-explorer-api.yaml"
+          let openApiSchema = "json-schemas" </> "client-api.yaml"
           openApi <- liftIO $ Yaml.decodeFileThrow @_ @OpenApi openApiSchema
           let componentSchemas = openApi ^?! components . schemas
           let maybeTickSchema = do
