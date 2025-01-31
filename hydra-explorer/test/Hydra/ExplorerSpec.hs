@@ -28,17 +28,17 @@ import Hydra.Explorer (clientApi)
 import System.FilePath ((</>))
 import Test.Hspec.Wai (MatchBody (..), ResponseMatcher (ResponseMatcher), shouldRespondWith, (<:>))
 import Test.Hspec.Wai qualified as Wai
-import Test.QuickCheck (generate)
+import Test.Hspec.Wai.Internal qualified as Wai
 
 spec :: Spec
 spec = apiServerSpec
 
 apiServerSpec :: Spec
 apiServerSpec = do
-  Wai.with (return webServer) $
-    describe "API should respond correctly" $ do
-      describe "GET /heads" $
-        it "matches schema" $ do
+  describe "Client API" $ do
+    describe "GET /heads" $
+      prop "matches schema" $ \explorerState -> do
+        Wai.withApplication (clientApi "static" $ pure explorerState) $ do
           let openApiSchema = "json-schemas" </> "client-api.yaml"
           openApi <- liftIO $ Yaml.decodeFileThrow @_ @OpenApi openApiSchema
           let componentSchemas = openApi ^?! components . schemas
@@ -58,8 +58,9 @@ apiServerSpec = do
               Wai.get "heads"
                 `shouldRespondWith` matchingJSONSchema componentSchemas headsSchema
 
-      describe "GET /tick" $
-        it "matches schema" $ do
+    describe "GET /tick" $
+      prop "matches schema" $ \explorerState -> do
+        Wai.withApplication (clientApi "static" $ pure explorerState) $ do
           let openApiSchema = "json-schemas" </> "client-api.yaml"
           openApi <- liftIO $ Yaml.decodeFileThrow @_ @OpenApi openApiSchema
           let componentSchemas = openApi ^?! components . schemas
@@ -78,10 +79,6 @@ apiServerSpec = do
               liftIO $ tickSchema `shouldNotBe` mempty
               Wai.get "tick"
                 `shouldRespondWith` matchingJSONSchema componentSchemas tickSchema
- where
-  webServer = clientApi "static" getRandomExplorerState
-
-  getRandomExplorerState = generate arbitrary
 
 matchingJSONSchema :: Definitions Schema -> Schema -> ResponseMatcher
 matchingJSONSchema definitions s =
@@ -97,7 +94,4 @@ matchingJSONSchema definitions s =
               errs ->
                 Just . toString . unlines $
                   map toText errs
-                    <> [ "Expected schema: " <> show s
-                       , "Actual value: " <> show value
-                       ]
     }

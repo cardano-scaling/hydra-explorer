@@ -102,6 +102,7 @@ data ExplorerState = ExplorerState
   { heads :: [HeadState]
   , tick :: TickState
   }
+  deriving (Eq, Show)
 
 instance Arbitrary ExplorerState where
   arbitrary = ExplorerState <$> arbitrary <*> arbitrary
