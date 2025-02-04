@@ -64,7 +64,7 @@ apiServerSpec = do
           let openApiSchema = "json-schemas" </> "client-api.yaml"
           openApi <- liftIO $ Yaml.decodeFileThrow @_ @OpenApi openApiSchema
           let componentSchemas = openApi ^?! components . schemas
-          let maybeTicksSchema = do
+          let maybeTickSchema = do
                 path <- openApi ^. paths . at "/ticks"
                 endpoint <- path ^. get
                 res <- endpoint ^. responses . at 200
@@ -73,7 +73,7 @@ apiServerSpec = do
                 jsonContent <- res ^. _Inline . content . at "application/json"
                 s <- jsonContent ^. schema
                 pure $ s ^. _Inline
-          case maybeTicksSchema of
+          case maybeTickSchema of
             Nothing -> liftIO . failure $ "Failed to find schema for GET /ticks endpoint"
             Just ticksSchema -> do
               liftIO $ ticksSchema `shouldNotBe` mempty
