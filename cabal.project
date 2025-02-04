@@ -9,9 +9,10 @@ repository cardano-haskell-packages
     c00aae8461a256275598500ea0e187588c35a5d5d7454fb57eac18d9edb86a56
     d4a35cd3121aa00d18544bb0ac01c3e1691d618f462c46129271bccf39f7e8ee
 
+-- Using same index-state as hydra (as packages are lacking upper bounds)
 index-state:
-  , hackage.haskell.org 2024-11-22T14:59:16Z
-  , cardano-haskell-packages 2024-12-20T15:52:56Z
+  , hackage.haskell.org 2025-01-15T13:32:16Z
+  , cardano-haskell-packages 2025-01-15T09:59:24Z
 
 packages:
   -- TODO: why subdir?
@@ -21,8 +22,9 @@ packages:
 source-repository-package
   type: git
   location: https://github.com/cardano-scaling/hydra
-  tag: 74990db6d825d9c4bcb8350ed67a06a559155184
-  --sha256: sha256-hSAo8eMdX5GfoHw/llJt/JlGoIqKGsfVFvHV7V6nBOM=
+  -- 0.20.0 + http-chain-observer work
+  tag: 3a95fb30d4a1e88d3bfde1fc868044a158061ba8
+  --sha256: sha256-jPtnMhktvCTgKrPYEKw2YbIJZpKlUz4dfxinPCs6u5c=
   subdir:
     hydra-prelude
     hydra-test-utils
