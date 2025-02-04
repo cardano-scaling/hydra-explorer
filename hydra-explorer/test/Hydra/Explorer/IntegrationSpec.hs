@@ -141,7 +141,9 @@ spec = do
               withChainObserver node explorer $ do
                 threadDelay 1
                 tip <- toJSON <$> queryTip networkId nodeSocket
-                tick <- getTick explorer
+                allTicks <- getTicks explorer
+
+                let tick = fromMaybe Null $ allTicks ^? nth 0
 
                 let tipSlot = tip ^? key "slot" . _Number
                     tickSlot = tick ^? key "point" . key "slot" . _Number
@@ -157,7 +159,7 @@ data HydraExplorerClient = HydraExplorerClient
   { clientPort :: PortNumber
   , observerPort :: PortNumber
   , getHeads :: IO Value
-  , getTick :: IO Value
+  , getTicks :: IO Value
   }
 
 -- | Starts a 'hydra-explorer'.
@@ -177,7 +179,7 @@ withHydraExplorer action =
             { clientPort
             , observerPort
             , getHeads = getJSON clientPort "/heads"
-            , getTick = getJSON clientPort "/tick"
+            , getTicks = getJSON clientPort "/ticks"
             }
  where
   getJSON port path =

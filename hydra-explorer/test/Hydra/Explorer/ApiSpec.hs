@@ -58,14 +58,14 @@ apiServerSpec = do
               Wai.get "heads"
                 `shouldRespondWith` matchingJSONSchema componentSchemas headsSchema
 
-    describe "GET /tick" $
+    describe "GET /ticks" $
       prop "matches schema" $ \explorerState -> do
         Wai.withApplication (clientApi "static" $ pure explorerState) $ do
           let openApiSchema = "json-schemas" </> "client-api.yaml"
           openApi <- liftIO $ Yaml.decodeFileThrow @_ @OpenApi openApiSchema
           let componentSchemas = openApi ^?! components . schemas
-          let maybeTickSchema = do
-                path <- openApi ^. paths . at "/tick"
+          let maybeTicksSchema = do
+                path <- openApi ^. paths . at "/ticks"
                 endpoint <- path ^. get
                 res <- endpoint ^. responses . at 200
                 -- XXX: _Inline here assumes that no $ref is used within the
@@ -73,12 +73,12 @@ apiServerSpec = do
                 jsonContent <- res ^. _Inline . content . at "application/json"
                 s <- jsonContent ^. schema
                 pure $ s ^. _Inline
-          case maybeTickSchema of
-            Nothing -> liftIO . failure $ "Failed to find schema for GET /tick endpoint"
-            Just tickSchema -> do
-              liftIO $ tickSchema `shouldNotBe` mempty
-              Wai.get "tick"
-                `shouldRespondWith` matchingJSONSchema componentSchemas tickSchema
+          case maybeTicksSchema of
+            Nothing -> liftIO . failure $ "Failed to find schema for GET /ticks endpoint"
+            Just ticksSchema -> do
+              liftIO $ ticksSchema `shouldNotBe` mempty
+              Wai.get "ticks"
+                `shouldRespondWith` matchingJSONSchema componentSchemas ticksSchema
 
 matchingJSONSchema :: Definitions Schema -> Schema -> ResponseMatcher
 matchingJSONSchema definitions s =

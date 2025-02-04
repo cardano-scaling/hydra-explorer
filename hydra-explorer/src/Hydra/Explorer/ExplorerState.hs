@@ -10,9 +10,9 @@ import Hydra.Chain (OnChainTx (..))
 import Test.Hydra.Tx.Gen (genUTxO)
 
 import Data.Aeson (Value (..))
-import Hydra.Cardano.Api (BlockNo, ChainPoint (..), NetworkId, NetworkMagic, TxIn, UTxO, networkIdToNetwork, toNetworkMagic)
-import Hydra.Cardano.Api.Network (Network)
-import Hydra.Explorer.ObservationApi (HydraVersion, Observation (..))
+import Hydra.Cardano.Api (BlockNo, ChainPoint (..), NetworkId, NetworkMagic (..), TxIn, UTxO, networkIdToNetwork, toNetworkMagic)
+import Hydra.Cardano.Api.Network (Network (..))
+import Hydra.Explorer.ObservationApi (HydraVersion (..), Observation (..))
 import Hydra.Tx.ContestationPeriod (ContestationPeriod, toNominalDiffTime)
 import Hydra.Tx.HeadId (HeadId (..), HeadSeed, headSeedToTxIn)
 import Hydra.Tx.HeadParameters (HeadParameters (..))
@@ -91,7 +91,9 @@ instance Arbitrary HeadState where
 
 -- | Represents the latest point in time observed on chain.
 data TickState = TickState
-  { point :: ChainPoint
+  { network :: Network
+  , networkMagic :: NetworkMagic
+  , point :: ChainPoint
   , blockNo :: BlockNo
   }
   deriving stock (Eq, Show, Generic)
@@ -100,12 +102,19 @@ data TickState = TickState
 instance Arbitrary TickState where
   arbitrary = genericArbitrary
 
-initialTickState :: TickState
-initialTickState = TickState ChainPointAtGenesis 0
+initialTickState :: [TickState]
+initialTickState =
+  [ TickState
+      { network = Testnet
+      , networkMagic = NetworkMagic 2
+      , point = ChainPointAtGenesis
+      , blockNo = 0
+      }
+  ]
 
 data ExplorerState = ExplorerState
   { heads :: [HeadState]
-  , tick :: TickState
+  , ticks :: [TickState]
   }
   deriving (Eq, Show)
 
@@ -549,6 +558,36 @@ replaceHeadState newHeadState@HeadState{headId = newHeadStateId} currentHeads =
         then newHeadState : tailStates
         else currentHeadState : replaceHeadState newHeadState tailStates
 
+replaceTickState :: TickState -> [TickState] -> [TickState]
+replaceTickState newTickState@TickState{network = newNetwork, networkMagic = newNetworkMagic} currentTicks =
+  case currentTicks of
+    [] -> [newTickState]
+    (currentTickState@TickState{network = currentNetwork, networkMagic = currentNetworkMagic} : tailStates) ->
+      if newNetwork == currentNetwork && newNetworkMagic == currentNetworkMagic
+        then newTickState : tailStates
+        else currentTickState : replaceTickState newTickState tailStates
+
+aggregateTickObservation ::
+  NetworkId ->
+  ChainPoint ->
+  BlockNo ->
+  [TickState] ->
+  [TickState]
+aggregateTickObservation networkId point blockNo currentTicks =
+  case findTickState networkId currentTicks of
+    Just _ ->
+      let newTickState = newUnknownTickState
+       in replaceTickState newTickState currentTicks
+    Nothing -> currentTicks <> [newUnknownTickState]
+ where
+  newUnknownTickState =
+    TickState
+      { network = networkIdToNetwork networkId
+      , networkMagic = toNetworkMagic networkId
+      , point
+      , blockNo
+      }
+
 -- XXX: Aggregation is very conservative and does ignore most information when
 -- matching data is already present.
 aggregateObservation ::
@@ -557,68 +596,75 @@ aggregateObservation ::
   Observation ->
   ExplorerState ->
   ExplorerState
-aggregateObservation networkId version Observation{point, blockNo, observedTx} ExplorerState{heads} =
+aggregateObservation networkId version Observation{point, blockNo, observedTx} ExplorerState{heads, ticks} =
   case observedTx of
     Nothing ->
       ExplorerState
         { heads
-        , tick = TickState point blockNo
+        , ticks = aggregateTickObservation networkId point blockNo ticks
         }
     Just OnInitTx{headId, headSeed, headParameters, participants} ->
       ExplorerState
         { heads = aggregateInitObservation networkId version headId point blockNo headSeed headParameters participants heads
-        , tick = TickState point blockNo
+        , ticks = aggregateTickObservation networkId point blockNo ticks
         }
     Just OnAbortTx{headId} ->
       ExplorerState
         { heads = aggregateAbortObservation networkId version headId point blockNo heads
-        , tick = TickState point blockNo
+        , ticks = aggregateTickObservation networkId point blockNo ticks
         }
     Just OnCommitTx{headId, party, committed} ->
       ExplorerState
         { heads = aggregateCommitObservation networkId version headId point blockNo party committed heads
-        , tick = TickState point blockNo
+        , ticks = aggregateTickObservation networkId point blockNo ticks
         }
     Just OnCollectComTx{headId} ->
       ExplorerState
         { heads = aggregateCollectComObservation networkId version headId point blockNo heads
-        , tick = TickState point blockNo
+        , ticks = aggregateTickObservation networkId point blockNo ticks
         }
     Just OnDepositTx{headId} ->
       ExplorerState
         { heads = aggregateDepositObservation networkId version headId point blockNo heads
-        , tick = TickState point blockNo
+        , ticks = aggregateTickObservation networkId point blockNo ticks
         }
     Just OnRecoverTx{headId} ->
       ExplorerState
         { heads = aggregateRecoverObservation networkId version headId point blockNo heads
-        , tick = TickState point blockNo
+        , ticks = aggregateTickObservation networkId point blockNo ticks
         }
     Just OnIncrementTx{headId} ->
       ExplorerState
         { heads = aggregateIncrementObservation networkId version headId point blockNo heads
-        , tick = TickState point blockNo
+        , ticks = aggregateTickObservation networkId point blockNo ticks
         }
     Just OnDecrementTx{headId} ->
       ExplorerState
         { heads = aggregateDecrementObservation networkId version headId point blockNo heads
-        , tick = TickState point blockNo
+        , ticks = aggregateTickObservation networkId point blockNo ticks
         }
     Just OnCloseTx{headId, snapshotNumber, contestationDeadline} ->
       ExplorerState
         { heads = aggregateCloseObservation networkId version headId point blockNo snapshotNumber contestationDeadline heads
-        , tick = TickState point blockNo
+        , ticks = aggregateTickObservation networkId point blockNo ticks
         }
     Just OnContestTx{headId, snapshotNumber} ->
       ExplorerState
         { heads = aggregateContestObservation networkId version headId point blockNo snapshotNumber heads
-        , tick = TickState point blockNo
+        , ticks = aggregateTickObservation networkId point blockNo ticks
         }
     Just OnFanoutTx{headId} ->
       ExplorerState
         { heads = aggregateFanoutObservation networkId version headId point blockNo heads
-        , tick = TickState point blockNo
+        , ticks = aggregateTickObservation networkId point blockNo ticks
         }
 
 findHeadState :: HeadId -> [HeadState] -> Maybe HeadState
 findHeadState idToFind = find (\HeadState{headId} -> headId == idToFind)
+
+findTickState :: NetworkId -> [TickState] -> Maybe TickState
+findTickState networkId =
+  find
+    ( \TickState{network, networkMagic} ->
+        networkIdToNetwork networkId == network && toNetworkMagic networkId == networkMagic
+    )

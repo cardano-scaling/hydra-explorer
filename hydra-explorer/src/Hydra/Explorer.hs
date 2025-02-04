@@ -40,7 +40,7 @@ handlePostObservation pushObservation (NetworkParam networkId) version observati
 
 type ClientApi =
   "heads" :> Get '[JSON] [HeadState]
-    :<|> "tick" :> Get '[JSON] TickState
+    :<|> "ticks" :> Get '[JSON] [TickState]
     :<|> Raw
 
 -- | WAI application serving the 'ClientApi'.
@@ -61,9 +61,9 @@ handleGetHeads getExplorerState =
 
 handleGetTick ::
   GetExplorerState ->
-  Handler TickState
+  Handler [TickState]
 handleGetTick getExplorerState = do
-  liftIO getExplorerState <&> \ExplorerState{tick} -> tick
+  liftIO getExplorerState <&> \ExplorerState{ticks} -> ticks
 
 -- * Agreggator
 
