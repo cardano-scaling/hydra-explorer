@@ -46,9 +46,9 @@ spec = do
                 allHeads <- getHeads explorer
                 length (allHeads ^. _Array) `shouldBe` 1
                 allHeads ^? nth 0 . key "network" . _String `shouldBe` Just "Testnet"
-                allHeads ^? nth 0 . key "networkMagic" . _String `shouldBe` Just (show . toNetworkMagic $ networkId node)
+                allHeads ^? nth 0 . key "networkMagic" . _Number `shouldBe` Just (fromIntegral . unNetworkMagic . toNetworkMagic $ networkId node)
                 -- NOTE: This deliberately pins the latest version of hydra we test against.
-                allHeads ^? nth 0 . key "version" . _String `shouldBe` Just "0.19.0"
+                allHeads ^? nth 0 . key "version" . _String `shouldBe` Just "0.20.0-3a95fb30d4a1e88d3bfde1fc868044a158061ba8"
 
   -- TODO: simplify scenarios! We are only interested in the end-to-end
   -- integration and not whether the hydra-chain-observer really works (that is
@@ -141,10 +141,11 @@ spec = do
               withChainObserver node explorer $ do
                 threadDelay 1
                 tip <- toJSON <$> queryTip networkId nodeSocket
+
                 allTicks <- getTicks explorer
+                length (allTicks ^. _Array) `shouldBe` 1
 
                 let tick = fromMaybe Null $ allTicks ^? nth 0
-
                 let tipSlot = tip ^? key "slot" . _Number
                     tickSlot = tick ^? key "point" . key "slot" . _Number
                 tickSlot `shouldBe` tipSlot

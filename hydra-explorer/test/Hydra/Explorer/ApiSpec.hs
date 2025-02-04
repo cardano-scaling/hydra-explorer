@@ -37,7 +37,7 @@ apiServerSpec :: Spec
 apiServerSpec = do
   describe "Client API" $ do
     describe "GET /heads" $
-      prop "matches schema" $ \explorerState -> do
+      prop "matches schema" $ \(ReasonablySized explorerState) -> do
         Wai.withApplication (clientApi "static" $ pure explorerState) $ do
           let openApiSchema = "json-schemas" </> "client-api.yaml"
           openApi <- liftIO $ Yaml.decodeFileThrow @_ @OpenApi openApiSchema
@@ -59,7 +59,7 @@ apiServerSpec = do
                 `shouldRespondWith` matchingJSONSchema componentSchemas headsSchema
 
     describe "GET /ticks" $
-      prop "matches schema" $ \explorerState -> do
+      prop "matches schema" $ \(ReasonablySized explorerState) -> do
         Wai.withApplication (clientApi "static" $ pure explorerState) $ do
           let openApiSchema = "json-schemas" </> "client-api.yaml"
           openApi <- liftIO $ Yaml.decodeFileThrow @_ @OpenApi openApiSchema
