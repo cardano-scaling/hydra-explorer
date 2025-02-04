@@ -8,7 +8,7 @@ import Hydra.Logging (Tracer, Verbosity (..), traceWith, withTracer)
 
 import Control.Concurrent.Class.MonadSTM (modifyTVar', newTBQueueIO, newTVarIO, readTBQueue, readTVarIO, writeTBQueue)
 import Hydra.Cardano.Api (NetworkId)
-import Hydra.Explorer.ExplorerState (ExplorerState (..), HeadState, TickState, aggregateObservation, initialTickState)
+import Hydra.Explorer.ExplorerState (ExplorerState (..), HeadState, TickState, aggregateObservation)
 import Hydra.Explorer.ObservationApi (HydraVersion, NetworkParam (..), Observation, ObservationApi)
 import Hydra.Explorer.Options (Options (..))
 import Network.Wai (Middleware, Request (..))
@@ -74,7 +74,7 @@ type ModifyExplorerState = (ExplorerState -> ExplorerState) -> IO ()
 -- | In-memory 'ExplorerState' that can be queried or modified.
 createExplorerState :: IO (GetExplorerState, ModifyExplorerState)
 createExplorerState = do
-  v <- newTVarIO (ExplorerState [] initialTickState)
+  v <- newTVarIO (ExplorerState [] [])
   pure (getExplorerState v, modifyExplorerState v)
  where
   getExplorerState = readTVarIO

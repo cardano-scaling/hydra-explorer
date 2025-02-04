@@ -102,16 +102,6 @@ data TickState = TickState
 instance Arbitrary TickState where
   arbitrary = genericArbitrary
 
-initialTickState :: [TickState]
-initialTickState =
-  [ TickState
-      { network = Testnet
-      , networkMagic = NetworkMagic 2
-      , point = ChainPointAtGenesis
-      , blockNo = 0
-      }
-  ]
-
 data ExplorerState = ExplorerState
   { heads :: [HeadState]
   , ticks :: [TickState]
