@@ -62,13 +62,13 @@ components:
     NetworkMagic:
       $ref: "https://raw.githubusercontent.com/CardanoSolutions/cardanonical/refs/heads/main/cardano.json#definitions/NetworkMagic"
     HydraVersion:
-      $ref: "https://raw.githubusercontent.com/cardano-scaling/hydra/http-chain-observer/hydra-node/json-schemas/common.yaml#definitions/HydraVersion"
+      $ref: "https://raw.githubusercontent.com/cardano-scaling/hydra/master/hydra-node/json-schemas/common.yaml#definitions/HydraVersion"
     Observation:
       type: object
       properties:
         point:
-          $ref: "https://raw.githubusercontent.com/cardano-scaling/hydra/json-schema-update/hydra-node/json-schemas/common.yaml#definitions/ChainPoint"
+          $ref: "https://raw.githubusercontent.com/cardano-scaling/hydra/master/hydra-node/json-schemas/common.yaml#definitions/ChainPoint"
         blockNo:
           type: integer
         observedTx:
-          $ref: "https://raw.githubusercontent.com/cardano-scaling/hydra/json-schema-update/hydra-node/json-schemas/common.yaml#definitions/OnChainTx"
+          $ref: "https://raw.githubusercontent.com/cardano-scaling/hydra/master/hydra-node/json-schemas/common.yaml#definitions/OnChainTx"
