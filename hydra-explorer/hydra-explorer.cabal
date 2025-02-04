@@ -42,7 +42,6 @@ library
   ghc-options:     -haddock
   build-depends:
     , aeson
-    , base
     , hydra-cardano-api
     , hydra-node
     , hydra-prelude
@@ -82,7 +81,6 @@ test-suite tests
   type:               exitcode-stdio-1.0
   build-depends:
     , aeson
-    , base
     , filepath
     , hspec
     , hspec-wai
