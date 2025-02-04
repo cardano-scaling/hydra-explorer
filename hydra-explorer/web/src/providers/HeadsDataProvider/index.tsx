@@ -2,7 +2,9 @@
 
 import { HeadState } from '@/app/model'
 import useDataFetcher from '@/hooks/DataFetcher'
-import React, { useContext, useState } from 'react'
+import React, { useContext, useMemo, useState } from 'react'
+import { useVersionContext } from "@/providers/VersionProvider"
+import { useNetworkContext } from "@/providers/NetworkProvider"
 
 export interface HeadsDataService {
   heads: HeadState[],
@@ -15,25 +17,37 @@ const HeadsDataContext: React.Context<HeadsDataService> =
 export const useHeadsDataContext = () => {
   const context = useContext(HeadsDataContext)
   if (!context) {
-      throw new Error("useHeadsDataContext must be used within a HeadsDataProvider")
+    throw new Error("useHeadsDataContext must be used within a HeadsDataProvider")
   }
   return context
 }
 
 export const HeadsDataProvider: React.FC<any> = ({
-    children
+  children
 }) => {
   const [heads, setHeads] = useState<HeadState[]>([])
   const [error, setError] = useState<string | null>(null)
 
+  const { currentVersion } = useVersionContext()
+  const { currentNetwork, currentNetworkMagic } = useNetworkContext()
+
   useDataFetcher<HeadState[]>({
-      url: '/heads',
-      setFetchedData: setHeads,
-      setError,
+    url: `/heads`,
+    setFetchedData: setHeads,
+    setError,
   })
 
+  const getHeads = useMemo(() => {
+    return heads.filter(
+      (head) =>
+        head.version === currentVersion &&
+        head.network === currentNetwork &&
+        head.networkMagic === currentNetworkMagic
+    )
+  }, [heads, currentVersion, currentNetwork, currentNetworkMagic])
+
   return (
-    <HeadsDataContext.Provider value={{heads: heads, error: error}}>
+    <HeadsDataContext.Provider value={{ heads: getHeads, error: error }}>
       {children}
     </HeadsDataContext.Provider>
   )
