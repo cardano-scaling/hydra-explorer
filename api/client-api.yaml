@@ -36,7 +36,6 @@ paths:
                 items:
                   $ref: '#/components/schemas/HeadState'
 
-# TODO: re-use these across hydra-explorer (and hydra)
 components:
   schemas:
     OnChainId:

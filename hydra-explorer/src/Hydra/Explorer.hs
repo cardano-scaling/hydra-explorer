@@ -99,7 +99,9 @@ createObservationQueue = do
 aggregator :: PopObservation -> ModifyExplorerState -> IO ()
 aggregator popObservation modifyExplorerState =
   forever $ do
-    -- TODO: IO does not compose as well as STM
+    -- XXX: STM would compose better here as IO does not ensure atomicity of the
+    -- pop and modify. OTOH we don't have multiple producers/consumers and the
+    -- whole explorer is going down in case of exceptions anyways.
     (network, version, observation) <- popObservation
     modifyExplorerState $ aggregateObservation network version observation
 

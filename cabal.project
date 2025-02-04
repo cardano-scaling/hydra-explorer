@@ -15,10 +15,10 @@ index-state:
   , cardano-haskell-packages 2025-01-15T09:59:24Z
 
 packages:
-  -- TODO: why subdir?
   hydra-explorer
 
--- TODO: publish these to CHaP?
+-- XXX: We could avoid the s-r-p by publishing these to chap. However, not all
+-- of them should be needed (e.g. hydra-plutus, hydra-tx and hydra-node)
 source-repository-package
   type: git
   location: https://github.com/cardano-scaling/hydra

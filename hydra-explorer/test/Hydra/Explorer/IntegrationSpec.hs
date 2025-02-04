@@ -16,12 +16,10 @@ import Control.Lens ((^.), (^?))
 import Data.Aeson as Aeson
 import Data.Aeson.Lens (key, nth, _Array, _Number, _String)
 import Hydra.Cardano.Api (NetworkId (..), NetworkMagic (..), toNetworkMagic, unFile)
-import Hydra.Cluster.Faucet (FaucetLog, publishHydraScriptsAs, seedFromFaucet_)
-import Hydra.Cluster.Fixture (Actor (..), aliceSk, bobSk, cperiod)
-import Hydra.Cluster.Scenarios (EndToEndLog, singlePartyHeadFullLifeCycle)
-import Hydra.Cluster.Util (chainConfigFor, keysFor)
-import Hydra.Tx.DepositDeadline (DepositDeadline (..))
-import HydraNode (HydraNodeLog, input, send, waitMatch, withHydraNode)
+import Hydra.Cluster.Faucet (FaucetLog, publishHydraScriptsAs)
+import Hydra.Cluster.Fixture (Actor (..))
+import Hydra.Cluster.Scenarios (EndToEndLog, singlePartyHeadFullLifeCycle, singlePartyOpenAHead)
+import HydraNode (HydraNodeLog)
 import Network.HTTP.Simple (getResponseBody, httpJSON, parseRequestThrow)
 import Network.Socket (PortNumber)
 import System.Process.Typed (Process, ProcessConfig, createPipe, getStderr, proc, setStderr, unsafeProcessHandle, withProcessTerm)
@@ -32,107 +30,45 @@ spec = do
   -- Simple end-to-end scenario with a cardano devnet and head opened/closed by
   -- a hydra-node, which a hydra-chain-observer reports into a single
   -- hydra-explorer.
-  it "aggregates observations" $
+  it "aggregates observations into /heads" $
     failAfter 60 $
       showLogsOnFailure "IntegrationSpec" $ \tracer -> do
         withTempDir "hydra-explorer-history" $ \tmpDir -> do
           withHydraExplorer $ \explorer -> do
             withCardanoNodeDevnet (contramap FromCardanoNode tracer) tmpDir $ \node -> do
-              hydraScriptsTxId <- publishHydraScriptsAs node Faucet
+              scriptsTxId <- publishHydraScriptsAs node Faucet
               withChainObserver node explorer $ do
                 -- Open and close a head
-                singlePartyHeadFullLifeCycle (contramap FromScenario tracer) tmpDir node hydraScriptsTxId
+                singlePartyHeadFullLifeCycle (contramap FromScenario tracer) tmpDir node scriptsTxId
                 -- Query client api
                 allHeads <- getHeads explorer
                 length (allHeads ^. _Array) `shouldBe` 1
-                allHeads ^? nth 0 . key "network" . _String `shouldBe` Just "Testnet"
+                allHeads ^? nth 0 . key "network" `shouldBe` Just "Testnet"
                 allHeads ^? nth 0 . key "networkMagic" . _Number `shouldBe` Just (fromIntegral . unNetworkMagic . toNetworkMagic $ networkId node)
                 -- NOTE: This deliberately pins the latest version of hydra we test against.
                 allHeads ^? nth 0 . key "version" . _String `shouldBe` Just "0.20.0-3a95fb30d4a1e88d3bfde1fc868044a158061ba8"
 
-  -- TODO: simplify scenarios! We are only interested in the end-to-end
-  -- integration and not whether the hydra-chain-observer really works (that is
-  -- to be covered in the main hydra repo)
-  it "can observe hydra transactions created by multiple hydra-nodes" $
+  it "aggregates hydra transactions of multiple heads into /heads" $
     failAfter 60 $
       showLogsOnFailure "IntegrationSpec" $ \tracer -> do
-        withTempDir "hydra-explorer-history" $ \tmpDir -> do
-          withHydraExplorer $ \explorer -> do
-            withCardanoNodeDevnet (contramap FromCardanoNode tracer) tmpDir $ \cardanoNode@RunningNode{nodeSocket} -> do
-              withChainObserver cardanoNode explorer $ do
-                let hydraTracer = contramap FromHydraNode tracer
-                hydraScriptsTxId <- publishHydraScriptsAs cardanoNode Faucet
-
-                let initHead hydraNode = do
-                      send hydraNode $ input "Init" []
-                      waitMatch 5 hydraNode $ \v -> do
-                        guard $ v ^? key "tag" == Just "HeadIsInitializing"
-                        v ^? key "headId" . _String
-
-                let depositDeadline = UnsafeDepositDeadline 200
-                (aliceCardanoVk, _aliceCardanoSk) <- keysFor Alice
-                aliceChainConfig <- chainConfigFor Alice tmpDir nodeSocket hydraScriptsTxId [] cperiod depositDeadline
-                seedFromFaucet_ cardanoNode aliceCardanoVk 25_000_000 (contramap FromFaucet tracer)
-                aliceHeadId <- withHydraNode hydraTracer aliceChainConfig tmpDir 1 aliceSk [] [1] initHead
-
-                (bobCardanoVk, _bobCardanoSk) <- keysFor Bob
-                bobChainConfig <- chainConfigFor Bob tmpDir nodeSocket hydraScriptsTxId [] cperiod depositDeadline
-                seedFromFaucet_ cardanoNode bobCardanoVk 25_000_000 (contramap FromFaucet tracer)
-                bobHeadId <- withHydraNode hydraTracer bobChainConfig tmpDir 2 bobSk [] [2] initHead
+        withHydraExplorer $ \explorer -> do
+          withTempDir "hydra-explorer-history" $ \tmpDir -> do
+            withCardanoNodeDevnet (contramap FromCardanoNode tracer) tmpDir $ \node -> do
+              withChainObserver node explorer $ do
+                scriptsTxId <- publishHydraScriptsAs node Faucet
+                -- Open two heads as alice (different head ids)
+                let tr = contramap FromScenario tracer
+                headId1 <- withTempDir "explorer-head1" $ \d -> singlePartyOpenAHead tr d node scriptsTxId $ \_ _ headId -> pure headId
+                headId2 <- withTempDir "explorer-head2" $ \d -> singlePartyOpenAHead tr d node scriptsTxId $ \_ _ headId -> pure headId
 
                 allHeads <- getHeads explorer
                 length (allHeads ^. _Array) `shouldBe` 2
-                allHeads ^. nth 0 . key "headId" . _String `shouldBe` aliceHeadId
-                allHeads ^. nth 0 . key "status" . _String `shouldBe` "Initializing"
-                allHeads ^. nth 1 . key "headId" . _String `shouldBe` bobHeadId
-                allHeads ^. nth 1 . key "status" . _String `shouldBe` "Initializing"
+                allHeads ^? nth 0 . key "headId" `shouldBe` Just (toJSON headId1)
+                allHeads ^? nth 0 . key "status" `shouldBe` Just "Open"
+                allHeads ^? nth 1 . key "headId" `shouldBe` Just (toJSON headId2)
+                allHeads ^? nth 1 . key "status" `shouldBe` Just "Open"
 
-  it "can query for all hydra heads observed" $
-    failAfter 60 $
-      showLogsOnFailure "IntegrationSpec" $ \tracer -> do
-        withTempDir "hydra-explorer-get-heads" $ \tmpDir -> do
-          withHydraExplorer $ \explorer -> do
-            withCardanoNodeDevnet (contramap FromCardanoNode tracer) tmpDir $ \cardanoNode@RunningNode{nodeSocket} -> do
-              withChainObserver cardanoNode explorer $ do
-                let hydraTracer = contramap FromHydraNode tracer
-                hydraScriptsTxId <- publishHydraScriptsAs cardanoNode Faucet
-                let depositDeadline = UnsafeDepositDeadline 200
-                (aliceCardanoVk, _aliceCardanoSk) <- keysFor Alice
-                aliceChainConfig <- chainConfigFor Alice tmpDir nodeSocket hydraScriptsTxId [] cperiod depositDeadline
-                seedFromFaucet_ cardanoNode aliceCardanoVk 25_000_000 (contramap FromFaucet tracer)
-                aliceHeadId <- withHydraNode hydraTracer aliceChainConfig tmpDir 1 aliceSk [] [1] $ \hydraNode -> do
-                  send hydraNode $ input "Init" []
-
-                  waitMatch 5 hydraNode $ \v -> do
-                    guard $ v ^? key "tag" == Just "HeadIsInitializing"
-                    v ^? key "headId" . _String
-
-                (bobCardanoVk, _bobCardanoSk) <- keysFor Bob
-                bobChainConfig <- chainConfigFor Bob tmpDir nodeSocket hydraScriptsTxId [] cperiod depositDeadline
-                seedFromFaucet_ cardanoNode bobCardanoVk 25_000_000 (contramap FromFaucet tracer)
-                bobHeadId <- withHydraNode hydraTracer bobChainConfig tmpDir 2 bobSk [] [2] $ \hydraNode -> do
-                  send hydraNode $ input "Init" []
-
-                  bobHeadId <- waitMatch 5 hydraNode $ \v -> do
-                    guard $ v ^? key "tag" == Just "HeadIsInitializing"
-                    v ^? key "headId" . _String
-
-                  send hydraNode $ input "Abort" []
-
-                  waitMatch 5 hydraNode $ \v -> do
-                    guard $ v ^? key "tag" == Just "HeadIsAborted"
-                    guard $ v ^? key "headId" . _String == Just bobHeadId
-
-                  pure bobHeadId
-
-                allHeads <- getHeads explorer
-                length (allHeads ^. _Array) `shouldBe` 2
-                allHeads ^. nth 0 . key "headId" . _String `shouldBe` aliceHeadId
-                allHeads ^. nth 0 . key "status" . _String `shouldBe` "Initializing"
-                allHeads ^. nth 1 . key "headId" . _String `shouldBe` bobHeadId
-                allHeads ^. nth 1 . key "status" . _String `shouldBe` "Aborted"
-
-  it "can query for latest point in time observed on chain" $
+  it "aggregates latest point of observed chains" $
     failAfter 60 $
       showLogsOnFailure "IntegrationSpec" $ \tracer -> do
         withTempDir "hydra-explorer-get-tick" $ \tmpDir -> do
@@ -204,7 +140,7 @@ data IntegrationTestLog
 
 -- | Starts a 'hydra-chain-observer' on some Cardano network and have it connect to given 'hydra-explorer' port.
 withChainObserver :: RunningNode -> HydraExplorerClient -> IO () -> IO ()
-withChainObserver cardanoNode HydraExplorerClient{observerPort} action =
+withChainObserver node HydraExplorerClient{observerPort} action =
   withProcessExpect process $ const action
  where
   process =
@@ -216,7 +152,7 @@ withChainObserver cardanoNode HydraExplorerClient{observerPort} action =
           Testnet (NetworkMagic magic) -> ["--testnet-magic", show magic]
         <> ["--explorer", "http://127.0.0.1:" <> show observerPort]
 
-  RunningNode{nodeSocket, networkId} = cardanoNode
+  RunningNode{nodeSocket, networkId} = node
 
 -- * Helpers
 
