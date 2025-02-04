@@ -11,7 +11,7 @@
 
     cardano-node.url = "github:IntersectMBO/cardano-node/9.2.0";
     # 0.20.0 + http-chain-observer work
-    hydra.url = "github:cardano-scaling/hydra/3a95fb30d4a1e88d3bfde1fc868044a158061ba8";
+    hydra.url = "github:cardano-scaling/hydra/cf09cb053a29800779f8024e9eaec7d88a3dfc7c";
 
     hackage = {
       url = "github:input-output-hk/hackage.nix";
