@@ -9,25 +9,29 @@ repository cardano-haskell-packages
     c00aae8461a256275598500ea0e187588c35a5d5d7454fb57eac18d9edb86a56
     d4a35cd3121aa00d18544bb0ac01c3e1691d618f462c46129271bccf39f7e8ee
 
+-- Using same index-state as hydra (as packages are lacking upper bounds)
 index-state:
-  , hackage.haskell.org 2024-10-14T02:12:15Z
-  , cardano-haskell-packages 2024-10-14T23:19:53Z
+  , hackage.haskell.org 2025-01-15T13:32:16Z
+  , cardano-haskell-packages 2025-01-15T09:59:24Z
 
 packages:
   hydra-explorer
 
+-- XXX: We could avoid the s-r-p by publishing these to chap. However, not all
+-- of them should be needed (e.g. hydra-plutus, hydra-tx and hydra-node)
 source-repository-package
   type: git
   location: https://github.com/cardano-scaling/hydra
-  tag: d55c4efb896273dc39d4bdc4fc83ec361de55f73
-  --sha256: sha256-LziIjrdjMA8dVPKMwKskLyjlnx5HhpDwTjC9sek5Bfo=
+  -- 0.20.0 + http-chain-observer work
+  tag: cf09cb053a29800779f8024e9eaec7d88a3dfc7c
+  --sha256: sha256-2v7K8il2Nq1MCeHpjkURp0uKSWFsUBnKOdMdrWZGkkw=
   subdir:
-    hydra-cardano-api
-    hydra-chain-observer
-    hydra-cluster
-    hydra-node 
-    hydra-plutus
-    hydra-plutus-extras
     hydra-prelude
     hydra-test-utils
+    hydra-cardano-api
+    hydra-plutus-extras
+    hydra-plutus
     hydra-tx
+    hydra-node
+    -- Needed for integration tests
+    hydra-cluster

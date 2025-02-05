@@ -1,0 +1,74 @@
+openapi: 3.0.3
+
+info:
+  title: Hydra Explorer - Observer API
+  version: 1.0.0
+  description: |-
+    API to be used by hydra-chain-observer instances to report observations of Hydra Head transactions to a hydra-explorer instance.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+
+externalDocs:
+  url: http://hydra.family
+  description: More information about the Hydra protocol
+
+servers:
+  - url: "http://{host}:{port}"
+    variables:
+      host:
+        default: "localhost"
+      port:
+        default: "8080"
+
+paths:
+  /observations/{network}/{version}:
+    post:
+      summary: Submit a new Hydra Head protocol observation from given network and protocol version
+      operationId: postObservations
+      parameters:
+        - in: path
+          name: network
+          schema:
+            oneof:
+              - title: Mainnet
+                type: string
+                enum: ["mainnet"]
+              - title: Network magic
+                $ref: "#/components/schemas/NetworkMagic"
+          required: true
+          description: |
+            Cardano network on which the observation was made. Identified by the string "mainnet" or the network magic number. For example 764824073 for mainnet or 1 for preprod.
+        - in: path
+          name: version
+          schema:
+            $ref: "#/components/schemas/HydraVersion"
+          required: true
+          description: Semantic version of the observer, currently corresponding to hydra protocol version.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Observation"
+        required: true
+      responses:
+        "200":
+          description: Successful reported observation
+        "400":
+          description: Invalid observation
+
+components:
+  schemas:
+    NetworkMagic:
+      $ref: "https://raw.githubusercontent.com/CardanoSolutions/cardanonical/refs/heads/main/cardano.json#definitions/NetworkMagic"
+    HydraVersion:
+      $ref: "https://raw.githubusercontent.com/cardano-scaling/hydra/master/hydra-node/json-schemas/common.yaml#definitions/HydraVersion"
+    Observation:
+      type: object
+      properties:
+        point:
+          $ref: "https://raw.githubusercontent.com/cardano-scaling/hydra/master/hydra-node/json-schemas/common.yaml#definitions/ChainPoint"
+        blockNo:
+          type: integer
+        observedTx:
+          $ref: "https://raw.githubusercontent.com/cardano-scaling/hydra/master/hydra-node/json-schemas/common.yaml#definitions/OnChainTx"

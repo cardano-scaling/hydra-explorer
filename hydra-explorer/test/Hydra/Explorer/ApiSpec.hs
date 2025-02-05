@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Hydra.ExplorerSpec where
+-- | Tests that the hydra-explorer client API endpoints correspond to the
+-- advertised openapi specification.
+module Hydra.Explorer.ApiSpec where
 
 import Hydra.Prelude hiding (get)
 import Test.Hydra.Prelude
@@ -22,23 +24,22 @@ import Data.OpenApi (
   _Inline,
  )
 import Data.Yaml qualified as Yaml
-import Hydra.Explorer (httpApp)
-import Hydra.Logging (nullTracer)
+import Hydra.Explorer (clientApi)
 import System.FilePath ((</>))
 import Test.Hspec.Wai (MatchBody (..), ResponseMatcher (ResponseMatcher), shouldRespondWith, (<:>))
 import Test.Hspec.Wai qualified as Wai
-import Test.QuickCheck (generate)
+import Test.Hspec.Wai.Internal qualified as Wai
 
 spec :: Spec
 spec = apiServerSpec
 
 apiServerSpec :: Spec
 apiServerSpec = do
-  Wai.with (return webServer) $
-    describe "API should respond correctly" $ do
-      describe "GET /heads" $
-        it "matches schema" $ do
-          let openApiSchema = "json-schemas" </> "hydra-explorer-api.yaml"
+  describe "Client API" $ do
+    describe "GET /heads" $
+      prop "matches schema" $ \(ReasonablySized explorerState) -> do
+        Wai.withApplication (clientApi "static" $ pure explorerState) $ do
+          let openApiSchema = "json-schemas" </> "client-api.yaml"
           openApi <- liftIO $ Yaml.decodeFileThrow @_ @OpenApi openApiSchema
           let componentSchemas = openApi ^?! components . schemas
           let maybeHeadsSchema = do
@@ -57,13 +58,14 @@ apiServerSpec = do
               Wai.get "heads"
                 `shouldRespondWith` matchingJSONSchema componentSchemas headsSchema
 
-      describe "GET /tick" $
-        it "matches schema" $ do
-          let openApiSchema = "json-schemas" </> "hydra-explorer-api.yaml"
+    describe "GET /ticks" $
+      prop "matches schema" $ \(ReasonablySized explorerState) -> do
+        Wai.withApplication (clientApi "static" $ pure explorerState) $ do
+          let openApiSchema = "json-schemas" </> "client-api.yaml"
           openApi <- liftIO $ Yaml.decodeFileThrow @_ @OpenApi openApiSchema
           let componentSchemas = openApi ^?! components . schemas
-          let maybeTickSchema = do
-                path <- openApi ^. paths . at "/tick"
+          let maybeTicksSchema = do
+                path <- openApi ^. paths . at "/ticks"
                 endpoint <- path ^. get
                 res <- endpoint ^. responses . at 200
                 -- XXX: _Inline here assumes that no $ref is used within the
@@ -71,16 +73,12 @@ apiServerSpec = do
                 jsonContent <- res ^. _Inline . content . at "application/json"
                 s <- jsonContent ^. schema
                 pure $ s ^. _Inline
-          case maybeTickSchema of
-            Nothing -> liftIO . failure $ "Failed to find schema for GET /tick endpoint"
-            Just tickSchema -> do
-              liftIO $ tickSchema `shouldNotBe` mempty
-              Wai.get "tick"
-                `shouldRespondWith` matchingJSONSchema componentSchemas tickSchema
- where
-  webServer = httpApp nullTracer "static" getRandomExplorerState
-
-  getRandomExplorerState = generate arbitrary
+          case maybeTicksSchema of
+            Nothing -> liftIO . failure $ "Failed to find schema for GET /ticks endpoint"
+            Just ticksSchema -> do
+              liftIO $ ticksSchema `shouldNotBe` mempty
+              Wai.get "ticks"
+                `shouldRespondWith` matchingJSONSchema componentSchemas ticksSchema
 
 matchingJSONSchema :: Definitions Schema -> Schema -> ResponseMatcher
 matchingJSONSchema definitions s =
@@ -96,7 +94,4 @@ matchingJSONSchema definitions s =
               errs ->
                 Just . toString . unlines $
                   map toText errs
-                    <> [ "Expected schema: " <> show s
-                       , "Actual value: " <> show value
-                       ]
     }

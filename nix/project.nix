@@ -11,7 +11,7 @@ let
     {
       src = ../.;
 
-      shell.withHoogle = false;
+      shell.withHoogle = true;
 
       inputMap = {
         "https://chap.intersectmbo.org/" = inputs.iogx.inputs.CHaP;
@@ -19,15 +19,7 @@ let
 
       name = "hydra-explorer";
       compiler-nix-name = lib.mkDefault "ghc96";
-      modules =
-        [
-          {
-            packages = { };
-          }
-          {
-            packages = { };
-          }
-        ];
+      modules = [ ];
     });
 
 

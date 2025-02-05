@@ -1,32 +1,48 @@
+-- | Unit tests for the aggregation logic in ExplorerState.
 module Hydra.Explorer.ExplorerStateSpec where
 
 import Hydra.Prelude
 import Test.Hydra.Prelude
 
-import Hydra.ChainObserver.NodeClient (ChainObservation (..))
-import Hydra.Explorer.ExplorerState (ExplorerState (..), HeadState (..), aggregateHeadObservations, initialTickState)
-import Hydra.Tx.HeadId (HeadId)
-import Test.QuickCheck (forAll, listOf1, (=/=))
+import Hydra.Explorer.ExplorerState (
+  ExplorerState (..),
+  HeadState (..),
+  aggregateObservation,
+ )
+import Hydra.Explorer.ObservationApi (Observation (..))
+import Test.QuickCheck (counterexample, forAll, (=/=), (===), (==>))
+
+-- NOTE: Orphan instances for NetworkId
+import Hydra.Cardano.Api (toNetworkMagic)
 
 spec :: Spec
 spec = do
-  describe "aggregate head observation into explorer state" $ do
-    -- This ensures that the explorer always at least knows about the existence of a head.
-    -- Even if we only observe a part of the life cycle of some head.
-    prop "Any head observations (of some head id) must yield an entry of that head id" $
-      forAll genObservations $ \observations ->
-        let ExplorerState{heads} = aggregateHeadObservations observations (ExplorerState [] initialTickState)
-         in heads =/= []
+  prop "Any observation of a head transaction must result in an entry of that head id" $ \network version observation ->
+    isJust (observedTx observation) ==>
+      let ExplorerState{heads} = aggregateObservation network version observation (ExplorerState [] [])
+       in heads =/= []
 
-    prop "Given any observations, the resulting list of head ids is a prefix of the original" $
-      forAll genObservations $ \observations ->
-        forAll arbitrary $ \initialHeads -> do
-          let resultExplorerState = aggregateHeadObservations observations (ExplorerState initialHeads initialTickState)
-          getHeadIds initialHeads `isPrefixOf` getHeadIds (heads resultExplorerState)
+  prop "Given any observations, the resulting list of head ids is a prefix of the original" $ \network version observation ->
+    forAll arbitrary $ \initialHeads -> do
+      let resultState = aggregateObservation network version observation (ExplorerState initialHeads [])
+      getHeadIds initialHeads `isPrefixOf` getHeadIds (heads resultState)
+
+  prop "Network is not updated" $ \network1 network2 version observation ->
+    isJust (observedTx observation) ==>
+      let resultState =
+            ExplorerState [] []
+              & aggregateObservation network1 version observation
+              & aggregateObservation network2 version observation
+       in (networkMagic <$> heads resultState) === [toNetworkMagic network1]
+            & counterexample (show resultState)
+
+  prop "Version is not updated" $ \network version1 version2 observation ->
+    isJust (observedTx observation) ==>
+      let resultState =
+            ExplorerState [] []
+              & aggregateObservation network version1 observation
+              & aggregateObservation network version2 observation
+       in (version <$> heads resultState) === [version1]
+            & counterexample (show resultState)
  where
-  genObservations :: Gen [ChainObservation]
-  genObservations =
-    listOf1 $ HeadObservation <$> arbitrary <*> arbitrary <*> arbitrary
-
-  getHeadIds :: [HeadState] -> [HeadId]
   getHeadIds = fmap headId

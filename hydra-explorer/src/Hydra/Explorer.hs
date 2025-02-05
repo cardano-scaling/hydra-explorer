@@ -1,37 +1,57 @@
 module Hydra.Explorer where
 
-import Hydra.ChainObserver qualified
 import Hydra.Prelude
 
-import Control.Concurrent.Class.MonadSTM (modifyTVar', newTVarIO, readTVarIO)
+-- XXX: Depends on hydra-node
 import Hydra.API.APIServerLog (APIServerLog (..), Method (..), PathInfo (..))
-import Hydra.ChainObserver.NodeClient (ChainObservation)
-import Hydra.Explorer.ExplorerState (ExplorerState (..), HeadState, TickState, aggregateHeadObservations, initialTickState)
-import Hydra.Explorer.Options (BlockfrostOptions (..), DirectOptions (..), Options (..), toArgProjectPath, toArgStartChainFrom)
 import Hydra.Logging (Tracer, Verbosity (..), traceWith, withTracer)
-import Hydra.Options qualified as Options
+
+import Control.Concurrent.Class.MonadSTM (modifyTVar', newTBQueueIO, newTVarIO, readTBQueue, readTVarIO, writeTBQueue)
+import Hydra.Cardano.Api (NetworkId)
+import Hydra.Explorer.ExplorerState (ExplorerState (..), HeadState, TickState, aggregateObservation)
+import Hydra.Explorer.ObservationApi (HydraVersion, NetworkParam (..), Observation, ObservationApi)
+import Hydra.Explorer.Options (Options (..))
 import Network.Wai (Middleware, Request (..))
 import Network.Wai.Handler.Warp qualified as Warp
 import Network.Wai.Middleware.Cors (simpleCors)
 import Servant (serveDirectoryFileServer)
 import Servant.API (Get, JSON, Raw, (:<|>) (..), (:>))
-import Servant.Server (Application, Handler, Server, serve)
-import System.Environment (withArgs)
+import Servant.Server (Application, Handler, serve)
 
-type API :: Type
-type API =
+-- * Observer-side API
+
+-- | WAI application serving the 'ObservationApi'.
+observationApi :: PushObservation -> Application
+observationApi pushObservation =
+  serve (Proxy @ObservationApi) server
+ where
+  server = handlePostObservation pushObservation
+
+handlePostObservation ::
+  PushObservation ->
+  NetworkParam ->
+  HydraVersion ->
+  Observation ->
+  Handler ()
+handlePostObservation pushObservation (NetworkParam networkId) version observation =
+  liftIO $ pushObservation (networkId, version, observation)
+
+-- * Client-side API
+
+type ClientApi =
   "heads" :> Get '[JSON] [HeadState]
-    :<|> "tick" :> Get '[JSON] TickState
+    :<|> "ticks" :> Get '[JSON] [TickState]
     :<|> Raw
 
-server ::
-  FilePath ->
-  GetExplorerState ->
-  Server API
-server staticPath getExplorerState =
-  handleGetHeads getExplorerState
-    :<|> handleGetTick getExplorerState
-    :<|> serveDirectoryFileServer staticPath
+-- | WAI application serving the 'ClientApi'.
+clientApi :: FilePath -> GetExplorerState -> Application
+clientApi staticPath getExplorerState =
+  serve (Proxy @ClientApi) server
+ where
+  server =
+    handleGetHeads getExplorerState
+      :<|> handleGetTick getExplorerState
+      :<|> serveDirectoryFileServer staticPath
 
 handleGetHeads ::
   GetExplorerState ->
@@ -41,9 +61,90 @@ handleGetHeads getExplorerState =
 
 handleGetTick ::
   GetExplorerState ->
-  Handler TickState
+  Handler [TickState]
 handleGetTick getExplorerState = do
-  liftIO getExplorerState <&> \ExplorerState{tick} -> tick
+  liftIO getExplorerState <&> \ExplorerState{ticks} -> ticks
+
+-- * Agreggator
+
+type GetExplorerState = IO ExplorerState
+
+type ModifyExplorerState = (ExplorerState -> ExplorerState) -> IO ()
+
+-- | In-memory 'ExplorerState' that can be queried or modified.
+createExplorerState :: IO (GetExplorerState, ModifyExplorerState)
+createExplorerState = do
+  v <- newTVarIO (ExplorerState [] [])
+  pure (getExplorerState v, modifyExplorerState v)
+ where
+  getExplorerState = readTVarIO
+  modifyExplorerState v = atomically . modifyTVar' v
+
+type PushObservation = (NetworkId, HydraVersion, Observation) -> IO ()
+
+type PopObservation = IO (NetworkId, HydraVersion, Observation)
+
+-- | Bounded queue to process observations.
+createObservationQueue :: IO (PushObservation, PopObservation)
+createObservationQueue = do
+  q <- newTBQueueIO 10
+  pure (pushObservation q, popObservation q)
+ where
+  pushObservation q = atomically . writeTBQueue q
+
+  popObservation = atomically . readTBQueue
+
+-- | Worker that continously pops observations and updates the in-memory
+-- 'ExplorerState'.
+aggregator :: PopObservation -> ModifyExplorerState -> IO ()
+aggregator popObservation modifyExplorerState =
+  forever $ do
+    -- XXX: STM would compose better here as IO does not ensure atomicity of the
+    -- pop and modify. OTOH we don't have multiple producers/consumers and the
+    -- whole explorer is going down in case of exceptions anyways.
+    (network, version, observation) <- popObservation
+    modifyExplorerState $ aggregateObservation network version observation
+
+-- * Main
+
+-- XXX: Depends on hydra-node for logging stuff, could replace with different
+-- (structured) logging tools
+-- TODO: distinguish servers when logging
+run :: Options -> IO ()
+run opts = do
+  withTracer (Verbose "hydra-explorer") $ \tracer -> do
+    (pushObservation, popObservation) <- createObservationQueue
+    (getExplorerState, modifyExplorerState) <- createExplorerState
+    race_ (observationServer tracer $ observationApi pushObservation) $
+      race_ (clientServer tracer $ clientApi staticFilePath getExplorerState) $
+        aggregator popObservation modifyExplorerState
+ where
+  Options{staticFilePath, clientPort, observerPort} = opts
+
+  clientServer tracer app = do
+    let settings =
+          Warp.defaultSettings
+            & Warp.setPort (fromIntegral clientPort)
+            & Warp.setHost "0.0.0.0"
+            & Warp.setBeforeMainLoop (traceWith tracer $ APIServerStarted clientPort)
+            & Warp.setOnException (\_ e -> traceWith tracer $ APIConnectionError{reason = show e})
+    Warp.runSettings settings
+      . logMiddleware tracer
+      . simpleCors
+      $ app
+
+  observationServer tracer app = do
+    let settings =
+          Warp.defaultSettings
+            & Warp.setPort (fromIntegral observerPort)
+            & Warp.setHost "0.0.0.0"
+            & Warp.setBeforeMainLoop (traceWith tracer $ APIServerStarted observerPort)
+            & Warp.setOnException (\_ e -> traceWith tracer $ APIConnectionError{reason = show e})
+    Warp.runSettings settings
+      . logMiddleware tracer
+      $ app
+
+-- * Logging
 
 logMiddleware :: Tracer IO APIServerLog -> Middleware
 logMiddleware tracer app' req sendResponse = do
@@ -54,65 +155,3 @@ logMiddleware tracer app' req sendResponse = do
         , path = PathInfo $ rawPathInfo req
         }
   app' req sendResponse
-
-httpApp :: Tracer IO APIServerLog -> FilePath -> GetExplorerState -> Application
-httpApp tracer staticPath getExplorerState =
-  logMiddleware tracer
-    . simpleCors
-    . serve (Proxy @API)
-    $ server staticPath getExplorerState
-
-observerHandler :: ModifyExplorerState -> [ChainObservation] -> IO ()
-observerHandler modifyExplorerState observations = do
-  modifyExplorerState $
-    aggregateHeadObservations observations
-
-type GetExplorerState = IO ExplorerState
-
-type ModifyExplorerState = (ExplorerState -> ExplorerState) -> IO ()
-
-createExplorerState :: IO (GetExplorerState, ModifyExplorerState)
-createExplorerState = do
-  v <- newTVarIO (ExplorerState [] initialTickState)
-  pure (getExplorerState v, modifyExplorerState v)
- where
-  getExplorerState = readTVarIO
-  modifyExplorerState v = atomically . modifyTVar' v
-
-run :: Options -> IO ()
-run opts = do
-  withTracer (Verbose "hydra-explorer") $ \tracer -> do
-    (getExplorerState, modifyExplorerState) <- createExplorerState
-
-    let chainObserverArgs =
-          case opts of
-            DirectOpts DirectOptions{networkId, nodeSocket, startChainFrom} ->
-              ["direct"]
-                <> Options.toArgNodeSocket nodeSocket
-                <> Options.toArgNetworkId networkId
-                <> toArgStartChainFrom startChainFrom
-            BlockfrostOpts BlockfrostOptions{projectPath, startChainFrom} ->
-              ["blockfrost"]
-                <> toArgProjectPath projectPath
-                <> toArgStartChainFrom startChainFrom
-    race_
-      ( withArgs chainObserverArgs $
-          Hydra.ChainObserver.main (observerHandler modifyExplorerState)
-      )
-      (Warp.runSettings (settings tracer) (httpApp tracer staticPath getExplorerState))
- where
-  staticPath =
-    case opts of
-      DirectOpts DirectOptions{staticFilePath} -> staticFilePath
-      BlockfrostOpts BlockfrostOptions{staticFilePath} -> staticFilePath
-  portToBind =
-    case opts of
-      DirectOpts DirectOptions{port} -> port
-      BlockfrostOpts BlockfrostOptions{port} -> port
-
-  settings tracer =
-    Warp.defaultSettings
-      & Warp.setPort (fromIntegral portToBind)
-      & Warp.setHost "0.0.0.0"
-      & Warp.setBeforeMainLoop (traceWith tracer $ APIServerStarted portToBind)
-      & Warp.setOnException (\_ e -> traceWith tracer $ APIConnectionError{reason = show e})
