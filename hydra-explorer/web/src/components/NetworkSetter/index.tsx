@@ -4,7 +4,7 @@ import React, { ChangeEvent } from 'react'
 import { useNetworkContext } from "@/providers/NetworkProvider"
 
 const NetworkSetter = () => {
-  const { currentNetwork, currentNetworkMagic, updateNetwork } = useNetworkContext()
+  const { currentNetworkMagic, updateNetwork } = useNetworkContext()
 
   return (
     <div className="flex">
@@ -15,14 +15,14 @@ const NetworkSetter = () => {
           <select
             value={currentNetworkMagic}
             onChange={(e: ChangeEvent<HTMLSelectElement>) => {
-              const networkSelected = e.target.innerText
+              const networkSelected = e.target.options[e.target.selectedIndex].text
               const networkMagicSelected = Number(e.target.value)
               updateNetwork(networkSelected, networkMagicSelected)
             }
             }
             className="py-2 px-3 bg-gray-800 text-gray-200 rounded-md"
           >
-            <option value={0}>mainnet</option>
+            <option value={764824073}>mainnet</option>
             <option value={2}>preview</option>
           </select>
         </div>

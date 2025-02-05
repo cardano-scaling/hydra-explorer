@@ -45,11 +45,15 @@ export default function Home() {
                       </div>
                       Hydrascan
                     </h1>
-                    <div>
-                      <NetworkSetter />
-                    </div>
-                    <div>
-                      <VersionSetter />
+                    <div className="ml-10">
+                      <div className="flex items-start space-x-4">
+                        <div>
+                          <NetworkSetter />
+                        </div>
+                        <div>
+                          <VersionSetter />
+                        </div>
+                      </div>
                     </div>
                     <div className="ml-10">
                       <HeadsDashboard />

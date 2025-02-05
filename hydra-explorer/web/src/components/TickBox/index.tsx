@@ -20,12 +20,14 @@ const TickBox = () => {
 
     const tick: TickState | undefined = useMemo(() => {
         return ticks.find(
-            (tick) =>
-            tick.network === currentNetwork &&
-            tick.networkMagic === currentNetworkMagic
+            (tick) => {
+                const networkSelected = currentNetwork === "mainnet" ? "Mainnet" : "Testnet"
+                return tick.network === networkSelected &&
+                    tick.networkMagic === currentNetworkMagic
+            }
         )
     }, [ticks, currentNetwork, currentNetworkMagic])
-    
+
 
     const explorer = useCardanoExplorer()
 

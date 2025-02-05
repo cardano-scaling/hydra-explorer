@@ -4,7 +4,7 @@ import React, { ChangeEvent } from 'react'
 import { useVersionContext } from "@/providers/VersionProvider"
 
 const VersionSetter = () => {
-  const {currentVersion, updateVersion} = useVersionContext()
+  const { currentVersion, updateVersion } = useVersionContext()
 
   return (
     <div className="flex">
@@ -21,9 +21,8 @@ const VersionSetter = () => {
             }
             className="py-2 px-3 bg-gray-800 text-gray-200 rounded-md"
           >
-            <option value={"latest"}>latest</option>
-            <option value={"0/20/0"}>0.20.0</option>
-            <option value={"0/21/0"}>0.21.0</option>
+            <option value={"0.19.0-0000000001000000000100000000010000000001"}>0.19.0</option>
+            <option value={"0.20.0-0000000001000000000100000000010000000001"}>latest</option>
           </select>
         </div>
       </div>

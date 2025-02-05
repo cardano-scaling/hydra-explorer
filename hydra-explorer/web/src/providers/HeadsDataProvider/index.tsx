@@ -39,10 +39,12 @@ export const HeadsDataProvider: React.FC<any> = ({
 
   const getHeads = useMemo(() => {
     return heads.filter(
-      (head) =>
-        head.version === currentVersion &&
-        head.network === currentNetwork &&
-        head.networkMagic === currentNetworkMagic
+      (head) => {
+        const networkSelected = currentNetwork === "mainnet" ? "Mainnet" : "Testnet"
+        return !(head.version === currentVersion &&
+          head.network === networkSelected &&
+          head.networkMagic === currentNetworkMagic)
+      }
     )
   }, [heads, currentVersion, currentNetwork, currentNetworkMagic])
 
