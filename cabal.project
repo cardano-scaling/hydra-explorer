@@ -23,7 +23,7 @@ source-repository-package
   type: git
   location: https://github.com/cardano-scaling/hydra
   -- 0.20.0 + http-chain-observer work
-  tag: cf09cb053a29800779f8024e9eaec7d88a3dfc7c
+  tag: 0be61598fa556761fabab374a66649a37e402304
   --sha256: sha256-2v7K8il2Nq1MCeHpjkURp0uKSWFsUBnKOdMdrWZGkkw=
   subdir:
     hydra-prelude
