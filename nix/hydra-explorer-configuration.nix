@@ -1,4 +1,4 @@
-{ pkgs, lib, inputs, ... }:
+{ pkgs, lib, inputs, config, ... }:
 {
   networking = {
     hostName = "hydra-explorer";
@@ -57,11 +57,81 @@
   virtualisation.podman.enable = true;
   virtualisation.podman.dockerCompat = true;
 
-  # Cardano node used by Hydra smoke tests and explorer instance
-  # TODO: add multiple instances of cardano-node and hydra-chain-observer
+  # Network between hydra-explorer and hydra-chain-observer
+  systemd.services."init-docker-network-explorer" =
+    let networkName = "hydra-explorer";
+    in {
+      description = "Network bridge for ${networkName}.";
+      after = [ "network.target" ];
+      wantedBy = [ "multi-user.target" ];
+
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = "yes";
+      };
+      script =
+        let cli = "${config.virtualisation.podman.package}/bin/podman";
+        in ''
+          if [[ $(${cli} network inspect ${networkName}) == "[]" ]]; then
+            ${cli} network create ${networkName}
+          else
+            echo "Docker network ${networkName} already exists"
+          fi
+        '';
+    };
+
+  # Hydra explorer instance
+  virtualisation.oci-containers.containers.hydra-explorer = {
+    image = "ghcr.io/cardano-scaling/hydra-explorer:unstable";
+    volumes = [
+      "/data/cardano/preview:/data"
+    ];
+    ports = [
+      "80:8000"
+    ];
+    cmd = builtins.concatLists [
+      [ "--client-port" "8000" ]
+      [ "--observer-port" "8001" ] # not bound to host
+    ];
+    extraOptions = [ "--network=hydra-explorer" ];
+  };
+
+  virtualisation.oci-containers.containers."hydra-chain-observer-preview-unstable" = {
+    image = "ghcr.io/cardano-scaling/hydra-chain-observer:unstable";
+    volumes = [
+      "/data/cardano/preview:/data"
+    ];
+    cmd = builtins.concatLists [
+      [ "--node-socket" "/data/node.socket" ]
+      [ "--testnet-magic" "2" ]
+      # NOTE: Block in which 0.20.0 scripts were published
+      [ "--start-chain-from" "49533501.e364500a42220ea47314215679b7e42e9bbb81fa69d1366fe738d8aef900f7ee" ]
+      # NOTE: Reachable via bridge network
+      [ "--explorer" "http://hydra-explorer:8001" ]
+    ];
+    extraOptions = [ "--network=hydra-explorer" ];
+  };
+
+  virtualisation.oci-containers.containers."hydra-chain-observer-preprod-unstable" = {
+    image = "ghcr.io/cardano-scaling/hydra-chain-observer:unstable";
+    volumes = [
+      "/data/cardano/preprod:/data"
+    ];
+    cmd = builtins.concatLists [
+      [ "--node-socket" "/data/node.socket" ]
+      [ "--testnet-magic" "1" ]
+      # NOTE: Block in which 0.20.0 scripts were published
+      [ "--start-chain-from" "82913877.aa62d900ecbd6a073e1b5bb8c014413365c26a3675bd81dc567013340bf94ec3" ]
+      # NOTE: Reachable via bridge network
+      [ "--explorer" "http://hydra-explorer:8001" ]
+    ];
+    extraOptions = [ "--network=hydra-explorer" ];
+  };
+
+  # Cardano node used by Hydra smoke tests and hydra-chain-observers
   # TODO: initialize /data/cardano/preview correctly on a fresh machine
   virtualisation.oci-containers.containers.cardano-node-preview = {
-    image = "ghcr.io/intersectmbo/cardano-node:10.1.3";
+    image = "ghcr.io/intersectmbo/cardano-node:10.1.4";
     volumes = [
       "/data/cardano/preview:/data"
     ];
@@ -76,21 +146,22 @@
     };
   };
 
-  virtualisation.oci-containers.containers.hydra-explorer = {
-    image = "ghcr.io/cardano-scaling/hydra-explorer:0.19.0";
+  # Cardano node used by Hydra smoke tests and hydra-chain-observers
+  # TODO: initialize /data/cardano/preprod correctly on a fresh machine
+  virtualisation.oci-containers.containers.cardano-node-preprod = {
+    image = "ghcr.io/intersectmbo/cardano-node:10.1.4";
     volumes = [
-      "/data/cardano/preview:/data"
+      "/data/cardano/preprod:/data"
     ];
-    ports = [
-      "80:8080"
-    ];
-    cmd = builtins.concatLists [
-      [ "--node-socket" "/data/node.socket" ]
-      [ "--testnet-magic" "2" ]
-      [ "--api-port" "8080" ]
-      # NOTE: Block in which current master scripts were published
-      [ "--start-chain-from" "49533501.e364500a42220ea47314215679b7e42e9bbb81fa69d1366fe738d8aef900f7ee" ]
-    ];
+    cmd = [ "run" ];
+    environment = {
+      CARDANO_CONFIG = "/data/config.json";
+      CARDANO_TOPOLOGY = "/data/topology.json";
+      CARDANO_DATABASE_PATH = "/data/db";
+      CARDANO_SOCKET_PATH = "/data/node.socket"; # used by cardano-node
+      CARDANO_NODE_SOCKET_PATH = "/data/node.socket"; # used by cardano-cli
+      CARDANO_LOG_DIR = "/data/logs";
+    };
   };
 
   services.openssh = {
