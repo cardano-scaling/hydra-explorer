@@ -1,7 +1,9 @@
 { pkgs, lib, inputs, config, ... }:
 {
   networking = {
-    hostName = "hydra-explorer";
+    # NOTE: This is not hydra-explorer as a container running on this host will
+    # use that dns name.
+    hostName = "explorer";
     firewall = {
       allowedTCPPorts = [ 22 80 443 ];
       enable = true;
@@ -53,9 +55,9 @@
     };
   };
 
-  # Use podman to manage containers
-  virtualisation.podman.enable = true;
-  virtualisation.podman.dockerCompat = true;
+  # Use docker to manage containers
+  virtualisation.docker.enable = true;
+  virtualisation.oci-containers.backend = "docker";
 
   # Network between hydra-explorer and hydra-chain-observer
   systemd.services."init-docker-network-explorer" =
@@ -70,7 +72,7 @@
         RemainAfterExit = "yes";
       };
       script =
-        let cli = "${config.virtualisation.podman.package}/bin/podman";
+        let cli = "${config.virtualisation.docker.package}/bin/docker";
         in ''
           if [[ $(${cli} network inspect ${networkName}) == "[]" ]]; then
             ${cli} network create ${networkName}
