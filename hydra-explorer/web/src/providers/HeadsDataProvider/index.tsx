@@ -41,9 +41,9 @@ export const HeadsDataProvider: React.FC<any> = ({
     return heads.filter(
       (head) => {
         const networkSelected = currentNetwork === "mainnet" ? "Mainnet" : "Testnet"
-        return !(head.version === currentVersion &&
+        return head.version === currentVersion &&
           head.network === networkSelected &&
-          head.networkMagic === currentNetworkMagic)
+          head.networkMagic === currentNetworkMagic
       }
     )
   }, [heads, currentVersion, currentNetwork, currentNetworkMagic])
