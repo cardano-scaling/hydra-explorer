@@ -107,7 +107,7 @@
       [ "--node-socket" "/data/node.socket" ]
       [ "--testnet-magic" "2" ]
       # NOTE: Block in which 0.20.0 scripts were published
-      [ "--start-chain-from" "49533501.e364500a42220ea47314215679b7e42e9bbb81fa69d1366fe738d8aef900f7ee" ]
+      [ "--start-chain-from" "71938562.2c5fc734343ad1bf8ce2df999421cca15dffdd2b8e1909dad7127b9eaacf8b9c" ]
       # NOTE: Reachable via bridge network
       [ "--explorer" "http://hydra-explorer:8001" ]
     ];
