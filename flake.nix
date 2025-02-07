@@ -57,7 +57,7 @@
     ];
 
     flake = _: {
-      nixosConfigurations.hydra-explorer =
+      nixosConfigurations.explorer =
         inputs.nixpkgs.lib.nixosSystem
           {
             system = "x86_64-linux";
