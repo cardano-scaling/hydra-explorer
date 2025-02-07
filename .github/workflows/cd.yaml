@@ -1,0 +1,22 @@
+# Deploy the latest images through docker compose to explorer.hydra.family
+name: "CD"
+on:
+  workflow_run:
+    workflows: ["Docker"]
+    branches: [ "master", "multi-version-explorer-deployment" ]
+    types:
+      - completed
+  workflow_dispatch:
+
+jobs:
+  explorer:
+    name: "Deploy"
+    runs-on: explorer
+    steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v4
+
+    - name: ⛄ Deploy with nixos
+      run: |
+        # TODO: update nixos config to docker pull
+        /run/current-system/sw/bin/nixos-rebuild switch --flake .
