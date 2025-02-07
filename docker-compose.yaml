@@ -1,0 +1,86 @@
+# Hydra explorer instance with it's chain observers as it is deployed to
+# explorer.hydra.family
+version: "3.9"
+
+networks:
+  hydra-explorer:
+    driver: bridge
+
+services:
+  hydra-explorer:
+    image: ghcr.io/cardano-scaling/hydra-explorer:unstable
+    ports:
+      - "80:8000"
+    command:
+      [ "--client-port", "8000"
+      , "--observer-port", "8001" # not bound to host
+      ]
+    networks:
+      - hydra-explorer
+    restart: always
+
+  # List of hydra-chain-observers
+
+  hydra-chain-observer-preview-unstable:
+    image: ghcr.io/cardano-scaling/hydra-chain-observer:unstable
+    volumes:
+      - "/data/cardano/preview:/data"
+    command:
+      [ "--node-socket", "/data/node.socket"
+      , "--testnet-magic", "2"
+      # NOTE: Block in which 0.20.0 scripts were published
+      , "--start-chain-from", "71938562.2c5fc734343ad1bf8ce2df999421cca15dffdd2b8e1909dad7127b9eaacf8b9c"
+      # NOTE: Reachable via hydra-explorer network
+      , "--explorer", "http://hydra-explorer:8001"
+      ]
+    networks:
+      - hydra-explorer
+    restart: always
+
+  hydra-chain-observer-preprod-unstable:
+    image: ghcr.io/cardano-scaling/hydra-chain-observer:unstable
+    volumes:
+      - "/data/cardano/preprod:/data"
+    command:
+      [ "--node-socket", "/data/node.socket"
+      , "--testnet-magic", "1"
+      # NOTE: Block in which 0.20.0 scripts were published
+      , "--start-chain-from", "82913877.aa62d900ecbd6a073e1b5bb8c014413365c26a3675bd81dc567013340bf94ec3"
+      # NOTE: Reachable via hydra-explorer network
+      , "--explorer", "http://hydra-explorer:8001"
+      ]
+    networks:
+      - hydra-explorer
+    restart: always
+
+  # One cardano node per network
+
+  cardano-node-preview:
+    image: ghcr.io/intersectmbo/cardano-node:10.1.4
+    volumes:
+      - /data/cardano/preview:/data
+    environment:
+      - CARDANO_CONFIG=/data/config.json
+      - CARDANO_TOPOLOGY=/data/topology.json
+      - CARDANO_DATABASE_PATH=/data/db
+      - CARDANO_SOCKET_PATH=/data/node.socket # used by cardano-node
+      - CARDANO_NODE_SOCKET_PATH=/data/node.socket # used by cardano-cli
+      - CARDANO_LOG_DIR=/data/logs
+    command:
+      [ "run" ]
+    restart: always
+
+  cardano-node-preprod:
+    image: ghcr.io/intersectmbo/cardano-node:10.1.4
+    volumes:
+      - /data/cardano/preprod:/data
+    environment:
+      - CARDANO_CONFIG=/data/config.json
+      - CARDANO_TOPOLOGY=/data/topology.json
+      - CARDANO_DATABASE_PATH=/data/db
+      - CARDANO_SOCKET_PATH=/data/node.socket # used by cardano-node
+      - CARDANO_NODE_SOCKET_PATH=/data/node.socket # used by cardano-cli
+      - CARDANO_LOG_DIR=/data/logs
+    command:
+      [ "run" ]
+    restart: always
