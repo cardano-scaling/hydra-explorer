@@ -27,6 +27,7 @@ const HeadsTable: React.FC = () => {
                         <thead className="sticky top-0 text-center px-4 py-2 bg-gray-800">
                             <tr>
                                 <th>Head ID</th>
+                                <th>Head Version</th>
                                 <th>Status</th>
                                 <th>Slot Number</th>
                                 <th>Block Number</th>
@@ -43,6 +44,7 @@ const HeadsTable: React.FC = () => {
                                             {head.headId}
                                         </a>
                                     </td>
+                                    <td className="truncate text-center border px-4 py-2">{head.version}</td>
                                     <td className="truncate text-center border px-4 py-2">{head.status}</td>
                                     <td className="truncate text-center border px-4 py-2">{head.point.slot}</td>
                                     <td className="truncate text-center border px-4 py-2">{head.blockNo}</td>

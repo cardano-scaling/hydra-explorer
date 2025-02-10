@@ -2,9 +2,7 @@ import Head from "next/head"
 
 import Image from "next/image"
 import IntervalSettingProvider from "@/providers/IntervalProvider"
-import VersionSettingProvider from "@/providers/VersionProvider"
 import IntervalSetter from "@/components/IntervalSetter"
-import VersionSetter from "@/components/VersionSetter"
 import TickBox from "@/components/TickBox"
 import HeadsTable from "@/components/HeadsTable"
 import { HeadsDataProvider } from "@/providers/HeadsDataProvider"
@@ -26,8 +24,6 @@ export default function Home() {
 
         <IntervalSettingProvider>
           <NetworkSettingProvider>
-            <VersionSettingProvider>
-
               <div className="flex flex-col items-center justify-center h-screen">
                 <HeadsDataProvider>
 
@@ -49,9 +45,6 @@ export default function Home() {
                       <div className="flex items-start space-x-4">
                         <div>
                           <NetworkSetter />
-                        </div>
-                        <div>
-                          <VersionSetter />
                         </div>
                       </div>
                     </div>
@@ -76,8 +69,6 @@ export default function Home() {
 
                 </HeadsDataProvider>
               </div>
-
-            </VersionSettingProvider>
           </NetworkSettingProvider>
         </IntervalSettingProvider>
       </div>
