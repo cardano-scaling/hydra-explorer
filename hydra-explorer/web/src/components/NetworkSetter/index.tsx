@@ -15,9 +15,8 @@ const NetworkSetter = () => {
           <select
             value={currentNetworkMagic}
             onChange={(e: ChangeEvent<HTMLSelectElement>) => {
-              const networkSelected = e.target.options[e.target.selectedIndex].text
               const networkMagicSelected = Number(e.target.value)
-              updateNetwork(networkSelected, networkMagicSelected)
+              updateNetwork(networkMagicSelected)
             }
             }
             className="py-2 px-3 bg-gray-800 text-gray-200 rounded-md"

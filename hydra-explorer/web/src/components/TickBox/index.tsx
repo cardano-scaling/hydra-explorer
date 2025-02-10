@@ -10,7 +10,7 @@ const TickBox = () => {
     const [ticks, setTicks] = useState<TickState[]>([])
     const [error, setError] = useState<string | null>(null)
 
-    const { currentNetwork, currentNetworkMagic } = useNetworkContext()
+    const { currentNetworkMagic } = useNetworkContext()
 
     useDataFetcher<TickState[]>({
         url: `/ticks`,
@@ -21,12 +21,10 @@ const TickBox = () => {
     const tick: TickState | undefined = useMemo(() => {
         return ticks.find(
             (tick) => {
-                const networkSelected = currentNetwork === "mainnet" ? "Mainnet" : "Testnet"
-                return tick.network === networkSelected &&
-                    tick.networkMagic === currentNetworkMagic
+                return tick.networkMagic === currentNetworkMagic
             }
         )
-    }, [ticks, currentNetwork, currentNetworkMagic])
+    }, [ticks, currentNetworkMagic])
 
 
     const explorer = useCardanoExplorer()

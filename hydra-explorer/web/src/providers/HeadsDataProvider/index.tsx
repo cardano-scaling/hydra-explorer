@@ -27,7 +27,7 @@ export const HeadsDataProvider: React.FC<any> = ({
   const [heads, setHeads] = useState<HeadState[]>([])
   const [error, setError] = useState<string | null>(null)
 
-  const { currentNetwork, currentNetworkMagic } = useNetworkContext()
+  const { currentNetworkMagic } = useNetworkContext()
 
   useDataFetcher<HeadState[]>({
     url: `/heads`,
@@ -38,12 +38,10 @@ export const HeadsDataProvider: React.FC<any> = ({
   const getHeads = useMemo(() => {
     return heads.filter(
       (head) => {
-        const networkSelected = currentNetwork === "mainnet" ? "Mainnet" : "Testnet"
-        return head.network === networkSelected &&
-          head.networkMagic === currentNetworkMagic
+        return head.networkMagic === currentNetworkMagic
       }
     )
-  }, [heads, currentNetwork, currentNetworkMagic])
+  }, [heads, currentNetworkMagic])
 
   return (
     <HeadsDataContext.Provider value={{ heads: getHeads, error: error }}>

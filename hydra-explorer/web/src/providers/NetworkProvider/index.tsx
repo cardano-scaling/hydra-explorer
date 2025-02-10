@@ -3,9 +3,8 @@
 import React, { useContext, useState } from 'react'
 
 export interface NetworkSettingService {
-    currentNetwork: string
     currentNetworkMagic: number
-    updateNetwork: (network: string, networkMagic: number) => void
+    updateNetwork: (networkMagic: number) => void
 }
 
 const NetworkContext: React.Context<NetworkSettingService> =
@@ -22,17 +21,14 @@ export const useNetworkContext = () => {
 const NetworkSettingProvider: React.FC<any> = ({
     children
 }) => {
-    const [currNetwork, setCurrentNetwork] = useState("preview")
     const [currNetworkMagic, setCurrentNetworkMagic] = useState(2)
 
-    const handleNetworkChange = (network: string, networkMagic: number) => {
-        setCurrentNetwork(network)
+    const handleNetworkChange = (networkMagic: number) => {
         setCurrentNetworkMagic(networkMagic)
     }
 
     return (
         <NetworkContext.Provider value={{
-            currentNetwork: currNetwork,
             currentNetworkMagic: currNetworkMagic,
             updateNetwork: handleNetworkChange
         }}>
