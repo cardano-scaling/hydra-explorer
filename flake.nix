@@ -41,52 +41,41 @@
     agenix.url = "github:ryantm/agenix";
   };
 
-  outputs = inputs:
-    let
-      systems = [
-        "x86_64-linux"
-        "x86_64-darwin"
-        "aarch64-darwin"
-        "aarch64-linux"
-      ];
-    in
-    inputs.iogx.lib.mkFlake {
+  outputs = inputs: inputs.iogx.lib.mkFlake {
+    inherit inputs;
+    systems = [ "x86_64-linux" "x86_64-darwin" "aarch64-darwin" "aarch64-linux" ];
+    repoRoot = ./.;
 
-      nixpkgsArgs.overlays = [
-        inputs.nix-npm-buildpackage.overlays.default
-        (final: prev: {
-          cardano-node = inputs.cardano-node.packages.${final.system}.cardano-node;
-          cardano-cli = inputs.cardano-node.packages.${final.system}.cardano-cli;
-          hydra-chain-observer = inputs.hydra.packages.${final.system}.hydra-chain-observer;
-          hydra-node = inputs.hydra.packages.${final.system}.hydra-node;
-        })
-      ];
+    nixpkgsArgs.overlays = [
+      inputs.nix-npm-buildpackage.overlays.default
+      (final: prev: {
+        cardano-node = inputs.cardano-node.packages.${final.system}.cardano-node;
+        cardano-cli = inputs.cardano-node.packages.${final.system}.cardano-cli;
+        hydra-chain-observer = inputs.hydra.packages.${final.system}.hydra-chain-observer;
+        hydra-node = inputs.hydra.packages.${final.system}.hydra-node;
+      })
+    ];
 
-      inherit inputs;
-      inherit systems;
-
-      repoRoot = ./.;
-
-      flake = _: {
-        nixosConfigurations.hydra-explorer =
-          inputs.nixpkgs.lib.nixosSystem
-            {
-              system = "x86_64-linux";
-              specialArgs = inputs;
-              modules = [
-                {
-                  imports = [
-                    "${inputs.nixpkgs}/nixos/modules/virtualisation/amazon-image.nix"
-                    (import ./nix/hydra-explorer-configuration.nix)
-                  ];
-                }
-                inputs.agenix.nixosModules.default
-              ];
-            };
-      };
-
-      outputs = import ./nix/outputs.nix;
+    flake = _: {
+      nixosConfigurations.explorer =
+        inputs.nixpkgs.lib.nixosSystem
+          {
+            system = "x86_64-linux";
+            specialArgs = inputs;
+            modules = [
+              {
+                imports = [
+                  "${inputs.nixpkgs}/nixos/modules/virtualisation/amazon-image.nix"
+                  (import ./nix/hydra-explorer-configuration.nix)
+                ];
+              }
+              inputs.agenix.nixosModules.default
+            ];
+          };
     };
+
+    outputs = import ./nix/outputs.nix;
+  };
 
   nixConfig = {
     extra-substituters = [

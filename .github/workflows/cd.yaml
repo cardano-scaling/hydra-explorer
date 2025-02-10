@@ -3,7 +3,7 @@ name: "CD"
 on:
   workflow_run:
     workflows: ["Docker"]
-    branches: [ "master", "multi-version-explorer-deployment" ]
+    branches: ["master"]
     types:
       - completed
   workflow_dispatch:
@@ -16,7 +16,7 @@ jobs:
     - name: 📥 Checkout repository
       uses: actions/checkout@v4
 
-    - name: ⛄ Deploy with nixos
+    - name: 🐳 Deploy with docker compose
       run: |
-        # TODO: update nixos config to docker pull
-        /run/current-system/sw/bin/nixos-rebuild switch --flake .
+        /run/current-system/sw/bin/docker compose pull
+        /run/current-system/sw/bin/docker compose up -d

@@ -1,7 +1,9 @@
-{ pkgs, lib, inputs, ... }:
+{ pkgs, lib, inputs, config, ... }:
 {
   networking = {
-    hostName = "hydra-explorer";
+    # NOTE: This is not hydra-explorer as a container running on this host will
+    # use that dns name.
+    hostName = "explorer";
     firewall = {
       allowedTCPPorts = [ 22 80 443 ];
       enable = true;
@@ -53,45 +55,8 @@
     };
   };
 
-  # Use podman to manage containers
-  virtualisation.podman.enable = true;
-  virtualisation.podman.dockerCompat = true;
-
-  # Cardano node used by Hydra smoke tests and explorer instance
-  # TODO: add multiple instances of cardano-node and hydra-chain-observer
-  # TODO: initialize /data/cardano/preview correctly on a fresh machine
-  virtualisation.oci-containers.containers.cardano-node-preview = {
-    image = "ghcr.io/intersectmbo/cardano-node:10.1.3";
-    volumes = [
-      "/data/cardano/preview:/data"
-    ];
-    cmd = [ "run" ];
-    environment = {
-      CARDANO_CONFIG = "/data/config.json";
-      CARDANO_TOPOLOGY = "/data/topology.json";
-      CARDANO_DATABASE_PATH = "/data/db";
-      CARDANO_SOCKET_PATH = "/data/node.socket"; # used by cardano-node
-      CARDANO_NODE_SOCKET_PATH = "/data/node.socket"; # used by cardano-cli
-      CARDANO_LOG_DIR = "/data/logs";
-    };
-  };
-
-  virtualisation.oci-containers.containers.hydra-explorer = {
-    image = "ghcr.io/cardano-scaling/hydra-explorer:0.19.0";
-    volumes = [
-      "/data/cardano/preview:/data"
-    ];
-    ports = [
-      "80:8080"
-    ];
-    cmd = builtins.concatLists [
-      [ "--node-socket" "/data/node.socket" ]
-      [ "--testnet-magic" "2" ]
-      [ "--api-port" "8080" ]
-      # NOTE: Block in which current master scripts were published
-      [ "--start-chain-from" "49533501.e364500a42220ea47314215679b7e42e9bbb81fa69d1366fe738d8aef900f7ee" ]
-    ];
-  };
+  # Use docker to manage containers
+  virtualisation.docker.enable = true;
 
   services.openssh = {
     settings.PasswordAuthentication = false;
