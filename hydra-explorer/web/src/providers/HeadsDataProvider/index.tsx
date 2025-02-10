@@ -3,7 +3,6 @@
 import { HeadState } from '@/app/model'
 import useDataFetcher from '@/hooks/DataFetcher'
 import React, { useContext, useMemo, useState } from 'react'
-import { useVersionContext } from "@/providers/VersionProvider"
 import { useNetworkContext } from "@/providers/NetworkProvider"
 
 export interface HeadsDataService {
@@ -28,7 +27,6 @@ export const HeadsDataProvider: React.FC<any> = ({
   const [heads, setHeads] = useState<HeadState[]>([])
   const [error, setError] = useState<string | null>(null)
 
-  const { currentVersion } = useVersionContext()
   const { currentNetwork, currentNetworkMagic } = useNetworkContext()
 
   useDataFetcher<HeadState[]>({
@@ -41,12 +39,11 @@ export const HeadsDataProvider: React.FC<any> = ({
     return heads.filter(
       (head) => {
         const networkSelected = currentNetwork === "mainnet" ? "Mainnet" : "Testnet"
-        return head.version === currentVersion &&
-          head.network === networkSelected &&
+        return head.network === networkSelected &&
           head.networkMagic === currentNetworkMagic
       }
     )
-  }, [heads, currentVersion, currentNetwork, currentNetworkMagic])
+  }, [heads, currentNetwork, currentNetworkMagic])
 
   return (
     <HeadsDataContext.Provider value={{ heads: getHeads, error: error }}>

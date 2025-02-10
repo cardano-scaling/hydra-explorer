@@ -24,51 +24,51 @@ export default function Home() {
 
         <IntervalSettingProvider>
           <NetworkSettingProvider>
-              <div className="flex flex-col items-center justify-center h-screen">
-                <HeadsDataProvider>
+            <div className="flex flex-col items-center justify-center h-screen">
+              <HeadsDataProvider>
 
-                  <div className="flex ">
-                    <h1 className="text-3xl font-bold flex items-center">
-                      <div className="mr-4">
-                        <Image
-                          src="/hydra.svg"
-                          alt="Hydra Logo"
-                          className="dark:invert"
-                          width={50}
-                          height={50}
-                          priority
-                        />
-                      </div>
-                      Hydrascan
-                    </h1>
-                    <div className="ml-10">
-                      <div className="flex items-start space-x-4">
-                        <div>
-                          <NetworkSetter />
-                        </div>
-                      </div>
+                <div className="flex ">
+                  <h1 className="text-3xl font-bold flex items-center">
+                    <div className="mr-4">
+                      <Image
+                        src="/hydra.svg"
+                        alt="Hydra Logo"
+                        className="dark:invert"
+                        width={50}
+                        height={50}
+                        priority
+                      />
                     </div>
-                    <div className="ml-10">
-                      <HeadsDashboard />
-                    </div>
-                  </div>
-
-                  <CardanoExplorerProvider network={process.env.NETWORK_URL || "preview"}>
+                    Hydrascan
+                  </h1>
+                  <div className="ml-10">
                     <div className="flex items-start space-x-4">
                       <div>
-                        <TickBox />
+                        <NetworkSetter />
                       </div>
-                      <div>
-                        <IntervalSetter />
-                      </div>
-
                     </div>
-                    <HeadsTable />
-                  </CardanoExplorerProvider>
+                  </div>
+                  <div className="ml-10">
+                    <HeadsDashboard />
+                  </div>
+                </div>
+
+                <CardanoExplorerProvider network={process.env.NETWORK_URL || "preview"}>
+                  <div className="flex items-start space-x-4">
+                    <div>
+                      <TickBox />
+                    </div>
+                    <div>
+                      <IntervalSetter />
+                    </div>
+
+                  </div>
+                  <HeadsTable />
+                </CardanoExplorerProvider>
 
 
-                </HeadsDataProvider>
-              </div>
+              </HeadsDataProvider>
+            </div>
           </NetworkSettingProvider>
         </IntervalSettingProvider>
       </div>
