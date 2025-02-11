@@ -8,6 +8,8 @@ import HeadsTable from "@/components/HeadsTable"
 import { HeadsDataProvider } from "@/providers/HeadsDataProvider"
 import HeadsDashboard from "@/components/HeadsDashboard"
 import { CardanoExplorerProvider } from "@/providers/CardanoExplorer"
+import NetworkSettingProvider from "@/providers/NetworkProvider"
+import NetworkSetter from "@/components/NetworkSetter"
 
 
 export default function Home() {
@@ -21,47 +23,53 @@ export default function Home() {
         </Head>
 
         <IntervalSettingProvider>
+          <NetworkSettingProvider>
+            <div className="flex flex-col items-center justify-center h-screen">
+              <HeadsDataProvider>
 
-          <div className="flex flex-col items-center justify-center h-screen">
-            <HeadsDataProvider>
-
-              <div className="flex ">
-                <h1 className="text-3xl font-bold flex items-center">
-                  <div className="mr-4">
-                    <Image
-                      src="/hydra.svg"
-                      alt="Hydra Logo"
-                      className="dark:invert"
-                      width={50}
-                      height={50}
-                      priority
-                    />
+                <div className="flex ">
+                  <h1 className="text-3xl font-bold flex items-center">
+                    <div className="mr-4">
+                      <Image
+                        src="/hydra.svg"
+                        alt="Hydra Logo"
+                        className="dark:invert"
+                        width={50}
+                        height={50}
+                        priority
+                      />
+                    </div>
+                    Hydrascan
+                  </h1>
+                  <div className="ml-10">
+                    <div className="flex items-start space-x-4">
+                      <div>
+                        <NetworkSetter />
+                      </div>
+                    </div>
                   </div>
-                  Hydrascan
-                </h1>
-                <div className="ml-10">
-                  <HeadsDashboard />
+                  <div className="ml-10">
+                    <HeadsDashboard />
+                  </div>
                 </div>
-              </div>
 
-              <CardanoExplorerProvider network={process.env.NETWORK_URL || "preview"}>
-                <div className="flex items-start space-x-4">
-                  <div>
-                    <TickBox />
+                <CardanoExplorerProvider network={process.env.NETWORK_URL || "preview"}>
+                  <div className="flex items-start space-x-4">
+                    <div>
+                      <TickBox />
+                    </div>
+                    <div>
+                      <IntervalSetter />
+                    </div>
+
                   </div>
-                  <div>
-                    <IntervalSetter />
-                  </div>
-
-                </div>
-                <HeadsTable />
-              </CardanoExplorerProvider>
+                  <HeadsTable />
+                </CardanoExplorerProvider>
 
 
-            </HeadsDataProvider>
-          </div>
-
-
+              </HeadsDataProvider>
+            </div>
+          </NetworkSettingProvider>
         </IntervalSettingProvider>
       </div>
     </main>

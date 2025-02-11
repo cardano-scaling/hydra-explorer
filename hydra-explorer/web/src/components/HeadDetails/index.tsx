@@ -59,6 +59,10 @@ const HeadDetails: React.FC<HeadDetailsProps> = ({ head, onClose }) => {
                         </p>
                     </div>
                     <div className="border p-4">
+                        <h3 className="text-lg font-semibold mb-2">Head Version</h3>
+                        <p>{head.version}</p>
+                    </div>
+                    <div className="border p-4">
                         <h3 className="text-lg font-semibold mb-2">Seed Tx In</h3>
                         <p>
                             {head.seedTxIn && (

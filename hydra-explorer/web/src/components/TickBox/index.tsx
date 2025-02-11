@@ -3,17 +3,29 @@
 import { TickState } from "@/app/model"
 import useDataFetcher from "@/hooks/DataFetcher"
 import { useCardanoExplorer } from "@/providers/CardanoExplorer"
-import { useState } from "react"
+import { useMemo, useState } from "react"
+import { useNetworkContext } from "@/providers/NetworkProvider"
 
 const TickBox = () => {
-    const [tick, setTick] = useState<TickState | null>(null)
+    const [ticks, setTicks] = useState<TickState[]>([])
     const [error, setError] = useState<string | null>(null)
 
-    useDataFetcher<TickState>({
-        url: '/tick',
-        setFetchedData: setTick,
+    const { currentNetworkMagic } = useNetworkContext()
+
+    useDataFetcher<TickState[]>({
+        url: `/ticks`,
+        setFetchedData: setTicks,
         setError,
     })
+
+    const tick: TickState | undefined = useMemo(() => {
+        return ticks.find(
+            (tick) => {
+                return tick.networkMagic === currentNetworkMagic
+            }
+        )
+    }, [ticks, currentNetworkMagic])
+
 
     const explorer = useCardanoExplorer()
 

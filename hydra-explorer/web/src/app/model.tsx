@@ -25,6 +25,9 @@ export interface ChainPoint {
 }
 
 export interface HeadState {
+    network: string
+    networkMagic: number
+    version: string
     headId: string
     seedTxIn: string | null
     status: string
@@ -38,6 +41,8 @@ export interface HeadState {
 }
 
 export interface TickState {
+    network: string
+    networkMagic: number
     point: ChainPoint
     blockNo: number
 }
