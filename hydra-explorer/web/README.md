@@ -1,5 +1,6 @@
 # Hydra Explorer Web Interface
 
 ```
-yarn build
+yarn install
+yarn run dev
 ```
