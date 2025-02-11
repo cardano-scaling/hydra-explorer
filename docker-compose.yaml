@@ -83,7 +83,7 @@ services:
       [ "--node-socket", "/data/node.socket"
       , "--testnet-magic", "1"
       # NOTE: Block in which 0.19.0 scripts were published
-      , "--start-chain-from", "70548651.03f8deb122fbbd98af8eb58ef56feda37728ec957d39586b78198a0cf624412a"
+      , "--start-chain-from", "70548651.ea1aa2ff826790a579a0d82ce7eee9ed943cf81e508084cea69539cb2018cbb6"
       # NOTE: Reachable via hydra-explorer network
       , "--explorer", "http://hydra-explorer:8001"
       ]
