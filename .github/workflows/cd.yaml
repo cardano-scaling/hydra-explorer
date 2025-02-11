@@ -19,4 +19,4 @@ jobs:
     - name: 🐳 Deploy with docker compose
       run: |
         /run/current-system/sw/bin/docker compose pull
-        /run/current-system/sw/bin/docker compose up -d
+        /run/current-system/sw/bin/docker compose up -d --remove-orphans
