@@ -13,3 +13,5 @@ changes.
 - Create a [client](api/client-api.yaml) and [observer](api/observer-api.yaml) API specification.
 
 - Listen for observations on the observer API and aggregate them into the client API.
+
+- Explorer frontend allows to switch networks and provides links accordingly.

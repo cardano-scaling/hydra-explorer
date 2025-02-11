@@ -53,7 +53,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                <CardanoExplorerProvider network={process.env.NETWORK_URL || "preview"}>
+                <CardanoExplorerProvider>
                   <div className="flex items-start space-x-4">
                     <div>
                       <TickBox />
