@@ -1,7 +1,5 @@
 # Hydra explorer instance with it's chain observers as it is deployed to
 # explorer.hydra.family
-version: "3.9"
-
 networks:
   hydra-explorer:
     driver: bridge
@@ -21,8 +19,11 @@ services:
 
   # List of hydra-chain-observers
 
-  hydra-chain-observer-preview-unstable:
-    image: ghcr.io/cardano-scaling/hydra-chain-observer:unstable
+  ## 0.20
+
+  hydra-chain-observer-preview-0.20:
+    # TODO: cut release 0.20.1
+    image: ghcr.io/cardano-scaling/hydra-chain-observer@sha256:7c47a006c09b7f7ed2771675b69d15c76105d692dd34b8facf1c96a9b99ff828
     volumes:
       - "/data/cardano/preview:/data"
     command:
@@ -37,8 +38,9 @@ services:
       - hydra-explorer
     restart: always
 
-  hydra-chain-observer-preprod-unstable:
-    image: ghcr.io/cardano-scaling/hydra-chain-observer:unstable
+  hydra-chain-observer-preprod-0.20:
+    # TODO: cut release 0.20.1
+    image: ghcr.io/cardano-scaling/hydra-chain-observer@sha256:7c47a006c09b7f7ed2771675b69d15c76105d692dd34b8facf1c96a9b99ff828
     volumes:
       - "/data/cardano/preprod:/data"
     command:
@@ -46,6 +48,42 @@ services:
       , "--testnet-magic", "1"
       # NOTE: Block in which 0.20.0 scripts were published
       , "--start-chain-from", "82913877.aa62d900ecbd6a073e1b5bb8c014413365c26a3675bd81dc567013340bf94ec3"
+      # NOTE: Reachable via hydra-explorer network
+      , "--explorer", "http://hydra-explorer:8001"
+      ]
+    networks:
+      - hydra-explorer
+    restart: always
+
+  ## 0.19
+
+  hydra-chain-observer-preview-0.19:
+    # TODO: cut release 0.19.1
+    image: ghcr.io/cardano-scaling/hydra-chain-observer@sha256:c1cd148650c844d19cbb319de9abbff7324f5b18891b475b54de2250edee5626
+    volumes:
+      - "/data/cardano/preview:/data"
+    command:
+      [ "--node-socket", "/data/node.socket"
+      , "--testnet-magic", "2"
+      # NOTE: Block in which 0.19.0 scripts were published
+      , "--start-chain-from", "59574002.1ba4ee1f87e8ebbf4682662839592639591133d589a8a84246bbb3c7ce2b713b"
+      # NOTE: Reachable via hydra-explorer network
+      , "--explorer", "http://hydra-explorer:8001"
+      ]
+    networks:
+      - hydra-explorer
+    restart: always
+
+  hydra-chain-observer-preprod-0.19:
+    # TODO: cut release 0.19.1
+    image: ghcr.io/cardano-scaling/hydra-chain-observer@sha256:c1cd148650c844d19cbb319de9abbff7324f5b18891b475b54de2250edee5626
+    volumes:
+      - "/data/cardano/preprod:/data"
+    command:
+      [ "--node-socket", "/data/node.socket"
+      , "--testnet-magic", "1"
+      # NOTE: Block in which 0.19.0 scripts were published
+      , "--start-chain-from", "70548651.03f8deb122fbbd98af8eb58ef56feda37728ec957d39586b78198a0cf624412a"
       # NOTE: Reachable via hydra-explorer network
       , "--explorer", "http://hydra-explorer:8001"
       ]
