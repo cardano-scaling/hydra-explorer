@@ -39,6 +39,9 @@ jobs:
 
     - name: ❓ Build and test
       run: |
+        nix build .#hydra-explorer-web
+        nix build .#docker
+
         nix run .#apps.x86_64-linux.hydra-explorer -- --help
 
         # Note: The tests need to find `json-schemas/client-api.yaml`;
