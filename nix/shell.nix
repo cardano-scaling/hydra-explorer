@@ -12,5 +12,6 @@ cabalProject:
     pkgs.cardano-node
     pkgs.hydra-chain-observer
     pkgs.hydra-node
+    pkgs.yarn # For hacking on the UI
   ];
 }
