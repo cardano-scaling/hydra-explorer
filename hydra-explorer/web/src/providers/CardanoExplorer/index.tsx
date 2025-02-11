@@ -22,7 +22,6 @@ export const useCardanoExplorer = () => {
 }
 
 export type CardanoExplorerProps = {
-    network: string
 }
 
 export const CardanoExplorerProvider: React.FC<PropsWithChildren<CardanoExplorerProps>> =
@@ -30,7 +29,7 @@ export const CardanoExplorerProvider: React.FC<PropsWithChildren<CardanoExplorer
 
         const { currentNetworkMagic } = useNetworkContext()
 
-        let explorerUrl;
+        let explorerUrl : string;
         switch (currentNetworkMagic) {
             case 764824073:
                 explorerUrl = "cexplorer.io";
