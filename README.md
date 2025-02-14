@@ -78,7 +78,7 @@ cabal test
 ## Deployment
 
 ```sh
-nixos-rebuild switch --target-host root@explorer.hydra.family --flake .#hydra-explorer --use-remote-sudo
+nixos-rebuild switch --target-host root@explorer.hydra.family --flake .#explorer --use-remote-sudo
 ```
 
 ## Testing locally

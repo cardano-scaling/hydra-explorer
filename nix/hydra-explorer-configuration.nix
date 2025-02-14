@@ -34,6 +34,11 @@
 
   services.getty.autologinUser = "root";
 
+  environment.systemPackages = with pkgs; [
+    git
+    jq
+  ];
+
   # Github runner registered with cardano-scaling organization
   age.secrets.github-runner-token.file = ../secrets/github-runner-token.age;
 
