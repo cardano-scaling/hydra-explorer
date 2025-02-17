@@ -34,6 +34,10 @@ services:
       # NOTE: Reachable via hydra-explorer network
       , "--explorer", "http://hydra-explorer:8001"
       ]
+    depends_on:
+      hydra-explorer:
+        condition: service_started
+        restart: true
     networks:
       - hydra-explorer
     restart: always
@@ -51,6 +55,10 @@ services:
       # NOTE: Reachable via hydra-explorer network
       , "--explorer", "http://hydra-explorer:8001"
       ]
+    depends_on:
+      hydra-explorer:
+        condition: service_started
+        restart: true
     networks:
       - hydra-explorer
     restart: always
@@ -68,6 +76,10 @@ services:
       # NOTE: Reachable via hydra-explorer network
       , "--explorer", "http://hydra-explorer:8001"
       ]
+    depends_on:
+      hydra-explorer:
+        condition: service_started
+        restart: true
     networks:
       - hydra-explorer
     restart: always
@@ -87,6 +99,10 @@ services:
       # NOTE: Reachable via hydra-explorer network
       , "--explorer", "http://hydra-explorer:8001"
       ]
+    depends_on:
+      hydra-explorer:
+        condition: service_started
+        restart: true
     networks:
       - hydra-explorer
     restart: always
@@ -104,6 +120,10 @@ services:
       # NOTE: Reachable via hydra-explorer network
       , "--explorer", "http://hydra-explorer:8001"
       ]
+    depends_on:
+      hydra-explorer:
+        condition: service_started
+        restart: true
     networks:
       - hydra-explorer
     restart: always
@@ -121,6 +141,10 @@ services:
       # NOTE: Reachable via hydra-explorer network
       , "--explorer", "http://hydra-explorer:8001"
       ]
+    depends_on:
+      hydra-explorer:
+        condition: service_started
+        restart: true
     networks:
       - hydra-explorer
     restart: always
