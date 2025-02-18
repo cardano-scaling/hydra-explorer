@@ -45,15 +45,18 @@ spec = do
        in (version <$> heads resultState) === [version1]
             & counterexample (show resultState)
 
-  prop "Two observations on different versions gives two heads" $ \network version1 version2 observation ->
-    ( isJust (observedTx observation)
+  prop "Same observation on different versions gives different heads" $ \network version1 version2 obs1 obs2 ->
+    ( isJust (observedTx obs1)
+      && isJust (observedTx obs2)
+      && obs1 /= obs2
       && version1 /= version2
     ) ==>
       let resultState =
             ExplorerState [] []
-              & aggregateObservation network version1 observation
-              & aggregateObservation network version2 observation
-        in length (heads resultState) === 2
+              & aggregateObservation network version1 obs1 -- Fine
+              & aggregateObservation network version2 obs1 -- Same observation in different version (hence same HeadId)
+              & aggregateObservation network version2 obs2 -- Another completely-fine observation that's different
+        in length (heads resultState) === 3
             & counterexample (show resultState)
  where
   getHeadIds = fmap headId

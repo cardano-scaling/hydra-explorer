@@ -34,7 +34,7 @@ instance FromHttpApiData NetworkParam where
 -- | Version of a hydra head as reported by chain observers.
 newtype HydraVersion = HydraVersion Text
   deriving stock (Eq, Show, Generic)
-  deriving newtype (FromJSON, ToJSON, Arbitrary, FromHttpApiData, Semigroup, Monoid)
+  deriving newtype (FromJSON, ToJSON, Arbitrary, FromHttpApiData)
 
 -- TODO: test correspondence with openapi
 type ObservationApi =
