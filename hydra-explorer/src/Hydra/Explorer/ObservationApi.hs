@@ -9,6 +9,7 @@ import Test.Hydra.Tx.Gen ()
 import Hydra.Cardano.Api (BlockNo, ChainPoint, NetworkId (..), NetworkMagic (..), Tx, fromNetworkMagic)
 import Hydra.Chain (OnChainTx)
 import Servant (Capture, FromHttpApiData (..), JSON, Post, ReqBody, (:>))
+import Data.Aeson (Value(Object), (.:))
 
 data Observation = Observation
   { point :: ChainPoint
@@ -16,7 +17,17 @@ data Observation = Observation
   , observedTx :: Maybe (OnChainTx Tx)
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (FromJSON)
+
+instance FromJSON Observation where
+  parseJSON (Object o) = do
+      point <- o .: "point"
+      blockNo <- o .: "blockNo"
+      tx <- o .: "observedTx" -- 0.20.0
+            <|> o .: "onChainTx" -- 0.19.*
+
+      pure (Observation { point = point, blockNo = blockNo, observedTx = tx })
+  parseJSON _ = mempty
+
 
 instance Arbitrary Observation where
   arbitrary = Observation <$> arbitrary <*> arbitrary <*> arbitrary
