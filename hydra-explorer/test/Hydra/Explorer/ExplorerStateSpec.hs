@@ -44,5 +44,16 @@ spec = do
               & aggregateObservation network version2 observation
        in (version <$> heads resultState) === [version1]
             & counterexample (show resultState)
+
+  prop "Two observations on different versions gives two heads" $ \network version1 version2 observation ->
+    ( isJust (observedTx observation)
+      && version1 /= version2
+    ) ==>
+      let resultState =
+            ExplorerState [] []
+              & aggregateObservation network version1 observation
+              & aggregateObservation network version2 observation
+        in length (heads resultState) === 2
+            & counterexample (show resultState)
  where
   getHeadIds = fmap headId
