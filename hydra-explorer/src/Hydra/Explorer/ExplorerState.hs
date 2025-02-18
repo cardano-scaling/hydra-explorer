@@ -132,7 +132,7 @@ aggregateInitObservation
   HeadParameters{parties, contestationPeriod}
   participants
   currentHeads =
-    case findHeadState headId currentHeads of
+    case findHeadState version headId currentHeads of
       Just headState -> replaceHeadState headState{status = Initializing} currentHeads
       Nothing -> currentHeads <> [newHeadState]
    where
@@ -172,7 +172,7 @@ aggregateAbortObservation ::
   [HeadState] ->
   [HeadState]
 aggregateAbortObservation networkId version headId point blockNo currentHeads =
-  case findHeadState headId currentHeads of
+  case findHeadState version headId currentHeads of
     Just headState ->
       let newHeadState = headState{status = Aborted}
        in replaceHeadState newHeadState currentHeads
@@ -206,7 +206,7 @@ aggregateCommitObservation ::
   [HeadState] ->
   [HeadState]
 aggregateCommitObservation networkId version headId point blockNo party committed currentHeads =
-  case findHeadState headId currentHeads of
+  case findHeadState version headId currentHeads of
     Just headState ->
       let newHeadState = updateMember headState
        in replaceHeadState newHeadState currentHeads
@@ -267,7 +267,7 @@ aggregateCollectComObservation ::
   [HeadState] ->
   [HeadState]
 aggregateCollectComObservation networkId version headId point blockNo currentHeads =
-  case findHeadState headId currentHeads of
+  case findHeadState version headId currentHeads of
     Just headState ->
       let newHeadState = headState{status = Open}
        in replaceHeadState newHeadState currentHeads
@@ -299,7 +299,7 @@ aggregateDepositObservation ::
   [HeadState] ->
   [HeadState]
 aggregateDepositObservation networkId version headId point blockNo currentHeads =
-  case findHeadState headId currentHeads of
+  case findHeadState version headId currentHeads of
     Just headState ->
       let newHeadState = headState{status = Open}
        in replaceHeadState newHeadState currentHeads
@@ -331,7 +331,7 @@ aggregateRecoverObservation ::
   [HeadState] ->
   [HeadState]
 aggregateRecoverObservation networkId version headId point blockNo currentHeads =
-  case findHeadState headId currentHeads of
+  case findHeadState version headId currentHeads of
     Just headState ->
       let newHeadState = headState{status = Open}
        in replaceHeadState newHeadState currentHeads
@@ -363,7 +363,7 @@ aggregateIncrementObservation ::
   [HeadState] ->
   [HeadState]
 aggregateIncrementObservation networkId version headId point blockNo currentHeads =
-  case findHeadState headId currentHeads of
+  case findHeadState version headId currentHeads of
     Just headState ->
       let newHeadState = headState{status = Open}
        in replaceHeadState newHeadState currentHeads
@@ -395,7 +395,7 @@ aggregateDecrementObservation ::
   [HeadState] ->
   [HeadState]
 aggregateDecrementObservation networkId version headId point blockNo currentHeads =
-  case findHeadState headId currentHeads of
+  case findHeadState version headId currentHeads of
     Just headState ->
       let newHeadState = headState{status = Open}
        in replaceHeadState newHeadState currentHeads
@@ -437,7 +437,7 @@ aggregateCloseObservation
   (UnsafeSnapshotNumber sn)
   contestationDeadline
   currentHeads =
-    case findHeadState headId currentHeads of
+    case findHeadState version headId currentHeads of
       Just headState ->
         let newHeadState =
               headState
@@ -476,7 +476,7 @@ aggregateContestObservation ::
   [HeadState] ->
   [HeadState]
 aggregateContestObservation networkId version headId point blockNo (UnsafeSnapshotNumber sn) currentHeads =
-  case findHeadState headId currentHeads of
+  case findHeadState version headId currentHeads of
     Just headState@HeadState{contestations, contestationPeriod, contestationDeadline} ->
       let newHeadState =
             headState
@@ -516,7 +516,7 @@ aggregateFanoutObservation ::
   [HeadState] ->
   [HeadState]
 aggregateFanoutObservation networkId version headId point blockNo currentHeads =
-  case findHeadState headId currentHeads of
+  case findHeadState version headId currentHeads of
     Just headState ->
       let newHeadState = headState{status = Finalized}
        in replaceHeadState newHeadState currentHeads
@@ -649,8 +649,8 @@ aggregateObservation networkId version Observation{point, blockNo, observedTx} E
         , ticks = aggregateTickObservation networkId point blockNo ticks
         }
 
-findHeadState :: HeadId -> [HeadState] -> Maybe HeadState
-findHeadState idToFind = find (\HeadState{headId} -> headId == idToFind)
+findHeadState :: HydraVersion -> HeadId -> [HeadState] -> Maybe HeadState
+findHeadState versionToFind idToFind = find (\HeadState{headId,version} -> headId == idToFind && version == versionToFind)
 
 findTickState :: NetworkId -> [TickState] -> Maybe TickState
 findTickState networkId =
