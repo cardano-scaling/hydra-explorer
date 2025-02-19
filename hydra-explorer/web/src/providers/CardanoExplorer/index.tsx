@@ -29,19 +29,19 @@ export const CardanoExplorerProvider: React.FC<PropsWithChildren<CardanoExplorer
 
         const { currentNetworkMagic } = useNetworkContext()
 
-        let explorerUrl : string;
+        let explorerUrl: string
         switch (currentNetworkMagic) {
             case 764824073:
-                explorerUrl = "cexplorer.io";
-                break;
+                explorerUrl = "cexplorer.io"
+                break
             case 1:
-                explorerUrl = "preprod.cexplorer.io";
-                break;
+                explorerUrl = "preprod.cexplorer.io"
+                break
             case 2:
-                explorerUrl = "preview.cexplorer.io";
-                break;
+                explorerUrl = "preview.cexplorer.io"
+                break
             default:
-                throw new Error("Unsupported network magic: " + currentNetworkMagic);
+                throw new Error("Unsupported network magic: " + currentNetworkMagic)
         }
 
         const cexplorer: CardanoExplorer = {
