@@ -7,6 +7,9 @@ import HeadDetails from "../HeadDetails"
 import { totalLovelaceValueLocked } from '@/utils'
 import { useCardanoExplorer } from '@/providers/CardanoExplorer'
 
+// The head id that was used on the hydra doom tournament finale
+const DOOM_HEAD_ID = "e1393f73096f03a2e127cdace1aad0d3332c158346d0b46efb5a9339";
+
 const HeadsTable: React.FC = () => {
     const { heads, error } = useHeadsData()
     const [selectedHead, setSelectedHead] = useState<HeadState | null>(null)
@@ -40,6 +43,11 @@ const HeadsTable: React.FC = () => {
                             {heads?.sort((a, b) => b.blockNo - a.blockNo).map((head, index) => (
                                 <tr key={index} className={`${index % 2 === 0 ? 'bg-gray-700' : 'bg-gray-600'}`}>
                                     <td className="truncate text-center border px-4 py-2">
+                                        {head.headId  === DOOM_HEAD_ID && (
+                                            <div className='flex items-center justify-center p-1 rounded-full bg-yellow-400 float-left mr-2' title="Hydra Doom Final">
+                                                <img src="/hydra.svg" alt='Hydra Head' width={16} height={16} className='' />
+                                            </div>
+                                        )}
                                         <a href={explorer.mintPolicy(head.headId)} target="_blank" className="text-blue-300 hover:text-blue-500">
                                             {head.headId}
                                         </a>
