@@ -88,7 +88,7 @@ services:
 
   hydra-chain-observer-preview-0.19:
     # TODO: cut release 0.19.1
-    image: ghcr.io/cardano-scaling/hydra-chain-observer@sha256:d28b74adfa8714985f730a8396c64de95c69aab45d9b7e251b8efd906693ce34
+    image: ghcr.io/cardano-scaling/hydra-chain-observer@sha256:5eae5f5e7e26f2af1428f0f90f43c54f2f12fcd9fb92a8bfdb96b7cefdb9233e
     volumes:
       - "/data/cardano/preview:/data"
     command:
@@ -109,7 +109,7 @@ services:
 
   hydra-chain-observer-preprod-0.19:
     # TODO: cut release 0.19.1
-    image: ghcr.io/cardano-scaling/hydra-chain-observer@sha256:d28b74adfa8714985f730a8396c64de95c69aab45d9b7e251b8efd906693ce34
+    image: ghcr.io/cardano-scaling/hydra-chain-observer@sha256:5eae5f5e7e26f2af1428f0f90f43c54f2f12fcd9fb92a8bfdb96b7cefdb9233e
     volumes:
       - "/data/cardano/preprod:/data"
     command:
@@ -130,7 +130,7 @@ services:
 
   hydra-chain-observer-mainnet-0.19:
     # TODO: cut release 0.19.1
-    image: ghcr.io/cardano-scaling/hydra-chain-observer@sha256:d28b74adfa8714985f730a8396c64de95c69aab45d9b7e251b8efd906693ce34
+    image: ghcr.io/cardano-scaling/hydra-chain-observer@sha256:5eae5f5e7e26f2af1428f0f90f43c54f2f12fcd9fb92a8bfdb96b7cefdb9233e
     volumes:
       - "/data/cardano/mainnet:/data"
     command:
