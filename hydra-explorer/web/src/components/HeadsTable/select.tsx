@@ -43,16 +43,23 @@ export const HeadsSelectTable: React.FC<HeadsSelectProps> = ({ filters, setFilte
 
     // Generate options dynamically based on current filtered heads
     const getOptions = (key: keyof FilterState) => {
-        const uniqueValues = Array.from(new Set(
-            filteredHeads.map((head) => {
-                if (key === "slot") return head.point.slot.toString()
-                if (key === "blockHash") return head.point.blockHash
-                if (key === "blockNo") return head.blockNo.toString()
-                return head[key] as string
-            })
-        )).filter(Boolean)
+        const seen = new Set<string>()
+        const uniqueValues = []
 
-        return uniqueValues.map((value) => ({ value, label: value }))
+        for (const head of filteredHeads) {
+            let value: string | undefined
+            if (key === "slot") value = head.point.slot.toString()
+            else if (key === "blockHash") value = head.point.blockHash
+            else if (key === "blockNo") value = head.blockNo.toString()
+            else value = head[key] as string
+
+            if (value && !seen.has(value)) {
+                seen.add(value)
+                uniqueValues.push(value)
+            }
+        }
+
+        return uniqueValues.reverse().map((value) => ({ value, label: value }))
     }
 
     const grayColor = "rgb(31 41 55)"
