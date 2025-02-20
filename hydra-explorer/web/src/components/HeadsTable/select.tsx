@@ -47,6 +47,7 @@ export const HeadsSelectTable: React.FC<HeadsSelectProps> = ({ filters, setFilte
         const uniqueValues: string[] = []
 
         if (key === "status") {
+            // XXX: Don't forget to change if a new top-level status is defined.
             const allStatuses = ["Open", "Aborted", "Initializing", "Closed", "Finalized"]
             return createOptions(allStatuses)
         }

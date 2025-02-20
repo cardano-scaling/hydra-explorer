@@ -21,7 +21,7 @@ export const useNetworkContext = () => {
 const NetworkSettingProvider: React.FC<any> = ({
     children
 }) => {
-    const [currNetworkMagic, setCurrentNetworkMagic] = useState(2)
+    const [currNetworkMagic, setCurrentNetworkMagic] = useState(764824073)
 
     const handleNetworkChange = (networkMagic: number) => {
         setCurrentNetworkMagic(networkMagic)
