@@ -7,6 +7,7 @@ import { totalLovelaceValueLocked } from "@/utils"
 import { useCardanoExplorer } from "@/providers/CardanoExplorer"
 import HeadDetails from "../HeadDetails"
 import { HeadsSelectTable, FilterState, emptyFilterState } from "./select"
+import { useNetworkContext } from "@/providers/NetworkProvider"
 
 const DOOM_HEAD_ID = "e1393f73096f03a2e127cdace1aad0d3332c158346d0b46efb5a9339"
 
@@ -17,6 +18,7 @@ const HeadsTable: React.FC = () => {
     const [filters, setFilters] = useState<FilterState>(emptyFilterState)
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 10
+    const { currentNetworkMagic } = useNetworkContext()
 
     // Filtering controls
     const clearAllFilters = () => {
@@ -46,11 +48,16 @@ const HeadsTable: React.FC = () => {
             ? Math.ceil(filteredHeads?.length / itemsPerPage)
             : 1
 
-
     // Reset to page number 1 when filters change
     useEffect(() => {
         setCurrentPage(1)
     }, [filters])
+
+    // Clear filters and reset to page number 1 when network change
+    useEffect(() => {
+        clearAllFilters()
+        setCurrentPage(1)
+    }, [currentNetworkMagic])
 
     return (
         <div className="container mx-auto mt-12 overflow-y-auto">
