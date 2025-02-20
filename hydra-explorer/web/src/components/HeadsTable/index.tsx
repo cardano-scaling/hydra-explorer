@@ -1,6 +1,6 @@
 "use client" // This is a client component 👈🏽
 
-import React, { useState } from "react"
+import React, { useState, useMemo, useEffect } from "react"
 import { HeadState } from "@/app/model"
 import { useHeadsData } from "@/providers/HeadsDataProvider"
 import { totalLovelaceValueLocked } from "@/utils"
@@ -13,24 +13,44 @@ const DOOM_HEAD_ID = "e1393f73096f03a2e127cdace1aad0d3332c158346d0b46efb5a9339"
 const HeadsTable: React.FC = () => {
     const { heads, error } = useHeadsData()
     const [selectedHead, setSelectedHead] = useState<HeadState | null>(null)
+    const explorer = useCardanoExplorer()
     const [filters, setFilters] = useState<FilterState>(emptyFilterState)
+    const [currentPage, setCurrentPage] = useState(1)
+    const itemsPerPage = 10
 
+    // Filtering controls
     const clearAllFilters = () => {
         setFilters(emptyFilterState)
     }
 
-    const filteredHeads = heads?.filter((head) => {
-        return (
-            (!filters.headId || head.headId === filters.headId) &&
-            (!filters.status || head.status === filters.status) &&
-            (!filters.version || head.version === filters.version) &&
-            (!filters.slot || head.point.slot.toString() === filters.slot) &&
-            (!filters.blockNo || head.blockNo.toString() === filters.blockNo) &&
-            (!filters.blockHash || head.point.blockHash === filters.blockHash)
-        )
-    })
+    const filteredHeads = useMemo(() => {
+        return heads?.filter((head) => {
+            return (
+                (!filters.headId || head.headId === filters.headId) &&
+                (!filters.status || head.status === filters.status) &&
+                (!filters.version || head.version === filters.version) &&
+                (!filters.slot || head.point.slot.toString() === filters.slot) &&
+                (!filters.blockNo || head.blockNo.toString() === filters.blockNo) &&
+                (!filters.blockHash || head.point.blockHash === filters.blockHash)
+            )
+        })
+    }, [heads, filters])
 
-    const explorer = useCardanoExplorer()
+    // Pagination controls
+    const paginatedHeads = useMemo(() => {
+        return filteredHeads?.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+    }, [filteredHeads, currentPage])
+
+    const totalPages =
+        (filteredHeads?.length > 0)
+            ? Math.ceil(filteredHeads?.length / itemsPerPage)
+            : 1
+
+
+    // Reset to page number 1 when filters change
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [filters])
 
     return (
         <div className="container mx-auto mt-12 overflow-y-auto">
@@ -39,7 +59,13 @@ const HeadsTable: React.FC = () => {
             ) : (
                 <>
                     {/* Select Filters Section */}
-                    <HeadsSelectTable filters={filters} setFilters={setFilters} clearAllFilters={clearAllFilters} heads={heads} />
+                    <HeadsSelectTable
+                        filters={filters}
+                        setFilters={setFilters}
+                        clearAllFilters={clearAllFilters}
+                        heads={heads}
+                        paginatedHeads={paginatedHeads}
+                    />
                     {/* Table Section */}
                     <div className="w-full">
                         <table className="table-fixed w-full rounded-lg">
@@ -56,7 +82,7 @@ const HeadsTable: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredHeads?.sort((a, b) => b.blockNo - a.blockNo).map((head, index) => (
+                                {paginatedHeads?.sort((a, b) => b.blockNo - a.blockNo).map((head, index) => (
                                     <tr key={index} className={`${index % 2 === 0 ? "bg-gray-700" : "bg-gray-600"}`}>
                                         <td className="truncate text-center border px-4 py-2">
                                             {head.headId === DOOM_HEAD_ID && (
@@ -87,6 +113,25 @@ const HeadsTable: React.FC = () => {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+
+                    {/* Pagination Controls */}
+                    <div className="mt-4 flex justify-between items-center">
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 bg-gray-500 text-white rounded disabled:opacity-50"
+                        >
+                            Previous
+                        </button>
+                        <span>Page {currentPage} of {totalPages}</span>
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 bg-gray-500 text-white rounded disabled:opacity-50"
+                        >
+                            Next
+                        </button>
                     </div>
                 </>
             )}

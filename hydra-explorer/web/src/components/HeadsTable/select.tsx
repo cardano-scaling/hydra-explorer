@@ -26,21 +26,11 @@ interface HeadsSelectProps {
     filters: FilterState
     setFilters: React.Dispatch<React.SetStateAction<FilterState>>
     clearAllFilters: () => void
-    heads: HeadState[]
+    heads: HeadState[],
+    paginatedHeads: HeadState[]
 }
 
-export const HeadsSelectTable: React.FC<HeadsSelectProps> = ({ filters, setFilters, clearAllFilters, heads }) => {
-    // Filter the available heads based on selected filters
-    const filteredHeads = heads.filter((head) => {
-        return Object.entries(filters).every(([key, value]) => {
-            if (!value) return true // If no filter is applied, keep all options
-            if (key === "slot") return head.point.slot.toString() === value
-            if (key === "blockHash") return head.point.blockHash === value
-            if (key === "blockNo") return head.blockNo.toString() === value
-            return head[key as keyof HeadState] === value
-        })
-    })
-
+export const HeadsSelectTable: React.FC<HeadsSelectProps> = ({ filters, setFilters, clearAllFilters, heads, paginatedHeads }) => {
     // Generate options dynamically based on current filtered heads
     const getOptions = (key: keyof FilterState) => {
         const createOptions = (values: string[]) => {
@@ -52,23 +42,19 @@ export const HeadsSelectTable: React.FC<HeadsSelectProps> = ({ filters, setFilte
 
         if (key === "status") {
             const allStatuses = ["Open", "Aborted", "Initializing", "Closed", "Finalized"]
-
-            for (const head of filteredHeads) {
-                const status = head.status
-                if (allStatuses.includes(status) && !seen.has(status)) {
-                    seen.add(status)
-                    uniqueValues.push(status)
+            return createOptions(allStatuses)
+        }
+        else if (key === "version") {
+            for (const head of heads) {
+                let version = head.version
+                if (version && !seen.has(version)) {
+                    seen.add(version)
+                    uniqueValues.push(version)
                 }
             }
-
-            if (uniqueValues.length === allStatuses.length) {
-                return createOptions(allStatuses)
-            } else {
-                return createOptions(uniqueValues.reverse())
-            }
-
+            return createOptions(uniqueValues)
         } else {
-            for (const head of filteredHeads) {
+            for (const head of paginatedHeads) {
                 let value: string | undefined
                 if (key === "slot") value = head.point.slot.toString()
                 else if (key === "blockHash") value = head.point.blockHash
@@ -80,8 +66,7 @@ export const HeadsSelectTable: React.FC<HeadsSelectProps> = ({ filters, setFilte
                     uniqueValues.push(value)
                 }
             }
-
-            return createOptions(uniqueValues.reverse())
+            return createOptions(uniqueValues)
         }
     }
 
