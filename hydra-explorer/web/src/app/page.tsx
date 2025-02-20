@@ -4,13 +4,14 @@ import Image from "next/image"
 import IntervalSettingProvider from "@/providers/IntervalProvider"
 import IntervalSetter from "@/components/IntervalSetter"
 import TickBox from "@/components/TickBox"
-import HeadsTable from "@/components/HeadsTable"
 import { HeadsDataProvider } from "@/providers/HeadsDataProvider"
 import HeadsDashboard from "@/components/HeadsDashboard"
 import { CardanoExplorerProvider } from "@/providers/CardanoExplorer"
-import NetworkSettingProvider from "@/providers/NetworkProvider"
 import NetworkSetter from "@/components/NetworkSetter"
 
+import dynamic from "next/dynamic"
+const HeadsTable = dynamic(() => import("@/components/HeadsTable"), { ssr: false })
+const NetworkSettingProvider = dynamic(() => import("@/providers/NetworkProvider"), { ssr: false })
 
 export default function Home() {
 
