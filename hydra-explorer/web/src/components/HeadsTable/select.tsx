@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react"
 import Select from "react-select"
 import { HeadState } from "@/app/model"
+import { ReadonlyURLSearchParams } from "next/navigation"
 
 export interface FilterState {
     headId: string | null
@@ -11,6 +12,16 @@ export interface FilterState {
     slot: string | null
     blockNo: string | null
     blockHash: string | null
+}
+
+export const filterStateFromUrl = (searchParams: ReadonlyURLSearchParams): FilterState => {
+    const filters: FilterState = { ...emptyFilterState }
+    searchParams.forEach((value, key) => {
+        if (key in filters) {
+            filters[key as keyof FilterState] = value
+        }
+    })
+    return filters
 }
 
 export const emptyFilterState: FilterState = {
@@ -24,21 +35,19 @@ export const emptyFilterState: FilterState = {
 
 interface HeadsSelectProps {
     filters: FilterState
-    setFilters: React.Dispatch<React.SetStateAction<FilterState>>
-    clearAllFilters: () => void
+    setFilterState: React.Dispatch<React.SetStateAction<FilterState>>
     heads: HeadState[],
     paginatedHeads: HeadState[]
 }
 
-export const HeadsSelectTable: React.FC<HeadsSelectProps> = ({ filters, setFilters, clearAllFilters, heads, paginatedHeads }) => {
-    const [isMounted, setIsMounted] = useState(false)
-
+export const HeadsSelectTable: React.FC<HeadsSelectProps> = ({ filters, setFilterState, heads, paginatedHeads }) => {
     // Must be deleted once
     // https://github.com/JedWatson/react-select/issues/5459 is fixed.
+    const [isMounted, setIsMounted] = useState(false)
     useEffect(() => setIsMounted(true), [])
 
-    // Generate options dynamically based on current filtered heads
-    const getOptions = (key: keyof FilterState) => {
+    // Generate select options dynamically based on current filtered heads
+    const getSelectOptions = (key: keyof FilterState) => {
         const createOptions = (values: string[]) => {
             return values.map((value) => ({ value, label: value }))
         }
@@ -77,6 +86,8 @@ export const HeadsSelectTable: React.FC<HeadsSelectProps> = ({ filters, setFilte
         }
     }
 
+    const clearFilterState = () => setFilterState(emptyFilterState)
+
     const grayColor = "rgb(31 41 55)"
 
     return isMounted ? (
@@ -85,8 +96,8 @@ export const HeadsSelectTable: React.FC<HeadsSelectProps> = ({ filters, setFilte
                 <Select
                     key={key}
                     value={filters[key] ? { value: filters[key]!, label: filters[key]! } : null}
-                    options={getOptions(key)}
-                    onChange={(selected) => setFilters((prev) => ({ ...prev, [key]: selected ? selected.value : null }))}
+                    options={getSelectOptions(key)}
+                    onChange={(selected) => setFilterState((prev) => ({ ...prev, [key]: selected ? selected.value : null }))}
                     placeholder={`Filter by ${key}`}
                     isClearable
                     className="w-64"
@@ -119,7 +130,7 @@ export const HeadsSelectTable: React.FC<HeadsSelectProps> = ({ filters, setFilte
             ))}
             <button
                 type="button"
-                onClick={clearAllFilters}
+                onClick={clearFilterState}
                 className="px-4 py-2 rounded bg-blue-500 hover:bg-blue-600 text-white"
             >
                 Clear All Filters

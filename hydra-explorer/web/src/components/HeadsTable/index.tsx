@@ -1,12 +1,13 @@
 "use client" // This is a client component 👈🏽
 
 import React, { useState, useMemo, useEffect } from "react"
+import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import { HeadState } from "@/app/model"
 import { useHeadsData } from "@/providers/HeadsDataProvider"
 import { totalLovelaceValueLocked } from "@/utils"
 import { useCardanoExplorer } from "@/providers/CardanoExplorer"
 import HeadDetails from "../HeadDetails"
-import { HeadsSelectTable, FilterState, emptyFilterState } from "./select"
+import { HeadsSelectTable, FilterState, filterStateFromUrl } from "./select"
 import { useNetworkContext } from "@/providers/NetworkProvider"
 
 const DOOM_HEAD_ID = "e1393f73096f03a2e127cdace1aad0d3332c158346d0b46efb5a9339"
@@ -15,16 +16,39 @@ const HeadsTable: React.FC = () => {
     const { heads, error } = useHeadsData()
     const [selectedHead, setSelectedHead] = useState<HeadState | null>(null)
     const explorer = useCardanoExplorer()
-    const [filters, setFilters] = useState<FilterState>(emptyFilterState)
+    // URL Routing hooks
+    const searchParams = useSearchParams()
+    const router = useRouter()
+    const pathname = usePathname()
+
+    const [filters, setFilters] = useState<FilterState>(filterStateFromUrl(searchParams))
+
     const [currentPage, setCurrentPage] = useState(1)
     const itemsPerPage = 10
+
     const { currentNetworkMagic } = useNetworkContext()
 
-    // Filtering controls
-    const clearAllFilters = () => {
-        setFilters(emptyFilterState)
+    const updateUrlParams = (network: number, newFilters: FilterState) => {
+        const params = new URLSearchParams()
+
+        params.set("network", network.toString())
+
+        Object.entries(newFilters).forEach(([key, value]) => {
+            if (value) params.set(key, value)
+        })
+
+        const newUrl = `${pathname}?${params.toString()}`
+        if (newUrl !== window.location.href) {
+            router.replace(newUrl)
+        }
     }
 
+    useEffect(() => {
+        setCurrentPage(1)
+        updateUrlParams(currentNetworkMagic, filters)
+    }, [currentNetworkMagic, filters])
+
+    // Pagination controls
     const filteredHeads = useMemo(() => {
         return heads?.filter((head) => {
             return (
@@ -38,26 +62,21 @@ const HeadsTable: React.FC = () => {
         })
     }, [heads, filters])
 
-    // Pagination controls
     const paginatedHeads = useMemo(() => {
         return filteredHeads?.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
     }, [filteredHeads, currentPage])
 
-    const totalPages =
-        (filteredHeads?.length > 0)
-            ? Math.ceil(filteredHeads?.length / itemsPerPage)
-            : 1
+    const totalPages = filteredHeads?.length ? Math.ceil(filteredHeads.length / itemsPerPage) : 1
 
-    // Reset to page number 1 when filters change
-    useEffect(() => {
-        setCurrentPage(1)
-    }, [filters])
+    const previousPage = () => {
+        const prevPage = Math.max(currentPage - 1, 1)
+        setCurrentPage(prevPage)
+    }
 
-    // Clear filters and reset to page number 1 when network change
-    useEffect(() => {
-        clearAllFilters()
-        setCurrentPage(1)
-    }, [currentNetworkMagic])
+    const nextPage = () => {
+        const nextPage = Math.min(currentPage + 1, totalPages)
+        setCurrentPage(nextPage)
+    }
 
     return (
         <div className="container mx-auto mt-12 overflow-y-auto">
@@ -68,11 +87,11 @@ const HeadsTable: React.FC = () => {
                     {/* Select Filters Section */}
                     <HeadsSelectTable
                         filters={filters}
-                        setFilters={setFilters}
-                        clearAllFilters={clearAllFilters}
+                        setFilterState={setFilters}
                         heads={heads}
                         paginatedHeads={paginatedHeads}
                     />
+
                     {/* Table Section */}
                     <div className="w-full">
                         <table className="table-fixed w-full rounded-lg">
@@ -125,17 +144,19 @@ const HeadsTable: React.FC = () => {
                     {/* Pagination Controls */}
                     <div className="mt-4 flex justify-between items-center">
                         <button
-                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            onClick={previousPage}
                             disabled={currentPage === 1}
-                            className="px-4 py-2 bg-gray-500 text-white rounded disabled:opacity-50"
+                            className={`px-4 py-2 rounded ${currentPage === 1 ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"
+                                } text-white`}
                         >
                             Previous
                         </button>
                         <span>Page {currentPage} of {totalPages}</span>
                         <button
-                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            onClick={nextPage}
                             disabled={currentPage === totalPages}
-                            className="px-4 py-2 bg-gray-500 text-white rounded disabled:opacity-50"
+                            className={`px-4 py-2 rounded ${currentPage === totalPages ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"
+                                } text-white`}
                         >
                             Next
                         </button>
