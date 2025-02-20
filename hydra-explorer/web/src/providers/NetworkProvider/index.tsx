@@ -3,6 +3,8 @@
 import { useSearchParams } from 'next/navigation'
 import React, { useContext, useState } from 'react'
 
+export const mainnetNetworkMagic: number = 764824073
+
 export interface NetworkSettingService {
     currentNetworkMagic: number
     updateNetwork: (networkMagic: number) => void
@@ -23,7 +25,7 @@ const NetworkSettingProvider: React.FC<any> = ({
     children
 }) => {
     const searchParams = useSearchParams()
-    const currentNetwork = Number(searchParams.get("network")) || 764824073
+    const currentNetwork = Number(searchParams.get("network")) || mainnetNetworkMagic
     const [currNetworkMagic, setCurrentNetworkMagic] = useState(currentNetwork)
 
     const handleNetworkChange = (networkMagic: number) => {

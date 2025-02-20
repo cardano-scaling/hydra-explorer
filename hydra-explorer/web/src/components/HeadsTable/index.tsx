@@ -8,7 +8,7 @@ import { totalLovelaceValueLocked } from "@/utils"
 import { useCardanoExplorer } from "@/providers/CardanoExplorer"
 import HeadDetails from "../HeadDetails"
 import { HeadsSelectTable, FilterState, filterStateFromUrl } from "./select"
-import { useNetworkContext } from "@/providers/NetworkProvider"
+import { mainnetNetworkMagic, useNetworkContext } from "@/providers/NetworkProvider"
 
 const DOOM_HEAD_ID = "e1393f73096f03a2e127cdace1aad0d3332c158346d0b46efb5a9339"
 
@@ -31,7 +31,9 @@ const HeadsTable: React.FC = () => {
     const updateUrlParams = (network: number, newFilters: FilterState) => {
         const params = new URLSearchParams()
 
-        params.set("network", network.toString())
+        if (network !== mainnetNetworkMagic) {
+            params.set("network", network.toString())
+        }
 
         Object.entries(newFilters).forEach(([key, value]) => {
             if (value) params.set(key, value)

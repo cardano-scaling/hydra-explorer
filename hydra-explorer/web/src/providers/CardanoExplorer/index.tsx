@@ -1,6 +1,6 @@
 "use client" // This is a client component 👈🏽
 
-import { useNetworkContext } from "@/providers/NetworkProvider"
+import { mainnetNetworkMagic, useNetworkContext } from "@/providers/NetworkProvider"
 import React, { PropsWithChildren, useContext } from "react"
 
 export interface CardanoExplorer {
@@ -31,7 +31,7 @@ export const CardanoExplorerProvider: React.FC<PropsWithChildren<CardanoExplorer
 
         let explorerUrl: string
         switch (currentNetworkMagic) {
-            case 764824073:
+            case mainnetNetworkMagic:
                 explorerUrl = "cexplorer.io"
                 break
             case 1:
