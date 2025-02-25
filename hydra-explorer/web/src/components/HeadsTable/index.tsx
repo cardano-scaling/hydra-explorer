@@ -1,7 +1,7 @@
 "use client" // This is a client component 👈🏽
 
 import React, { useState, useMemo, useEffect } from "react"
-import { useSearchParams, useRouter, usePathname } from "next/navigation"
+import { useSearchParams, useRouter, usePathname, ReadonlyURLSearchParams } from "next/navigation"
 import { HeadState } from "@/app/model"
 import { useHeadsData } from "@/providers/HeadsDataProvider"
 import { totalLovelaceValueLocked } from "@/utils"
@@ -11,6 +11,11 @@ import { HeadsSelectTable, FilterState, filterStateFromUrl } from "./select"
 import { mainnetNetworkMagic, useNetworkContext } from "@/providers/NetworkProvider"
 
 const DOOM_HEAD_ID = "e1393f73096f03a2e127cdace1aad0d3332c158346d0b46efb5a9339"
+
+const pageFromUrl = (searchParams: ReadonlyURLSearchParams): number => {
+    const page = searchParams.get("page")
+    return page ? Math.max(1, Number(page)) : 1
+}
 
 const HeadsTable: React.FC = () => {
     const { heads, error } = useHeadsData()
@@ -22,35 +27,12 @@ const HeadsTable: React.FC = () => {
     const pathname = usePathname()
 
     const [filters, setFilters] = useState<FilterState>(filterStateFromUrl(searchParams))
-
-    const [currentPage, setCurrentPage] = useState(1)
+    const [currentPage, setCurrentPage] = useState<number>(pageFromUrl(searchParams))
     const itemsPerPage = process.env.NEXT_PUBLIC_ITEMS_PER_PAGE
         ? process.env.NEXT_PUBLIC_ITEMS_PER_PAGE
         : 100
 
     const { currentNetworkMagic } = useNetworkContext()
-
-    const updateUrlParams = (network: number, newFilters: FilterState) => {
-        const params = new URLSearchParams()
-
-        if (network !== mainnetNetworkMagic) {
-            params.set("network", network.toString())
-        }
-
-        Object.entries(newFilters).forEach(([key, value]) => {
-            if (value) params.set(key, value)
-        })
-
-        const newUrl = `${pathname}?${params.toString()}`
-        if (newUrl !== window.location.href) {
-            router.replace(newUrl)
-        }
-    }
-
-    useEffect(() => {
-        setCurrentPage(1)
-        updateUrlParams(currentNetworkMagic, filters)
-    }, [currentNetworkMagic, filters])
 
     // Pagination controls
     const filteredHeads = useMemo(() => {
@@ -70,7 +52,9 @@ const HeadsTable: React.FC = () => {
         return filteredHeads?.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
     }, [filteredHeads, currentPage])
 
-    const totalPages = filteredHeads?.length ? Math.ceil(filteredHeads.length / itemsPerPage) : 1
+    const totalPages = useMemo(() => {
+        return filteredHeads?.length ? Math.ceil(filteredHeads.length / itemsPerPage) : 1
+    }, [filteredHeads, itemsPerPage])
 
     const previousPage = () => {
         const prevPage = Math.max(currentPage - 1, 1)
@@ -81,6 +65,32 @@ const HeadsTable: React.FC = () => {
         const nextPage = Math.min(currentPage + 1, totalPages)
         setCurrentPage(nextPage)
     }
+
+    // Effects
+    const updateUrlParams = (page: number, network: number, newFilters: FilterState) => {
+        const params = new URLSearchParams()
+
+        if (page > 1) {
+            params.set("page", page.toString())
+        }
+
+        if (network !== mainnetNetworkMagic) {
+            params.set("network", network.toString())
+        }
+
+        Object.entries(newFilters).forEach(([key, value]) => {
+            if (value) params.set(key, value)
+        })
+
+        const newUrl = `${pathname}?${params.toString()}`
+        if (newUrl !== window.location.href) {
+            router.replace(newUrl)
+        }
+    }
+
+    useEffect(() => {
+        updateUrlParams(currentPage, currentNetworkMagic, filters)
+    }, [currentPage, currentNetworkMagic, filters])
 
     return (
         <div className="container mx-auto mt-12 overflow-y-auto">
