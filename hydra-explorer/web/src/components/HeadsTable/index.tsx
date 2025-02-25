@@ -24,7 +24,9 @@ const HeadsTable: React.FC = () => {
     const [filters, setFilters] = useState<FilterState>(filterStateFromUrl(searchParams))
 
     const [currentPage, setCurrentPage] = useState(1)
-    const itemsPerPage = 10
+    const itemsPerPage = process.env.NEXT_PUBLIC_ITEMS_PER_PAGE
+        ? process.env.NEXT_PUBLIC_ITEMS_PER_PAGE
+        : 100
 
     const { currentNetworkMagic } = useNetworkContext()
 
