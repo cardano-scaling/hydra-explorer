@@ -48,13 +48,17 @@ const HeadsTable: React.FC = () => {
         })
     }, [heads, filters])
 
+    const isLoading = useMemo(() => {
+        return filteredHeads.length === 0
+    }, [filteredHeads])
+
     const paginatedHeads = useMemo(() => {
         return filteredHeads?.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
     }, [filteredHeads, currentPage])
 
     const totalPages = useMemo(() => {
         return filteredHeads?.length ? Math.ceil(filteredHeads.length / itemsPerPage) : 1
-    }, [filteredHeads, itemsPerPage])
+    }, [filteredHeads])
 
     const previousPage = () => {
         const prevPage = Math.max(currentPage - 1, 1)
@@ -89,8 +93,13 @@ const HeadsTable: React.FC = () => {
     }
 
     useEffect(() => {
-        updateUrlParams(currentPage, currentNetworkMagic, filters)
-    }, [currentPage, currentNetworkMagic, filters])
+        if (!isLoading) {
+            if (currentPage > totalPages) {
+                setCurrentPage(1)
+            }
+            updateUrlParams(currentPage, currentNetworkMagic, filters)
+        }
+    }, [currentPage, currentNetworkMagic, filters, isLoading, totalPages])
 
     return (
         <div className="container mx-auto mt-12 overflow-y-auto">
@@ -156,6 +165,7 @@ const HeadsTable: React.FC = () => {
                     </div>
 
                     {/* Pagination Controls */}
+
                     <div className="mt-4 flex justify-between items-center">
                         <button
                             onClick={previousPage}
@@ -165,7 +175,13 @@ const HeadsTable: React.FC = () => {
                         >
                             Previous
                         </button>
-                        <span>Page {currentPage} of {totalPages}</span>
+
+                        {isLoading ? (
+                            <span>Loading...</span>
+                        ) : (
+                            <span>Page {currentPage} of {totalPages}</span>
+                        )}
+
                         <button
                             onClick={nextPage}
                             disabled={currentPage === totalPages}
