@@ -12,8 +12,12 @@ const TickBox = () => {
 
     const { currentNetworkMagic } = useNetworkContext()
 
+    const url = process.env.NEXT_PUBLIC_EXPLORER_URL
+        ? `${process.env.NEXT_PUBLIC_EXPLORER_URL}/ticks`
+        : `/ticks`
+
     useDataFetcher<TickState[]>({
-        url: `/ticks`,
+        url,
         setFetchedData: setTicks,
         setError,
     })

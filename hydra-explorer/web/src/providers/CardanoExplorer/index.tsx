@@ -1,6 +1,6 @@
 "use client" // This is a client component 👈🏽
 
-import { useNetworkContext } from "@/providers/NetworkProvider"
+import { mainnetNetworkMagic, useNetworkContext } from "@/providers/NetworkProvider"
 import React, { PropsWithChildren, useContext } from "react"
 
 export interface CardanoExplorer {
@@ -29,19 +29,19 @@ export const CardanoExplorerProvider: React.FC<PropsWithChildren<CardanoExplorer
 
         const { currentNetworkMagic } = useNetworkContext()
 
-        let explorerUrl : string;
+        let explorerUrl: string
         switch (currentNetworkMagic) {
-            case 764824073:
-                explorerUrl = "cexplorer.io";
-                break;
+            case mainnetNetworkMagic:
+                explorerUrl = "cexplorer.io"
+                break
             case 1:
-                explorerUrl = "preprod.cexplorer.io";
-                break;
+                explorerUrl = "preprod.cexplorer.io"
+                break
             case 2:
-                explorerUrl = "preview.cexplorer.io";
-                break;
+                explorerUrl = "preview.cexplorer.io"
+                break
             default:
-                throw new Error("Unsupported network magic: " + currentNetworkMagic);
+                throw new Error("Unsupported network magic: " + currentNetworkMagic)
         }
 
         const cexplorer: CardanoExplorer = {
