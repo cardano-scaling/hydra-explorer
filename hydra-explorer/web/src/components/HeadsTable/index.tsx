@@ -138,7 +138,7 @@ const HeadsTable: React.FC = () => {
                                 </tr>
                             </thead>
                         </table>
-                        <div className="h-[200px] overflow-y-auto">
+                        <div className="h-[400px] overflow-y-auto">
                             <table className="table-fixed w-full">
                                 <tbody className="">
                                     {paginatedHeads?.sort((a, b) => b.blockNo - a.blockNo).map((head, index) => (
