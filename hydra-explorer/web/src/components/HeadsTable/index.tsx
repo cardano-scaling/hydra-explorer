@@ -108,23 +108,24 @@ const HeadsTable: React.FC = () => {
     }, [currentPage, currentNetworkMagic, filters, isLoading, totalPages])
 
     return (
-        <div className="container mx-auto mt-12 overflow-y-auto">
+        <div className="container mx-auto mt-12">
             {error ? (
                 <p className="text-red-500">{error}</p>
             ) : (
                 <>
                     {/* Select Filters Section */}
-                    <HeadsSelectTable
-                        filters={filters}
-                        setFilterState={setFilters}
-                        heads={heads}
-                        paginatedHeads={paginatedHeads}
-                    />
-
+                    <div className="sticky top-0 bg-black z-10">
+                        <HeadsSelectTable
+                            filters={filters}
+                            setFilterState={setFilters}
+                            heads={heads}
+                            paginatedHeads={paginatedHeads}
+                        />
+                    </div>
                     {/* Table Section */}
-                    <div className="w-full">
-                        <table className="table-fixed w-full rounded-lg">
-                            <thead className="sticky top-0 text-center px-4 py-2 bg-gray-800">
+                    <div className="relative bg-black border border-gray-700 rounded-lg">
+                        <table className="table-fixed w-full rounded-lg border-collapse">
+                            <thead className="sticky top-0 bg-gray-800">
                                 <tr>
                                     <th>Head ID</th>
                                     <th>Head Version</th>
@@ -136,42 +137,45 @@ const HeadsTable: React.FC = () => {
                                     <th>Details</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                {paginatedHeads?.sort((a, b) => b.blockNo - a.blockNo).map((head, index) => (
-                                    <tr key={index} className={`${index % 2 === 0 ? "bg-gray-700" : "bg-gray-600"}`}>
-                                        <td className="truncate text-center border px-4 py-2">
-                                            {head.headId === DOOM_HEAD_ID && (
-                                                <div className="flex items-center justify-center p-1 rounded-full bg-yellow-400 float-left mr-2" title="Hydra Doom Final">
-                                                    <img src="/hydra.svg" alt="Hydra Head" width={16} height={16} />
-                                                </div>
-                                            )}
-                                            <a href={explorer.mintPolicy(head.headId)} target="_blank" className="text-blue-300 hover:text-blue-500">
-                                                {head.headId}
-                                            </a>
-                                        </td>
-                                        <td className="truncate text-center border px-4 py-2">{head.version}</td>
-                                        <td className="truncate text-center border px-4 py-2">{head.status}</td>
-                                        <td className="truncate text-center border px-4 py-2">{head.point.slot}</td>
-                                        <td className="truncate text-center border px-4 py-2">{head.blockNo}</td>
-                                        <td className="truncate text-center border px-4 py-2">
-                                            <a href={explorer.block(head.point.blockHash)} target="_blank" className="text-blue-300 hover:text-blue-500">
-                                                {head.point.blockHash}
-                                            </a>
-                                        </td>
-                                        <td className="truncate text-center border px-4 py-2">{totalLovelaceValueLocked(head) / 1000000} ₳</td>
-                                        <td className="text-center border px-4 py-2">
-                                            <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={() => setSelectedHead(head)}>
-                                                View
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
                         </table>
+                        <div className="h-[200px] overflow-y-auto">
+                            <table className="table-fixed w-full">
+                                <tbody className="">
+                                    {paginatedHeads?.sort((a, b) => b.blockNo - a.blockNo).map((head, index) => (
+                                        <tr key={index} className={`${index % 2 === 0 ? "bg-gray-700" : "bg-gray-600"}`}>
+                                            <td className="truncate text-center border px-4 py-2">
+                                                {head.headId === DOOM_HEAD_ID && (
+                                                    <div className="flex items-center justify-center p-1 rounded-full bg-yellow-400 float-left mr-2" title="Hydra Doom Final">
+                                                        <img src="/hydra.svg" alt="Hydra Head" width={16} height={16} />
+                                                    </div>
+                                                )}
+                                                <a href={explorer.mintPolicy(head.headId)} target="_blank" className="text-blue-300 hover:text-blue-500">
+                                                    {head.headId}
+                                                </a>
+                                            </td>
+                                            <td className="truncate text-center border px-4 py-2">{head.version}</td>
+                                            <td className="truncate text-center border px-4 py-2">{head.status}</td>
+                                            <td className="truncate text-center border px-4 py-2">{head.point.slot}</td>
+                                            <td className="truncate text-center border px-4 py-2">{head.blockNo}</td>
+                                            <td className="truncate text-center border px-4 py-2">
+                                                <a href={explorer.block(head.point.blockHash)} target="_blank" className="text-blue-300 hover:text-blue-500">
+                                                    {head.point.blockHash}
+                                                </a>
+                                            </td>
+                                            <td className="truncate text-center border px-4 py-2">{totalLovelaceValueLocked(head) / 1000000} ₳</td>
+                                            <td className="text-center border px-4 py-2">
+                                                <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={() => setSelectedHead(head)}>
+                                                    View
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     {/* Pagination Controls */}
-
                     <div className="mt-4 flex justify-between items-center">
                         <button
                             onClick={previousPage}
