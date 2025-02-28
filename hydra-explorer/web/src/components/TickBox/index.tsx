@@ -12,8 +12,12 @@ const TickBox = () => {
 
     const { currentNetworkMagic } = useNetworkContext()
 
+    const url = process.env.NEXT_PUBLIC_EXPLORER_URL
+        ? `${process.env.NEXT_PUBLIC_EXPLORER_URL}/ticks`
+        : `/ticks`
+
     useDataFetcher<TickState[]>({
-        url: `/ticks`,
+        url,
         setFetchedData: setTicks,
         setError,
     })
@@ -34,8 +38,8 @@ const TickBox = () => {
             {error ? (
                 <p className="text-red-500">{error}</p>
             ) : (
-                <div className="w-full">
-                    <table className="table-fixed bg-gray-800 text-white rounded-lg">
+                <div className="w-full border border-gray-700 rounded-lg">
+                    <table className="table-fixed bg-gray-800 text-white rounded-lg border-collapse">
                         <thead>
                             <tr>
                                 <th className="text-center px-4 py-2">Block Number</th>

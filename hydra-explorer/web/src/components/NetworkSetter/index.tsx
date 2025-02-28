@@ -1,7 +1,7 @@
 "use client" // This is a client component 👈🏽
 
 import React, { ChangeEvent } from 'react'
-import { useNetworkContext } from "@/providers/NetworkProvider"
+import { mainnetNetworkMagic, useNetworkContext } from "@/providers/NetworkProvider"
 
 const NetworkSetter = () => {
   const { currentNetworkMagic, updateNetwork } = useNetworkContext()
@@ -21,7 +21,7 @@ const NetworkSetter = () => {
             }
             className="py-2 px-3 bg-gray-800 text-gray-200 rounded-md"
           >
-            <option value={764824073}>mainnet</option>
+            <option value={mainnetNetworkMagic}>mainnet</option>
             <option value={1}>preprod</option>
             <option value={2}>preview</option>
           </select>
