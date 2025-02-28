@@ -7,7 +7,7 @@ import { useHeadsData } from "@/providers/HeadsDataProvider"
 import { totalLovelaceValueLocked } from "@/utils"
 import { useCardanoExplorer } from "@/providers/CardanoExplorer"
 import HeadDetails from "../HeadDetails"
-import { HeadsSelectTable, FilterState, filterStateFromUrl } from "./select"
+import { HeadsSelectTable, FilterState, filterStateFromUrl, emptyFilterState } from "./select"
 import { mainnetNetworkMagic, useNetworkContext } from "@/providers/NetworkProvider"
 
 const DOOM_HEAD_ID = "e1393f73096f03a2e127cdace1aad0d3332c158346d0b46efb5a9339"
@@ -53,7 +53,13 @@ const HeadsTable: React.FC = () => {
     }, [filteredHeads])
 
     const paginatedHeads = useMemo(() => {
-        return filteredHeads?.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+        if (!filteredHeads) return []
+
+        const totalItems = filteredHeads.length
+        const start = totalItems - currentPage * itemsPerPage
+        const end = totalItems - (currentPage - 1) * itemsPerPage
+
+        return filteredHeads.slice(Math.max(0, start), Math.max(0, end))
     }, [filteredHeads, currentPage])
 
     const totalPages = useMemo(() => {
