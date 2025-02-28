@@ -17,7 +17,7 @@ export default function Home() {
 
   return (
     <main className="items-center">
-      <div className="pt-16">
+      <div className="pt-28">
         <Head>
           <title>Hydrascan</title>
           <meta name="description" content="Hydra Head Explorer" />
