@@ -29,8 +29,12 @@ export const HeadsDataProvider: React.FC<any> = ({
 
   const { currentNetworkMagic } = useNetworkContext()
 
+  const url = process.env.NEXT_PUBLIC_EXPLORER_URL
+    ? `${process.env.NEXT_PUBLIC_EXPLORER_URL}/heads`
+    : `/heads`
+
   useDataFetcher<HeadState[]>({
-    url: `/heads`,
+    url,
     setFetchedData: setHeads,
     setError,
   })

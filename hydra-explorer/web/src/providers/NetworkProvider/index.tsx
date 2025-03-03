@@ -1,6 +1,9 @@
 "use client" // This is a client component 👈🏽
 
+import { useSearchParams } from 'next/navigation'
 import React, { useContext, useState } from 'react'
+
+export const mainnetNetworkMagic: number = 764824073
 
 export interface NetworkSettingService {
     currentNetworkMagic: number
@@ -21,7 +24,9 @@ export const useNetworkContext = () => {
 const NetworkSettingProvider: React.FC<any> = ({
     children
 }) => {
-    const [currNetworkMagic, setCurrentNetworkMagic] = useState(2)
+    const searchParams = useSearchParams()
+    const currentNetwork = Number(searchParams.get("network")) || mainnetNetworkMagic
+    const [currNetworkMagic, setCurrentNetworkMagic] = useState(currentNetwork)
 
     const handleNetworkChange = (networkMagic: number) => {
         setCurrentNetworkMagic(networkMagic)
