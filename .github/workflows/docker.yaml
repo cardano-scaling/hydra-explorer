@@ -65,6 +65,10 @@ jobs:
         [[ ${BUILDING_TAG} = true ]] && \
           VERSION_NAME=${{github.ref_name}}
 
+        BUILDING_ON_MASTER=false
+        [[ git merge-base --is-ancestor HEAD origin/master ]] && \
+          BUILDING_ON_MASTER=true
+
         # Use 'FROM' instruction to use docker build with --label
         echo "FROM hydra-explorer" | docker build \
           --label org.opencontainers.image.source=${{github.repositoryUrl}} \
@@ -74,17 +78,18 @@ jobs:
           --label org.opencontainers.image.version=${VERSION_NAME:-unstable} \
           --tag ${IMAGE_NAME}:unstable -
 
-        # Also tag with semver and 'latest' if we are building a tag
-        [[ ${BUILDING_TAG} = true ]] && \
-          docker tag ${IMAGE_NAME}:unstable ${IMAGE_NAME}:${{github.ref_name}}
-        [[ ${BUILDING_TAG} = true ]] && \
+        # Also tag with 'latest' if we are building on master
+        [[ ${BUIDING_TAG} && ${BUILDING_ON_MASTER} = true ]] && \
           docker tag ${IMAGE_NAME}:unstable ${IMAGE_NAME}:latest
-        # Tag image with workflow dispatch ref_name
+        # Also tag with version if we are building a tag
+        [[ ${BUILDING_TAG} = true && ${{matrix.target}} != "hydraw" ]] && \
+          docker tag ${IMAGE_NAME}:unstable ${IMAGE_NAME}:${VERSION_NAME}
+        # Also tag with ref name when manually dispatched
         [[ ${{github.event_name == 'workflow_dispatch'}} = true ]] && \
-          docker tag ${IMAGE_NAME}:unstable ${IMAGE_NAME}:${{github.event.inputs.ref_name}}
+          docker tag ${IMAGE_NAME}:unstable ${IMAGE_NAME}:workflow_dispatch-${{github.event.inputs.ref_name}}
 
-        docker images
         docker inspect ${IMAGE_NAME}:unstable
+        docker images
 
     - name: 📤 Push to registry
       run: |
