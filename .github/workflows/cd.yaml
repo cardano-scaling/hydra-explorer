@@ -3,7 +3,8 @@ name: "CD"
 on:
   workflow_run:
     workflows: ["Docker"]
-    branches: ["master"]
+    branches:
+      - main
     types:
       - completed
   workflow_dispatch:
