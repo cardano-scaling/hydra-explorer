@@ -84,7 +84,7 @@ jobs:
         [[ ${BUIDING_TAG} && ${BUILDING_ON_MAIN} = true ]] && \
           docker tag ${IMAGE_NAME}:unstable ${IMAGE_NAME}:latest
         # Also tag with version if we are building a tag
-        [[ ${BUILDING_TAG} = true && ${{matrix.target}} != "hydraw" ]] && \
+        [[ ${BUILDING_TAG} = true ]] && \
           docker tag ${IMAGE_NAME}:unstable ${IMAGE_NAME}:${VERSION_NAME}
         # Also tag with ref name when manually dispatched
         [[ ${{github.event_name == 'workflow_dispatch'}} = true ]] && \
