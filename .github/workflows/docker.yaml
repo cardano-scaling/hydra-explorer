@@ -67,8 +67,9 @@ jobs:
           VERSION_NAME=${{github.ref_name}}
 
         BUILDING_ON_MAIN=false
-        [[ git merge-base --is-ancestor HEAD origin/main ]] && \
+        if (git merge-base --is-ancestor HEAD origin/main); then
           BUILDING_ON_MAIN=true
+        fi
 
         # Use 'FROM' instruction to use docker build with --label
         echo "FROM hydra-explorer" | docker build \
