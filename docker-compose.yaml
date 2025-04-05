@@ -16,6 +16,8 @@ services:
     networks:
       - hydra-explorer
     restart: always
+    logging:
+      driver: journald
 
   # List of hydra-chain-observers
 
@@ -41,6 +43,8 @@ services:
     networks:
       - hydra-explorer
     restart: always
+    logging:
+      driver: journald
 
   hydra-chain-observer-preprod-0.20:
     # TODO: cut release 0.20.1
@@ -62,6 +66,8 @@ services:
     networks:
       - hydra-explorer
     restart: always
+    logging:
+      driver: journald
 
   hydra-chain-observer-mainnet-0.20:
     # TODO: cut release 0.20.1
@@ -83,6 +89,8 @@ services:
     networks:
       - hydra-explorer
     restart: always
+    logging:
+      driver: journald
 
   ## 0.19
 
@@ -105,6 +113,8 @@ services:
     networks:
       - hydra-explorer
     restart: always
+    logging:
+      driver: journald
 
   hydra-chain-observer-preprod-0.19:
     image: ghcr.io/cardano-scaling/hydra-chain-observer:0.19.1
@@ -125,6 +135,8 @@ services:
     networks:
       - hydra-explorer
     restart: always
+    logging:
+      driver: journald
 
   hydra-chain-observer-mainnet-0.19:
     image: ghcr.io/cardano-scaling/hydra-chain-observer:0.19.1
@@ -145,6 +157,8 @@ services:
     networks:
       - hydra-explorer
     restart: always
+    logging:
+      driver: journald
 
   # One cardano node per network
 
@@ -162,6 +176,8 @@ services:
     command:
       [ "run" ]
     restart: always
+    logging:
+      driver: journald
 
   cardano-node-preprod:
     image: ghcr.io/intersectmbo/cardano-node:10.1.4
@@ -177,6 +193,8 @@ services:
     command:
       [ "run" ]
     restart: always
+    logging:
+      driver: journald
 
   cardano-node-mainnet:
     image: ghcr.io/intersectmbo/cardano-node:10.1.4
@@ -192,3 +210,5 @@ services:
     command:
       [ "run" ]
     restart: always
+    logging:
+      driver: journald
