@@ -36,24 +36,20 @@ export const emptyFilterState: FilterState = {
 interface HeadsSelectProps {
     filters: FilterState
     setFilterState: React.Dispatch<React.SetStateAction<FilterState>>
-    heads: HeadState[],
-    paginatedHeads: HeadState[]
+    heads: HeadState[]
 }
 
-export const HeadsSelectTable: React.FC<HeadsSelectProps> = ({ filters, setFilterState, heads, paginatedHeads }) => {
+export const HeadsSelectTable: React.FC<HeadsSelectProps> = ({ filters, setFilterState, heads }) => {
     // Must be deleted once
     // https://github.com/JedWatson/react-select/issues/5459 is fixed.
     const [isMounted, setIsMounted] = useState(false)
     useEffect(() => setIsMounted(true), [])
 
-    // Generate select options dynamically based on current filtered heads
+    // Generate global select options dynamically based on current heads
     const getSelectOptions = (key: keyof FilterState) => {
         const createOptions = (values: string[]) => {
             return values.map((value) => ({ value, label: value }))
         }
-
-        const seen = new Set<string>()
-        const uniqueValues: string[] = []
 
         if (key === "status") {
             // XXX: Don't forget to change if a new top-level status is defined.
@@ -61,6 +57,8 @@ export const HeadsSelectTable: React.FC<HeadsSelectProps> = ({ filters, setFilte
             return createOptions(allStatuses)
         }
         else if (key === "version") {
+            const seen = new Set<string>()
+            const uniqueValues: string[] = []
             for (const head of heads) {
                 let version = head.version
                 if (version && !seen.has(version)) {
@@ -70,19 +68,19 @@ export const HeadsSelectTable: React.FC<HeadsSelectProps> = ({ filters, setFilte
             }
             return createOptions(uniqueValues)
         } else {
-            for (const head of paginatedHeads) {
-                let value: string | undefined
-                if (key === "slot") value = head.point.slot.toString()
-                else if (key === "blockHash") value = head.point.blockHash
-                else if (key === "blockNo") value = head.blockNo.toString()
-                else value = head[key] as string
-
-                if (value && !seen.has(value)) {
-                    seen.add(value)
-                    uniqueValues.push(value)
+            const allValues: string[] = heads.map(head => {
+                switch (key) {
+                    case "slot":
+                        return head.point.slot.toString()
+                    case "blockHash":
+                        return head.point.blockHash
+                    case "blockNo":
+                        return head.blockNo.toString()
+                    default:
+                        return head[key] as string
                 }
-            }
-            return createOptions(uniqueValues)
+            })
+            return createOptions(allValues)
         }
     }
 

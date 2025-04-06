@@ -119,7 +119,6 @@ const HeadsTable: React.FC = () => {
                             filters={filters}
                             setFilterState={setFilters}
                             heads={heads}
-                            paginatedHeads={paginatedHeads}
                         />
                     </div>
                     {/* Table Section */}
