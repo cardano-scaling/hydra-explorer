@@ -1,13 +1,14 @@
 "use client" // This is a client component 👈🏽
 
-import React, { useState, useMemo, useEffect } from "react"
+import React, { useState, useMemo, useEffect, useCallback } from "react"
 import { useSearchParams, useRouter, usePathname, ReadonlyURLSearchParams } from "next/navigation"
+import Image from "next/image"
 import { HeadState } from "@/app/model"
 import { useHeadsData } from "@/providers/HeadsDataProvider"
 import { totalLovelaceValueLocked } from "@/utils"
 import { useCardanoExplorer } from "@/providers/CardanoExplorer"
 import HeadDetails from "../HeadDetails"
-import { HeadsSelectTable, FilterState, filterStateFromUrl, emptyFilterState } from "./select"
+import { HeadsSelectTable, FilterState, filterStateFromUrl } from "./select"
 import { mainnetNetworkMagic, useNetworkContext } from "@/providers/NetworkProvider"
 
 const DOOM_HEAD_ID = "e1393f73096f03a2e127cdace1aad0d3332c158346d0b46efb5a9339"
@@ -60,11 +61,11 @@ const HeadsTable: React.FC = () => {
         const end = totalItems - (currentPage - 1) * itemsPerPage
 
         return filteredHeads.slice(Math.max(0, start), Math.max(0, end))
-    }, [filteredHeads, currentPage])
+    }, [filteredHeads, currentPage, itemsPerPage])
 
     const totalPages = useMemo(() => {
         return filteredHeads?.length ? Math.ceil(filteredHeads.length / itemsPerPage) : 1
-    }, [filteredHeads])
+    }, [filteredHeads, itemsPerPage])
 
     const previousPage = () => {
         const prevPage = Math.max(currentPage - 1, 1)
@@ -77,7 +78,7 @@ const HeadsTable: React.FC = () => {
     }
 
     // Effects
-    const updateUrlParams = (page: number, network: number, newFilters: FilterState) => {
+    const updateUrlParams = useCallback((page: number, network: number, newFilters: FilterState) => {
         const params = new URLSearchParams()
 
         if (page > 1) {
@@ -96,7 +97,7 @@ const HeadsTable: React.FC = () => {
         if (newUrl !== window.location.href) {
             router.replace(newUrl)
         }
-    }
+    }, [pathname, router])
 
     useEffect(() => {
         if (!isLoading) {
@@ -105,7 +106,7 @@ const HeadsTable: React.FC = () => {
             }
             updateUrlParams(currentPage, currentNetworkMagic, filters)
         }
-    }, [currentPage, currentNetworkMagic, filters, isLoading, totalPages])
+    }, [currentPage, currentNetworkMagic, filters, isLoading, totalPages, updateUrlParams])
 
     return (
         <div className="container mx-auto mt-12">
@@ -145,7 +146,7 @@ const HeadsTable: React.FC = () => {
                                             <td className="truncate text-center border px-4 py-2">
                                                 {head.headId === DOOM_HEAD_ID && (
                                                     <div className="flex items-center justify-center p-1 rounded-full bg-yellow-400 float-left mr-2" title="Hydra Doom Final">
-                                                        <img src="/hydra.svg" alt="Hydra Head" width={16} height={16} />
+                                                        <Image src="/hydra.svg" alt="Hydra Head" width={16} height={16} />
                                                     </div>
                                                 )}
                                                 <a href={explorer.mintPolicy(head.headId)} target="_blank" className="text-blue-300 hover:text-blue-500">
