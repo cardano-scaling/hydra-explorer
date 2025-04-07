@@ -9,7 +9,7 @@
       flake = false;
     };
 
-    cardano-node.url = "github:IntersectMBO/cardano-node/9.2.0";
+    cardano-node.url = "github:IntersectMBO/cardano-node/10.1.4";
     # 0.20.0 + http-chain-observer work
     hydra.url = "github:cardano-scaling/hydra/0.20.0-37-g0be61598fa";
 
