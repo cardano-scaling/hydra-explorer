@@ -69,5 +69,7 @@
     enable = true;
   };
 
+  services.timesyncd.enable = true;
+
   system.stateVersion = "24.05";
 }
