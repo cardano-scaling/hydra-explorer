@@ -22,7 +22,7 @@ import Hydra.Cluster.Scenarios (EndToEndLog, singlePartyHeadFullLifeCycle, singl
 import HydraNode (HydraNodeLog)
 import Network.HTTP.Simple (getResponseBody, httpJSON, parseRequestThrow)
 import Network.Socket (PortNumber)
-import System.Process.Typed (Process, ProcessConfig, createPipe, getStderr, proc, setStderr, unsafeProcessHandle, withProcessTerm)
+import System.Process.Typed (Process, ProcessConfig, createPipe, getStderr, proc, setEnv, setStderr, unsafeProcessHandle, withProcessTerm)
 import Test.Network.Ports (withFreePort)
 
 spec :: Spec
@@ -105,8 +105,9 @@ withHydraExplorer action =
   withFreePort $ \clientPort ->
     withFreePort $ \observerPort -> do
       let process =
-            proc "hydra-explorer" $
-              ["--client-port", show clientPort]
+            setEnv [("LOG_LEVEL", "debug")]
+              . proc "hydra-explorer"
+              $ ["--client-port", show clientPort]
                 <> ["--observer-port", show observerPort]
       withProcessExpect process $ \_p -> do
         -- XXX: wait for the http server to be listening on port
@@ -144,9 +145,8 @@ withChainObserver node HydraExplorerClient{observerPort} action =
   withProcessExpect process $ const action
  where
   process =
-    proc
-      "hydra-chain-observer"
-      $ ["--node-socket", unFile nodeSocket]
+    proc "hydra-chain-observer" $
+      ["--node-socket", unFile nodeSocket]
         <> case networkId of
           Mainnet -> ["--mainnet"]
           Testnet (NetworkMagic magic) -> ["--testnet-magic", show magic]

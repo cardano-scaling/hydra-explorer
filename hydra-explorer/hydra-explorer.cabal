@@ -44,9 +44,9 @@ library
     , aeson
     , Blammo
     , Blammo-wai
+    , containers
     , envparse
     , hydra-cardano-api
-    , hydra-node
     , hydra-prelude
     , hydra-tx
     , hydra-tx:testlib
@@ -97,6 +97,7 @@ test-suite tests
     , hydra-node
     , hydra-prelude
     , hydra-test-utils
+    , hydra-tx
     , lens
     , lens-aeson
     , network
