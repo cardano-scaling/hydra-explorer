@@ -19,7 +19,15 @@ let
 
       name = "hydra-explorer";
       compiler-nix-name = lib.mkDefault "ghc966";
-      modules = [ ];
+      modules = [
+        # XXX: This should not be needed here as proto-lens-protobuf,
+        # proto-lens-etcd and hydra-node should not be needed
+        {
+          packages.proto-lens-protobuf-types.components.library.build-tools = [ pkgs.protobuf ];
+          packages.proto-lens-etcd.components.library.build-tools = [ pkgs.protobuf ];
+          packages.hydra-node.components.library.build-tools = [ pkgs.etcd ];
+        }
+      ];
     });
 
 
