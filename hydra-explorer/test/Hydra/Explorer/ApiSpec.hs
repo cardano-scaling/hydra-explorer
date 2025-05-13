@@ -24,10 +24,9 @@ import Data.OpenApi (
   _Inline,
  )
 import Data.Yaml qualified as Yaml
-import Hydra.Cardano.Api (Tx)
-import Hydra.Chain (OnChainTx)
 import Hydra.Explorer (clientApi)
 import Hydra.Explorer.ObservationApi (Observation)
+import Hydra.Tx.Observe (HeadObservation)
 import System.FilePath ((</>))
 import Test.Aeson.GenericSpecs (defaultSettings, roundtripAndGoldenADTSpecsWithSettings, roundtripAndGoldenSpecsWithSettings, sampleSize)
 import Test.Hspec.Wai (MatchBody (..), ResponseMatcher (ResponseMatcher), shouldRespondWith, (<:>))
@@ -43,7 +42,9 @@ apiServerSpec = do
     -- NOTE: Detect regressions in observer interface
     let settings = defaultSettings{sampleSize = 1}
     roundtripAndGoldenSpecsWithSettings settings $ Proxy @Observation
-    roundtripAndGoldenADTSpecsWithSettings settings $ Proxy @(MinimumSized (OnChainTx Tx))
+    roundtripAndGoldenADTSpecsWithSettings settings $ Proxy @(MinimumSized HeadObservation)
+
+  -- TODO: test compatibility using old golden/OnChainTx/*.json files
 
   -- TODO: test conformance, but prop_validateJSONSchema only works for hydra-node schemas right now
   -- prop "conforms to observer-api.yaml" $

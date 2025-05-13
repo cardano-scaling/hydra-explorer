@@ -21,6 +21,8 @@ data Observation = Observation
   deriving stock (Eq, Show, Generic)
   deriving anyclass (ToJSON)
 
+-- FIXME: Test this using golden files for 'HeadObservation' and 'OnChainTx'
+-- (for legacy support: generate them before dropping the hydra-node dep)
 instance FromJSON Observation where
   parseJSON = withObject "Observation" $ \o -> do
     point <- o .: "point"
@@ -34,6 +36,7 @@ instance FromJSON Observation where
 
     mapTag = \case
       "OnInitTx" -> "Init"
+      "OnCommitTx" -> "Commit"
       s -> s
 
 instance Arbitrary Observation where
