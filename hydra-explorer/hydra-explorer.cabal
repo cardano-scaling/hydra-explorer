@@ -42,6 +42,9 @@ library
   ghc-options:     -haddock
   build-depends:
     , aeson
+    , Blammo
+    , Blammo-wai
+    , envparse
     , hydra-cardano-api
     , hydra-node
     , hydra-prelude
@@ -53,12 +56,13 @@ library
     , QuickCheck
     , servant
     , servant-server
-    , wai
+    , unliftio
     , wai-cors
     , warp
 
   exposed-modules:
     Hydra.Explorer
+    Hydra.Explorer.Env
     Hydra.Explorer.ExplorerState
     Hydra.Explorer.ObservationApi
     Hydra.Explorer.Options
