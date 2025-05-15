@@ -8,6 +8,7 @@ import Test.Hydra.Tx.Gen ()
 
 import Data.Aeson (Value (Object), withObject, (.:))
 import Data.Aeson.KeyMap (fromMap, toMap)
+import Data.Aeson.Types (Parser)
 import Data.Map qualified as Map
 import Hydra.Cardano.Api (BlockNo, ChainPoint, NetworkId (..), NetworkMagic (..), fromNetworkMagic)
 import Hydra.Tx.Observe (HeadObservation)
@@ -21,23 +22,32 @@ data Observation = Observation
   deriving stock (Eq, Show, Generic)
   deriving anyclass (ToJSON)
 
--- FIXME: Test this using golden files for 'HeadObservation' and 'OnChainTx'
--- (for legacy support: generate them before dropping the hydra-node dep)
 instance FromJSON Observation where
   parseJSON = withObject "Observation" $ \o -> do
     point <- o .: "point"
     blockNo <- o .: "blockNo"
-    observed <- o .: "observed" <|> (o .: "observedTx" >>= oldAPI)
+    observed <- (o .: "observed") <|> (o .: "observedTx" >>= parseOldObservation)
     pure $ Observation{point, blockNo, observed}
-   where
-    oldAPI =
-      withObject "OnChainTx (legacy)" $ \o ->
-        parseJSON (Object . fromMap . Map.adjust mapTag "tag" $ toMap o)
 
-    mapTag = \case
-      "OnInitTx" -> "Init"
-      "OnCommitTx" -> "Commit"
-      s -> s
+-- FIXME: OnCollectComTx was not containing a utxoHash and contesters were not a thing
+parseOldObservation :: Value -> Parser HeadObservation
+parseOldObservation =
+  withObject "OnChainTx (legacy)" $ \o ->
+    parseJSON (Object . fromMap . Map.adjust mapTag "tag" $ toMap o)
+ where
+  mapTag = \case
+    "OnInitTx" -> "Init"
+    "OnAbortTx" -> "Abort"
+    "OnCommitTx" -> "Commit"
+    "OnCollectComTx" -> "CollectCom"
+    "OnIncrementTx" -> "Increment"
+    "OnDecrementTx" -> "Decrement"
+    "OnCloseTx" -> "Close"
+    "OnContestTx" -> "Contest"
+    "OnFanoutTx" -> "Fanout"
+    "OnDepositTx" -> "Deposit"
+    "OnRecoverTx" -> "Recover"
+    s -> s
 
 instance Arbitrary Observation where
   arbitrary = Observation <$> arbitrary <*> arbitrary <*> arbitrary
