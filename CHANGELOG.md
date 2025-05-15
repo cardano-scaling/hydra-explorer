@@ -15,3 +15,8 @@ changes.
 - Listen for observations on the observer API and aggregate them into the client API.
 
 - Explorer frontend allows to switch networks and provides links accordingly.
+
+- Observer API 1.1.0:
+  - Backwards compatible change on request body to `/observations`.
+  - New field `observed` containing `HeadObserveration` to be used going forward.
+  - Deprecated `observedTx` being a `Maybe (OnChainTx Tx)`.
