@@ -24,8 +24,12 @@ import Data.OpenApi (
   _Inline,
  )
 import Data.Yaml qualified as Yaml
+import Hydra.Cardano.Api (Tx)
+import Hydra.Chain (OnChainTx)
 import Hydra.Explorer (clientApi)
+import Hydra.Explorer.ObservationApi (Observation)
 import System.FilePath ((</>))
+import Test.Aeson.GenericSpecs (defaultSettings, roundtripAndGoldenADTSpecsWithSettings, roundtripAndGoldenSpecsWithSettings, sampleSize)
 import Test.Hspec.Wai (MatchBody (..), ResponseMatcher (ResponseMatcher), shouldRespondWith, (<:>))
 import Test.Hspec.Wai qualified as Wai
 import Test.Hspec.Wai.Internal qualified as Wai
@@ -35,6 +39,23 @@ spec = apiServerSpec
 
 apiServerSpec :: Spec
 apiServerSpec = do
+  describe "Observer API" $ do
+    -- NOTE: Detect regressions in observer interface
+    let settings = defaultSettings{sampleSize = 1}
+    roundtripAndGoldenSpecsWithSettings settings $ Proxy @Observation
+    roundtripAndGoldenADTSpecsWithSettings settings $ Proxy @(MinimumSized (OnChainTx Tx))
+
+  -- TODO: test conformance, but prop_validateJSONSchema only works for hydra-node schemas right now
+  -- prop "conforms to observer-api.yaml" $
+  --   prop_validateJSONSchema @Observation ("json-schemas" </> "observer-api.yaml") $
+  --     key "paths"
+  --       . key "/observations/{network}/{version}"
+  --       . key "post"
+  --       . key "requestBody"
+  --       . key "content"
+  --       . key "application/json"
+  --       . key "schema"
+
   describe "Client API" $ do
     describe "GET /heads" $
       prop "matches schema" $ \(ReasonablySized explorerState) -> do

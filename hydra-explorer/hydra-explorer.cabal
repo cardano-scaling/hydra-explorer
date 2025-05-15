@@ -81,8 +81,10 @@ test-suite tests
   type:               exitcode-stdio-1.0
   build-depends:
     , aeson
+    , base
     , filepath
     , hspec
+    , hspec-golden-aeson
     , hspec-wai
     , http-conduit
     , hydra-cardano-api

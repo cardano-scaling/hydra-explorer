@@ -1,0 +1,22 @@
+{
+    "samples": [
+        {
+            "fanoutUTxO": {
+                "0000010101000001010001010000010100000001000000000100000000000001#84": {
+                    "address": "addr_test1vp46q67p3m8a8qvtgtcmecfxgtk2f4v55ehuslm4z6gag9cwwurk4",
+                    "datum": null,
+                    "datumhash": null,
+                    "inlineDatum": null,
+                    "inlineDatumRaw": null,
+                    "referenceScript": null,
+                    "value": {
+                        "lovelace": 849070
+                    }
+                }
+            },
+            "headId": "00010001010001000000010101010100",
+            "tag": "OnFanoutTx"
+        }
+    ],
+    "seed": -470479129
+}

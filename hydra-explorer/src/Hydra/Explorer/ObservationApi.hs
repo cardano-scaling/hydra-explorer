@@ -16,7 +16,7 @@ data Observation = Observation
   , observedTx :: Maybe (OnChainTx Tx)
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (FromJSON)
+  deriving anyclass (ToJSON, FromJSON)
 
 instance Arbitrary Observation where
   arbitrary = Observation <$> arbitrary <*> arbitrary <*> arbitrary
