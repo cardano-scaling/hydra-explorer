@@ -44,7 +44,6 @@ library
     , aeson
     , Blammo
     , Blammo-wai
-    , containers
     , envparse
     , hydra-cardano-api
     , hydra-prelude

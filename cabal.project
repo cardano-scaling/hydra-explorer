@@ -23,8 +23,8 @@ source-repository-package
   type: git
   location: https://github.com/cardano-scaling/hydra
   -- 0.21.0 + new HeadObservation api
-  tag: af53252ffc0d3b13736faa762594d70a206613f7
-  --sha256: sha256-t/GPrkD3xbjM9WzjCxSTXfUSMyC9c+kCEJHi4hJJh60=
+  tag: 68acfb571a9ed7e080b0f852df07acc1a787443f
+  --sha256: sha256-j7iBi/R1YHxoMSYItb/lCD6gr9Xww0iXR5ulxXtY4GE=
   subdir:
     hydra-prelude
     hydra-test-utils
