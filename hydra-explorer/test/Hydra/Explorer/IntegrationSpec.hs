@@ -46,7 +46,7 @@ spec = do
                 allHeads ^? nth 0 . key "network" `shouldBe` Just "Testnet"
                 allHeads ^? nth 0 . key "networkMagic" . _Number `shouldBe` Just (fromIntegral . unNetworkMagic . toNetworkMagic $ networkId node)
                 -- NOTE: This deliberately pins the latest version of hydra we test against.
-                allHeads ^? nth 0 . key "version" `shouldBe` Just "0.21.0-50b388e8f99a2d7c745e7adf6b37eae54c9f5bb5"
+                allHeads ^? nth 0 . key "version" `shouldBe` Just "0.22.0-cbbc35457a5b6252a9e690e6e9a0922799d317e3"
 
   it "aggregates hydra transactions of multiple heads into /heads" $
     failAfter 60 $

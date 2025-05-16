@@ -68,7 +68,6 @@ components:
       required:
         - point
         - blockNo
-        - observed
       properties:
         point:
           $ref: "https://raw.githubusercontent.com/cardano-scaling/hydra/master/hydra-node/json-schemas/common.yaml#definitions/ChainPoint"

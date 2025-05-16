@@ -11,7 +11,7 @@
 
     cardano-node.url = "github:IntersectMBO/cardano-node/10.1.4";
     # 0.21.0 + new HeadObservation api
-    hydra.url = "github:cardano-scaling/hydra/50b388e8f99a2d7c745e7adf6b37eae54c9f5bb5";
+    hydra.url = "github:cardano-scaling/hydra/cbbc35457a5b6252a9e690e6e9a0922799d317e3";
 
     hackage = {
       url = "github:input-output-hk/hackage.nix";

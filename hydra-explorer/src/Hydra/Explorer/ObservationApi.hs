@@ -30,9 +30,12 @@ data Observation = Observation
 
 instance FromJSON Observation where
   parseJSON = withObject "Observation" $ \o -> do
-    point <- o .: "point"
+    point <- spy o .: "point"
     blockNo <- o .: "blockNo"
-    observed <- (o .: "observed") <|> (o .: "observedTx" >>= parseOldObservation)
+    observed <-
+      (o .: "observed")
+        <|> (o .: "observedTx" >>= parseOldObservation)
+        <|> pure NoHeadTx
     pure $ Observation{point, blockNo, observed}
 
 -- | Backwards compatible parser for the old OnChainTx type that was used to
