@@ -1,40 +1,55 @@
+{-# LANGUAGE OverloadedRecordDot #-}
+
 module Hydra.Explorer where
 
 import Hydra.Prelude hiding (race_)
 
+import Blammo.Logging (Logger, MonadLogger)
 import Blammo.Logging.Logger (newLogger)
-import Blammo.Logging.Setup (runLoggerLoggingT)
+import Blammo.Logging.Setup (LoggingT, runLoggerLoggingT)
 import Blammo.Logging.Simple (Message ((:#)), logError, logInfo, withThreadContext, (.=))
 import Control.Concurrent.Class.MonadSTM (modifyTVar', newTBQueueIO, newTVarIO, readTBQueue, readTVarIO, writeTBQueue)
-import Hydra.Cardano.Api (NetworkId)
+import Hydra.Cardano.Api (NetworkId, chainPointToSlotNo)
 import Hydra.Explorer.Env qualified as Env
 import Hydra.Explorer.ExplorerState (ExplorerState (..), HeadState, TickState, aggregateObservation)
-import Hydra.Explorer.ObservationApi (HydraVersion, NetworkParam (..), Observation, ObservationApi)
+import Hydra.Explorer.ObservationApi (HydraVersion, NetworkParam (..), Observation, ObservationApi, observed, point)
 import Hydra.Explorer.Options (Options (..))
+import Hydra.Tx.Observe (HeadObservation (NoHeadTx))
 import Network.Wai.Handler.Warp qualified as Warp
 import Network.Wai.Middleware.Cors (simpleCors)
 import Network.Wai.Middleware.Logging (requestLogger)
-import Servant (serveDirectoryFileServer)
+import Servant (hoistServer, serveDirectoryFileServer)
 import Servant.API (Get, JSON, Raw, (:<|>) (..), (:>))
-import Servant.Server (Application, Handler, serve)
+import Servant.Server (Application, Handler (..), serve)
 import UnliftIO (race_)
 
 -- * Observer-side API
 
 -- | WAI application serving the 'ObservationApi'.
-observationApi :: PushObservation -> Application
-observationApi pushObservation =
-  serve (Proxy @ObservationApi) server
+observationApiApp :: Logger -> PushObservation -> Application
+observationApiApp logger pushObservation =
+  serve api $
+    hoistServer api nt server
  where
-  server = handlePostObservation pushObservation
+  nt :: LoggingT IO a -> Handler a
+  nt = liftIO . runLoggerLoggingT logger
+
+  api = Proxy @ObservationApi
+
+  server =
+    handlePostObservation pushObservation
 
 handlePostObservation ::
+  (MonadIO m, MonadLogger m) =>
   PushObservation ->
   NetworkParam ->
   HydraVersion ->
   Observation ->
-  Handler ()
-handlePostObservation pushObservation (NetworkParam networkId) version observation =
+  m ()
+handlePostObservation pushObservation (NetworkParam networkId) version observation = do
+  case observation.observed of
+    NoHeadTx -> logInfo $ "Tick" :# ["network" .= networkId, "slot" .= chainPointToSlotNo observation.point]
+    o -> logInfo $ "Observed" :# ["network" .= networkId, "version" .= version, "observation" .= o]
   liftIO $ pushObservation (networkId, version, observation)
 
 -- * Client-side API
@@ -113,7 +128,7 @@ run opts = do
   logger <- newLogger =<< Env.parse
   (pushObservation, popObservation) <- createObservationQueue
   (getExplorerState, modifyExplorerState) <- createExplorerState
-  race_ (observationServer logger $ observationApi pushObservation) $
+  race_ (observationServer logger pushObservation) $
     race_ (clientServer logger $ clientApi staticFilePath getExplorerState) $
       aggregator popObservation modifyExplorerState
  where
@@ -133,7 +148,7 @@ run opts = do
       . simpleCors
       $ app
 
-  observationServer logger app = do
+  observationServer logger pushObservation = do
     let runLogger = runLoggerLoggingT logger . withThreadContext ["api" .= ("observer" :: String)]
     let settings =
           Warp.defaultSettings
@@ -144,4 +159,4 @@ run opts = do
     liftIO
       . Warp.runSettings settings
       . requestLogger logger
-      $ app
+      $ observationApiApp logger pushObservation
