@@ -1,3 +1,5 @@
+{-# LANGUAGE StrictData #-}
+
 module Hydra.Explorer.ExplorerState where
 
 import Hydra.Prelude
