@@ -1,0 +1,136 @@
+{
+    "samples": [
+        {
+            "fanoutUTxO": {
+                "0001010000000001000000010100010101010100000100000001000000010100#31": {
+                    "address": "addr_test1zr5lf5xezthc99sn2txrrzxafy9u335p2eexfpmtueuctfey44k6nz6yv0chnmzppfurfc9d4wuc73ygufgcc0jpr5vs3gk573",
+                    "datum": null,
+                    "inlineDatum": {
+                        "constructor": 0,
+                        "fields": [
+                            {
+                                "bytes": ""
+                            },
+                            {
+                                "map": [
+                                    {
+                                        "k": {
+                                            "bytes": ""
+                                        },
+                                        "v": {
+                                            "constructor": 2,
+                                            "fields": [
+                                                {
+                                                    "int": -2
+                                                },
+                                                {
+                                                    "bytes": "fbac"
+                                                },
+                                                {
+                                                    "bytes": ""
+                                                },
+                                                {
+                                                    "bytes": "86"
+                                                },
+                                                {
+                                                    "bytes": "8461819b"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "k": {
+                                            "int": 4
+                                        },
+                                        "v": {
+                                            "constructor": 0,
+                                            "fields": [
+                                                {
+                                                    "int": 5
+                                                },
+                                                {
+                                                    "bytes": "32efa1"
+                                                },
+                                                {
+                                                    "bytes": "f1"
+                                                },
+                                                {
+                                                    "bytes": "a903"
+                                                },
+                                                {
+                                                    "int": 1
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "k": {
+                                            "bytes": "de73"
+                                        },
+                                        "v": {
+                                            "list": [
+                                                {
+                                                    "bytes": "9d34"
+                                                },
+                                                {
+                                                    "int": -4
+                                                },
+                                                {
+                                                    "bytes": "7c"
+                                                },
+                                                {
+                                                    "bytes": "419b"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "k": {
+                                            "bytes": "270c7da9"
+                                        },
+                                        "v": {
+                                            "bytes": "27f741"
+                                        }
+                                    },
+                                    {
+                                        "k": {
+                                            "bytes": ""
+                                        },
+                                        "v": {
+                                            "list": [
+                                                {
+                                                    "int": -4
+                                                },
+                                                {
+                                                    "bytes": "4bfb02"
+                                                },
+                                                {
+                                                    "bytes": "aa90"
+                                                },
+                                                {
+                                                    "bytes": "5d"
+                                                },
+                                                {
+                                                    "int": 0
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "inlineDatumRaw": "d8799f40a540d87b9f2142fbac404186448461819bff04d8799f054332efa141f142a90301ff42de739f429d3423417c42419bff44270c7da94327f741409f23434bfb0242aa90415d00ffff",
+                    "inlineDatumhash": "aac2f2ab0c449c18d6f97fc6eebecb340134d3daaf17befd1fab505b20a2967b",
+                    "referenceScript": null,
+                    "value": {
+                        "lovelace": 1336100
+                    }
+                }
+            },
+            "headId": "01010101000001010101010101010001",
+            "tag": "Fanout"
+        }
+    ],
+    "seed": 776688612
+}

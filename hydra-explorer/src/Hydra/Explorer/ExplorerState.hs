@@ -2,20 +2,29 @@ module Hydra.Explorer.ExplorerState where
 
 import Hydra.Prelude
 
--- XXX: This is the only proper dependency onto hydra-node. Should factor this
--- into a hydra-chain package with smaller dependency footprint.
-import Hydra.Chain (OnChainTx (..))
-
 -- XXX: Need to depend on hydra-tx:testlib for generators?
 import Test.Hydra.Tx.Gen (genUTxO)
 
 import Data.Aeson (Value (..))
-import Hydra.Cardano.Api (BlockNo, ChainPoint (..), NetworkId, NetworkMagic (..), TxIn, UTxO, networkIdToNetwork, toNetworkMagic)
-import Hydra.Cardano.Api.Network (Network (..))
+import Hydra.Cardano.Api (BlockNo, ChainPoint (..), Network, NetworkId, NetworkMagic (..), TxIn, UTxO, toNetworkMagic, toShelleyNetwork)
 import Hydra.Explorer.ObservationApi (HydraVersion (..), Observation (..))
 import Hydra.Tx.ContestationPeriod (ContestationPeriod, toNominalDiffTime)
 import Hydra.Tx.HeadId (HeadId (..), HeadSeed, headSeedToTxIn)
 import Hydra.Tx.HeadParameters (HeadParameters (..))
+import Hydra.Tx.Observe (
+  AbortObservation (..),
+  CloseObservation (..),
+  CollectComObservation (..),
+  CommitObservation (..),
+  ContestObservation (..),
+  DecrementObservation (..),
+  DepositObservation (..),
+  FanoutObservation (..),
+  HeadObservation (..),
+  IncrementObservation (..),
+  InitObservation (..),
+  RecoverObservation (..),
+ )
 import Hydra.Tx.OnChainId (OnChainId)
 import Hydra.Tx.Party (Party)
 import Hydra.Tx.Snapshot (SnapshotNumber (..))
@@ -138,7 +147,7 @@ aggregateInitObservation
    where
     newHeadState =
       HeadState
-        { network = networkIdToNetwork networkId
+        { network = toShelleyNetwork networkId
         , networkMagic = toNetworkMagic networkId
         , version
         , headId
@@ -180,7 +189,7 @@ aggregateAbortObservation networkId version headId point blockNo currentHeads =
  where
   newUnknownHeadState =
     HeadState
-      { network = networkIdToNetwork networkId
+      { network = toShelleyNetwork networkId
       , networkMagic = toNetworkMagic networkId
       , version
       , headId
@@ -243,7 +252,7 @@ aggregateCommitObservation networkId version headId point blockNo party committe
 
   newUnknownHeadState =
     HeadState
-      { network = networkIdToNetwork networkId
+      { network = toShelleyNetwork networkId
       , networkMagic = toNetworkMagic networkId
       , version
       , headId
@@ -275,7 +284,7 @@ aggregateCollectComObservation networkId version headId point blockNo currentHea
  where
   newUnknownHeadState =
     HeadState
-      { network = networkIdToNetwork networkId
+      { network = toShelleyNetwork networkId
       , networkMagic = toNetworkMagic networkId
       , version
       , headId
@@ -307,7 +316,7 @@ aggregateDepositObservation networkId version headId point blockNo currentHeads 
  where
   newUnknownHeadState =
     HeadState
-      { network = networkIdToNetwork networkId
+      { network = toShelleyNetwork networkId
       , networkMagic = toNetworkMagic networkId
       , version
       , headId
@@ -339,7 +348,7 @@ aggregateRecoverObservation networkId version headId point blockNo currentHeads 
  where
   newUnknownHeadState =
     HeadState
-      { network = networkIdToNetwork networkId
+      { network = toShelleyNetwork networkId
       , networkMagic = toNetworkMagic networkId
       , version
       , headId
@@ -371,7 +380,7 @@ aggregateIncrementObservation networkId version headId point blockNo currentHead
  where
   newUnknownHeadState =
     HeadState
-      { network = networkIdToNetwork networkId
+      { network = toShelleyNetwork networkId
       , networkMagic = toNetworkMagic networkId
       , version
       , headId
@@ -403,7 +412,7 @@ aggregateDecrementObservation networkId version headId point blockNo currentHead
  where
   newUnknownHeadState =
     HeadState
-      { network = networkIdToNetwork networkId
+      { network = toShelleyNetwork networkId
       , networkMagic = toNetworkMagic networkId
       , version
       , headId
@@ -451,7 +460,7 @@ aggregateCloseObservation
    where
     newUnknownHeadState =
       HeadState
-        { network = networkIdToNetwork networkId
+        { network = toShelleyNetwork networkId
         , networkMagic = toNetworkMagic networkId
         , version
         , headId
@@ -492,7 +501,7 @@ aggregateContestObservation networkId version headId point blockNo (UnsafeSnapsh
  where
   newUnknownHeadState =
     HeadState
-      { network = networkIdToNetwork networkId
+      { network = toShelleyNetwork networkId
       , networkMagic = toNetworkMagic networkId
       , version
       , headId
@@ -524,7 +533,7 @@ aggregateFanoutObservation networkId version headId point blockNo currentHeads =
  where
   newUnknownHeadState =
     HeadState
-      { network = networkIdToNetwork networkId
+      { network = toShelleyNetwork networkId
       , networkMagic = toNetworkMagic networkId
       , version
       , headId
@@ -572,7 +581,7 @@ aggregateTickObservation networkId point blockNo currentTicks =
  where
   newUnknownTickState =
     TickState
-      { network = networkIdToNetwork networkId
+      { network = toShelleyNetwork networkId
       , networkMagic = toNetworkMagic networkId
       , point
       , blockNo
@@ -586,64 +595,64 @@ aggregateObservation ::
   Observation ->
   ExplorerState ->
   ExplorerState
-aggregateObservation networkId version Observation{point, blockNo, observedTx} ExplorerState{heads, ticks} =
-  case observedTx of
-    Nothing ->
+aggregateObservation networkId version Observation{point, blockNo, observed} ExplorerState{heads, ticks} =
+  case observed of
+    NoHeadTx ->
       ExplorerState
         { heads
         , ticks = aggregateTickObservation networkId point blockNo ticks
         }
-    Just OnInitTx{headId, headSeed, headParameters, participants} ->
+    Init InitObservation{headId, headSeed, headParameters, participants} ->
       ExplorerState
         { heads = aggregateInitObservation networkId version headId point blockNo headSeed headParameters participants heads
         , ticks = aggregateTickObservation networkId point blockNo ticks
         }
-    Just OnAbortTx{headId} ->
+    Abort AbortObservation{headId} ->
       ExplorerState
         { heads = aggregateAbortObservation networkId version headId point blockNo heads
         , ticks = aggregateTickObservation networkId point blockNo ticks
         }
-    Just OnCommitTx{headId, party, committed} ->
+    Commit CommitObservation{headId, party, committed} ->
       ExplorerState
         { heads = aggregateCommitObservation networkId version headId point blockNo party committed heads
         , ticks = aggregateTickObservation networkId point blockNo ticks
         }
-    Just OnCollectComTx{headId} ->
+    CollectCom CollectComObservation{headId} ->
       ExplorerState
         { heads = aggregateCollectComObservation networkId version headId point blockNo heads
         , ticks = aggregateTickObservation networkId point blockNo ticks
         }
-    Just OnDepositTx{headId} ->
+    Deposit DepositObservation{headId} ->
       ExplorerState
         { heads = aggregateDepositObservation networkId version headId point blockNo heads
         , ticks = aggregateTickObservation networkId point blockNo ticks
         }
-    Just OnRecoverTx{headId} ->
+    Recover RecoverObservation{headId} ->
       ExplorerState
         { heads = aggregateRecoverObservation networkId version headId point blockNo heads
         , ticks = aggregateTickObservation networkId point blockNo ticks
         }
-    Just OnIncrementTx{headId} ->
+    Increment IncrementObservation{headId} ->
       ExplorerState
         { heads = aggregateIncrementObservation networkId version headId point blockNo heads
         , ticks = aggregateTickObservation networkId point blockNo ticks
         }
-    Just OnDecrementTx{headId} ->
+    Decrement DecrementObservation{headId} ->
       ExplorerState
         { heads = aggregateDecrementObservation networkId version headId point blockNo heads
         , ticks = aggregateTickObservation networkId point blockNo ticks
         }
-    Just OnCloseTx{headId, snapshotNumber, contestationDeadline} ->
+    Close CloseObservation{headId, snapshotNumber, contestationDeadline} ->
       ExplorerState
         { heads = aggregateCloseObservation networkId version headId point blockNo snapshotNumber contestationDeadline heads
         , ticks = aggregateTickObservation networkId point blockNo ticks
         }
-    Just OnContestTx{headId, snapshotNumber} ->
+    Contest ContestObservation{headId, snapshotNumber} ->
       ExplorerState
         { heads = aggregateContestObservation networkId version headId point blockNo snapshotNumber heads
         , ticks = aggregateTickObservation networkId point blockNo ticks
         }
-    Just OnFanoutTx{headId} ->
+    Fanout FanoutObservation{headId} ->
       ExplorerState
         { heads = aggregateFanoutObservation networkId version headId point blockNo heads
         , ticks = aggregateTickObservation networkId point blockNo ticks
@@ -656,5 +665,5 @@ findTickState :: NetworkId -> [TickState] -> Maybe TickState
 findTickState networkId =
   find
     ( \TickState{network, networkMagic} ->
-        networkIdToNetwork networkId == network && toNetworkMagic networkId == networkMagic
+        toShelleyNetwork networkId == network && toNetworkMagic networkId == networkMagic
     )

@@ -1,0 +1,23 @@
+{
+    "samples": [
+        {
+            "distributedUTxO": {
+                "0100000101000001000000010001000101010000000001000101000100000101#15": {
+                    "address": "addr_test1yrzz2g5q3ye8fxsugy3dgmqh3au52sxzpnkehwkyqjuxh0gxpjvj04hny7fpv775zxs9tgh8tfqr9k2ae5nmrww3496qpmzf3l",
+                    "datum": null,
+                    "datumhash": null,
+                    "inlineDatum": null,
+                    "inlineDatumRaw": null,
+                    "referenceScript": null,
+                    "value": {
+                        "lovelace": 45000000000000000
+                    }
+                }
+            },
+            "headId": "01010000010000010101000101010100",
+            "newVersion": 0,
+            "tag": "OnDecrementTx"
+        }
+    ],
+    "seed": -1071145066
+}

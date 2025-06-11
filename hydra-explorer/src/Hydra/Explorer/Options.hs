@@ -2,11 +2,13 @@ module Hydra.Explorer.Options where
 
 import Hydra.Prelude
 
+import Hydra.Explorer.Env (envHelp)
 import Network.Socket (PortNumber)
 import Options.Applicative (
   Parser,
   ParserInfo,
   auto,
+  footer,
   fullDesc,
   header,
   help,
@@ -75,4 +77,5 @@ hydraExplorerOptions =
     ( fullDesc
         <> progDesc "Explore Hydra heads."
         <> header "hydra-explorer"
+        <> footer envHelp
     )

@@ -11,20 +11,20 @@ repository cardano-haskell-packages
 
 -- Using same index-state as hydra (as packages are lacking upper bounds)
 index-state:
-  , hackage.haskell.org 2025-01-15T13:32:16Z
-  , cardano-haskell-packages 2025-01-15T09:59:24Z
+  , hackage.haskell.org 2025-05-27T12:29:12Z
+  , cardano-haskell-packages 2025-05-28T12:02:33Z
 
 packages:
   hydra-explorer
 
 -- XXX: We could avoid the s-r-p by publishing these to chap. However, not all
--- of them should be needed (e.g. hydra-plutus, hydra-tx and hydra-node)
+-- of them should be needed (e.g. hydra-node)
 source-repository-package
   type: git
   location: https://github.com/cardano-scaling/hydra
-  -- 0.20.0 + http-chain-observer work
-  tag: 0be61598fa556761fabab374a66649a37e402304
-  --sha256: sha256-2v7K8il2Nq1MCeHpjkURp0uKSWFsUBnKOdMdrWZGkkw=
+  -- 0.21.0 + new HeadObservation api
+  tag: da4ee1141cfbbb66914f481871372de836ed2afa
+  --sha256: sha256-4IoyI9nw1dI9sky6F74QfC7msa5KbzNE+Z10Oa9LIbY=
   subdir:
     hydra-prelude
     hydra-test-utils

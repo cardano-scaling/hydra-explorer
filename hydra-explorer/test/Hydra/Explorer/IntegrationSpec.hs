@@ -22,7 +22,7 @@ import Hydra.Cluster.Scenarios (EndToEndLog, singlePartyHeadFullLifeCycle, singl
 import HydraNode (HydraNodeLog)
 import Network.HTTP.Simple (getResponseBody, httpJSON, parseRequestThrow)
 import Network.Socket (PortNumber)
-import System.Process.Typed (Process, ProcessConfig, createPipe, getStderr, proc, setStderr, unsafeProcessHandle, withProcessTerm)
+import System.Process.Typed (Process, ProcessConfig, createPipe, getStderr, proc, setEnv, setStderr, unsafeProcessHandle, withProcessTerm)
 import Test.Network.Ports (withFreePort)
 
 spec :: Spec
@@ -46,7 +46,7 @@ spec = do
                 allHeads ^? nth 0 . key "network" `shouldBe` Just "Testnet"
                 allHeads ^? nth 0 . key "networkMagic" . _Number `shouldBe` Just (fromIntegral . unNetworkMagic . toNetworkMagic $ networkId node)
                 -- NOTE: This deliberately pins the latest version of hydra we test against.
-                allHeads ^? nth 0 . key "version" `shouldBe` Just "0.20.0-0be61598fa556761fabab374a66649a37e402304"
+                allHeads ^? nth 0 . key "version" `shouldBe` Just "0.22.0-cbbc35457a5b6252a9e690e6e9a0922799d317e3"
 
   it "aggregates hydra transactions of multiple heads into /heads" $
     failAfter 60 $
@@ -105,8 +105,9 @@ withHydraExplorer action =
   withFreePort $ \clientPort ->
     withFreePort $ \observerPort -> do
       let process =
-            proc "hydra-explorer" $
-              ["--client-port", show clientPort]
+            setEnv [("LOG_LEVEL", "debug")]
+              . proc "hydra-explorer"
+              $ ["--client-port", show clientPort]
                 <> ["--observer-port", show observerPort]
       withProcessExpect process $ \_p -> do
         -- XXX: wait for the http server to be listening on port
@@ -144,9 +145,8 @@ withChainObserver node HydraExplorerClient{observerPort} action =
   withProcessExpect process $ const action
  where
   process =
-    proc
-      "hydra-chain-observer"
-      $ ["--node-socket", unFile nodeSocket]
+    proc "hydra-chain-observer" $
+      ["--node-socket", unFile nodeSocket]
         <> case networkId of
           Mainnet -> ["--mainnet"]
           Testnet (NetworkMagic magic) -> ["--testnet-magic", show magic]

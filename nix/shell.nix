@@ -12,6 +12,7 @@ cabalProject:
     pkgs.cardano-node
     pkgs.hydra-chain-observer
     pkgs.hydra-node
+    pkgs.check-jsonschema # For hydra-explorer:test:tests
     pkgs.yarn # For hacking on the UI
   ];
 }

@@ -1,0 +1,18 @@
+{
+    "samples": [
+        {
+            "blockNo": 12425717,
+            "observed": {
+                "headId": "2f99962dca6bc532e6f962b677c7e84c",
+                "tag": "CollectCom",
+                "utxoHash": "4c499a6e453382eef1c0079d190f8e4b9a88cfa6e30ce02d61f271824c5f301f"
+            },
+            "point": {
+                "blockHash": "d686e5140886487038bbaad20a50d045745e66033d167ee5a97906653b1355e6",
+                "slot": 3568947,
+                "tag": "ChainPoint"
+            }
+        }
+    ],
+    "seed": 1967822725
+}

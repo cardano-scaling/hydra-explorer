@@ -1,0 +1,24 @@
+{
+    "samples": [
+        {
+            "deadline": "1864-05-08T12:51:22.434669976253Z",
+            "depositTxId": "0100010100000101010100010001000100000001010100010100010001000101",
+            "deposited": {
+                "0001000001000000000100010000010000010101000100010000010100000000#46": {
+                    "address": "addr_test1qzgy90qmnq6trw4s4pzufph2r6cj42yuq49q040ttcsau9xdvcantezungmr5pkgwdm5ey5l699t5ylgxelkj07w4qqqgh8dtm",
+                    "datum": null,
+                    "datumhash": null,
+                    "inlineDatum": null,
+                    "inlineDatumRaw": null,
+                    "referenceScript": null,
+                    "value": {
+                        "lovelace": 969750
+                    }
+                }
+            },
+            "headId": "01000000010000000001010100000000",
+            "tag": "OnDepositTx"
+        }
+    ],
+    "seed": -16239793
+}

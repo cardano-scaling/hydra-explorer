@@ -43,8 +43,10 @@ library
   ghc-options:     -haddock
   build-depends:
     , aeson
+    , Blammo
+    , Blammo-wai
+    , envparse
     , hydra-cardano-api
-    , hydra-node
     , hydra-prelude
     , hydra-tx
     , hydra-tx:testlib
@@ -54,12 +56,13 @@ library
     , QuickCheck
     , servant
     , servant-server
-    , wai
+    , unliftio
     , wai-cors
     , warp
 
   exposed-modules:
     Hydra.Explorer
+    Hydra.Explorer.Env
     Hydra.Explorer.ExplorerState
     Hydra.Explorer.ObservationApi
     Hydra.Explorer.Options
@@ -82,8 +85,11 @@ test-suite tests
   type:               exitcode-stdio-1.0
   build-depends:
     , aeson
+    , base
+    , directory
     , filepath
     , hspec
+    , hspec-golden-aeson
     , hspec-wai
     , http-conduit
     , hydra-cardano-api
@@ -92,6 +98,7 @@ test-suite tests
     , hydra-node
     , hydra-prelude
     , hydra-test-utils
+    , hydra-tx
     , lens
     , lens-aeson
     , network

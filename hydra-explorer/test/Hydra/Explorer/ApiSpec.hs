@@ -9,6 +9,8 @@ import Test.Hydra.Prelude
 
 import Control.Lens (at, (^.), (^?!))
 import Data.Aeson qualified as Aeson
+import Data.Aeson.Lens (key, nth)
+import Data.Aeson.Types qualified as Aeson
 import Data.OpenApi (
   Definitions,
   OpenApi (..),
@@ -25,7 +27,11 @@ import Data.OpenApi (
  )
 import Data.Yaml qualified as Yaml
 import Hydra.Explorer (clientApi)
+import Hydra.Explorer.ObservationApi (Observation, parseOldObservation)
+import Hydra.Tx.Observe (HeadObservation)
+import System.Directory (listDirectory)
 import System.FilePath ((</>))
+import Test.Aeson.GenericSpecs (defaultSettings, roundtripAndGoldenADTSpecsWithSettings, roundtripAndGoldenSpecsWithSettings, sampleSize)
 import Test.Hspec.Wai (MatchBody (..), ResponseMatcher (ResponseMatcher), shouldRespondWith, (<:>))
 import Test.Hspec.Wai qualified as Wai
 import Test.Hspec.Wai.Internal qualified as Wai
@@ -35,6 +41,34 @@ spec = apiServerSpec
 
 apiServerSpec :: Spec
 apiServerSpec = do
+  describe "Observer API" $ do
+    -- NOTE: Detect regressions in observer interface
+    let settings = defaultSettings{sampleSize = 1}
+    roundtripAndGoldenSpecsWithSettings settings $ Proxy @Observation
+    roundtripAndGoldenADTSpecsWithSettings settings $ Proxy @(MinimumSized HeadObservation)
+
+    -- NOTE: Test compatibility using old golden/OnChainTx/*.json files
+    it "is backwards compatible" $ do
+      let goldenDir = "golden/OnChainTx"
+      files <- listDirectory goldenDir
+      forM_ files $ \fn -> do
+        bytes <- readFileLBS $ goldenDir </> fn
+        let v = bytes ^?! key "samples" . nth 0
+        case Aeson.parseEither parseOldObservation v of
+          Left err -> failure $ "Failed to decode file " <> fn <> ": " <> err
+          Right _ -> pure ()
+
+  -- TODO: test conformance, but prop_validateJSONSchema only works for hydra-node schemas right now
+  -- prop "conforms to observer-api.yaml" $
+  --   prop_validateJSONSchema @Observation ("json-schemas" </> "observer-api.yaml") $
+  --     key "paths"
+  --       . key "/observations/{network}/{version}"
+  --       . key "post"
+  --       . key "requestBody"
+  --       . key "content"
+  --       . key "application/json"
+  --       . key "schema"
+
   describe "Client API" $ do
     describe "GET /heads" $
       prop "matches schema" $ \(ReasonablySized explorerState) -> do
