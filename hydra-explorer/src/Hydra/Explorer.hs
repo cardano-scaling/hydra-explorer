@@ -7,7 +7,7 @@ import Hydra.Prelude hiding (race_)
 import Blammo.Logging (Logger, MonadLogger)
 import Blammo.Logging.Logger (newLogger)
 import Blammo.Logging.Setup (LoggingT, runLoggerLoggingT)
-import Blammo.Logging.Simple (Message ((:#)), logError, logInfo, withThreadContext, (.=))
+import Blammo.Logging.Simple (Message ((:#)), logError, logInfo, logDebug, withThreadContext, (.=))
 import Control.Concurrent.Class.MonadSTM (modifyTVar', newTBQueueIO, newTVarIO, readTBQueue, readTVarIO, writeTBQueue)
 import Hydra.Cardano.Api (NetworkId, chainPointToSlotNo)
 import Hydra.Explorer.Env qualified as Env
@@ -48,7 +48,7 @@ handlePostObservation ::
   m ()
 handlePostObservation pushObservation (NetworkParam networkId) version observation = do
   case observation.observed of
-    NoHeadTx -> logInfo $ "Tick" :# ["network" .= networkId, "slot" .= chainPointToSlotNo observation.point]
+    NoHeadTx -> logDebug $ "Tick" :# ["network" .= networkId, "slot" .= chainPointToSlotNo observation.point]
     o -> logInfo $ "Observed" :# ["network" .= networkId, "version" .= version, "observation" .= o]
   liftIO $ pushObservation (networkId, version, observation)
 

@@ -30,7 +30,7 @@ data Observation = Observation
 
 instance FromJSON Observation where
   parseJSON = withObject "Observation" $ \o -> do
-    point <- spy o .: "point"
+    point <- o .: "point"
     blockNo <- o .: "blockNo"
     observed <-
       (o .: "observed")
