@@ -77,11 +77,18 @@ cabal test
 
 ## Deployment
 
+The NixOS system for `explorer.hydra.family` contains:
+
+- Github runner registered to the `cardano-scaling` organization
+- Contiuously deployed `docker-compose` project, see [docker-compose.yaml](./docker-compose.yaml) and [github workflow](.github/workflows/cd.yaml)
+
+The system can be deployed with:
+
 ```sh
 nixos-rebuild switch --target-host root@explorer.hydra.family --flake .#explorer --use-remote-sudo
 ```
 
-## Testing locally
+### Testing locally
 
 ```sh
 nix build .#qemu
