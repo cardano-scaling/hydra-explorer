@@ -81,6 +81,7 @@ The NixOS system for `explorer.hydra.family` contains:
 
 - Github runner registered to the `cardano-scaling` organization
 - Contiuously deployed `docker-compose` project, see [docker-compose.yaml](./docker-compose.yaml) and [github workflow](.github/workflows/cd.yaml)
+- [Hydra Doom](https://github.com/cardano-scaling/hydra-doom) in a single-player long-term-support deployment
 
 The system can be deployed with:
 

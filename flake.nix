@@ -12,6 +12,7 @@
     cardano-node.url = "github:IntersectMBO/cardano-node/10.1.4";
     # 0.21.0 + new HeadObservation api
     hydra.url = "github:cardano-scaling/hydra/cbbc35457a5b6252a9e690e6e9a0922799d317e3";
+    hydra-doom.url = "github:cardano-scaling/hydra-doom/single-player";
 
     hackage = {
       url = "github:input-output-hk/hackage.nix";
@@ -58,20 +59,18 @@
 
     flake = _: {
       nixosConfigurations.explorer =
-        inputs.nixpkgs.lib.nixosSystem
-          {
-            system = "x86_64-linux";
-            specialArgs = inputs;
-            modules = [
-              {
-                imports = [
-                  "${inputs.nixpkgs}/nixos/modules/virtualisation/amazon-image.nix"
-                  (import ./nix/hydra-explorer-configuration.nix)
-                ];
-              }
-              inputs.agenix.nixosModules.default
-            ];
+        inputs.nixpkgs.lib.nixosSystem rec {
+          system = "x86_64-linux";
+          specialArgs = {
+            inherit inputs system;
           };
+          modules = [
+            "${inputs.nixpkgs}/nixos/modules/virtualisation/amazon-image.nix"
+            inputs.agenix.nixosModules.default
+            (import ./nix/hydra-explorer-configuration.nix)
+            (import ./nix/hydra-doom.nix)
+          ];
+        };
     };
 
     outputs = import ./nix/outputs.nix;
