@@ -1,14 +1,12 @@
 { pkgs, lib, inputs, config, ... }:
 {
-  networking = {
-    # NOTE: This is not hydra-explorer as a container running on this host will
-    # use that dns name.
-    hostName = "explorer";
-    firewall = {
-      allowedTCPPorts = [ 22 80 443 ];
-      enable = true;
-    };
-  };
+  networking.hostName = "explorer";
+  networking.firewall.allowedTCPPorts = [ 80 443 ];
+
+  services.nginx.enable = true;
+  services.nginx.recommendedProxySettings = true;
+  security.acme.acceptTerms = true;
+  security.acme.defaults.email = "sebastian.nagel@iohk.io";
 
   nix = {
     settings.trusted-users = [ "root" ];
@@ -63,6 +61,20 @@
 
   # Use docker to manage containers
   virtualisation.docker.enable = true;
+
+  # NOTE: Reverse proxy to the hydra-explorer container deployed through
+  services.nginx.virtualHosts."explorer.hydra.family" = {
+    forceSSL = true;
+    enableACME = true;
+    locations."/" = {
+      proxyPass = "http://127.0.0.1:8080";
+      proxyWebsockets = true;
+      extraConfig = ''
+        proxy_buffering off;
+        client_max_body_size 500M;
+      '';
+    };
+  };
 
   services.openssh = {
     settings.PasswordAuthentication = false;

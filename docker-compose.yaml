@@ -8,7 +8,7 @@ services:
   hydra-explorer:
     image: ghcr.io/cardano-scaling/hydra-explorer:unstable
     ports:
-      - "80:8000"
+      - "8080:8000"
     command:
       [ "--client-port", "8000"
       , "--observer-port", "8001" # not bound to host
