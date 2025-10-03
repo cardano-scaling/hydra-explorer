@@ -1,4 +1,9 @@
-{ pkgs, lib, inputs, ... }:
+{ pkgs, lib, inputs, system, ... }:
+
+let
+  unstablePkgs = import inputs.unstableNixpkgs { inherit system; };
+in
+
 {
   networking.hostName = "explorer";
   networking.firewall.allowedTCPPorts = [ 80 443 ];
@@ -51,6 +56,7 @@
     replace = true;
     # Surprisingly required for this to be able to delete files owned by root.
     user = "root";
+    package = unstablePkgs.github-runner;
     extraLabels = [ "nixos" "self-hosted" "explorer" "cardano" ];
     serviceOverrides = {
       # See: https://discourse.nixos.org/t/github-runners-cp-read-only-filesystem/36513/2

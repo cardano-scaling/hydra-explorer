@@ -2,6 +2,8 @@
   description = "hydra-explorer application and system image";
 
   inputs = {
+    unstableNixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+
     haskell-nix = {
       url = "github:input-output-hk/haskell.nix";
       inputs.hackage.follows = "hackage";
