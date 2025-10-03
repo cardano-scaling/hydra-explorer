@@ -49,20 +49,28 @@
         import ./nix/outputs.nix { inherit inputs system; }
         ) // {
           nixosConfigurations.explorer =
-            inputs.nixpkgs.lib.nixosSystem
-              {
+            let
+              unstablePkgs = import inputs.unstableNixpkgs {
                 system = "x86_64-linux";
-                specialArgs = inputs;
-                modules = [
-                  {
-                    imports = [
-                      "${inputs.nixpkgs}/nixos/modules/virtualisation/amazon-image.nix"
-                      (import ./nix/hydra-explorer-configuration.nix)
-                    ];
-                  }
-                  inputs.agenix.nixosModules.default
-                ];
               };
+              # Newer version as 0.236.0 is incompatible; and that's the
+              # latest version from haskell.nix's nixpkgs.
+              github-runner-new = unstablePkgs.github-runner;
+            in
+            inputs.nixpkgs.lib.nixosSystem
+            {
+              system = "x86_64-linux";
+              specialArgs = { inherit inputs github-runner-new; };
+              modules = [
+                {
+                  imports = [
+                    "${inputs.nixpkgs}/nixos/modules/virtualisation/amazon-image.nix"
+                    (import ./nix/hydra-explorer-configuration.nix)
+                  ];
+                }
+                inputs.agenix.nixosModules.default
+              ];
+            };
       };
     in output;
 
