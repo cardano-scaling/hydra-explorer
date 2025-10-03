@@ -43,9 +43,8 @@ let
     # Broken; I don't know why.
     # A place to hack on the image to see how it works.
     qemu = inputs.nixos-generators.nixosGenerate {
-      inherit system;
       specialArgs = {
-        inherit inputs;
+        # inherit inputs;
         diskSize = 10 * 1024;
       };
 
@@ -53,6 +52,7 @@ let
 
       modules = [
         (import ./hydra-explorer-configuration.nix {
+          inherit inputs pkgs lib;
           cardano-node-module = inputs.cardano-node.nixosModules.cardano-node;
           hydra-explorer = inputs.self.packages.x86_64-linux.hydra-explorer;
           hydra-explorer-web = inputs.self.packages.x86_64-linux.hydra-explorer-web;

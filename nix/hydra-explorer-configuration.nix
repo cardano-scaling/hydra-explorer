@@ -1,4 +1,4 @@
-{ pkgs, lib, inputs, config, ... }:
+{ pkgs, lib, inputs, ... }:
 {
   networking.hostName = "explorer";
   networking.firewall.allowedTCPPorts = [ 80 443 ];
