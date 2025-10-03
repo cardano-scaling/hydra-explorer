@@ -36,6 +36,7 @@
   environment.systemPackages = with pkgs; [
     git
     jq
+    isd
   ];
 
   # Github runner registered with cardano-scaling organization
