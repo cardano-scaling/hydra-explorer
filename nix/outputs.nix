@@ -13,9 +13,9 @@ let
 
   projectFlake = project.flake {};
 
-  packages = rec {
-    # hydra-explorer = project.hsPkgs.hydra-explorer.components.exes.hydra-explorer;
+  apps = projectFlake.apps;
 
+  packages = rec {
     hydra-explorer-web = import ../hydra-explorer/web/hydra-explorer.nix
     {
       inherit pkgs;
@@ -61,7 +61,7 @@ let
         })
       ];
     };
-  };
+  } // project.hsPkgs.hydra-explorer.components.exes ;
 
   devShells = rec {
     default = mkShell "ghc966";
@@ -69,7 +69,7 @@ let
 
 in
   {
-    apps = projectFlake.apps;
+    inherit apps;
     inherit packages;
     inherit devShells;
   }
