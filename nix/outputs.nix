@@ -1,39 +1,52 @@
-{ repoRoot, inputs, pkgs, lib, system }:
+{ inputs, system }:
 
 let
-  project = repoRoot.nix.project;
-in
-[
-  project.flake
-  rec {
-    packages.hydra-explorer-web = import ../hydra-explorer/web/hydra-explorer.nix { inherit pkgs; };
+  inherit (pkgs) lib;
 
-    packages.hydra-explorer-static =
-      project.cross.musl64.cabalProject.hsPkgs.hydra-explorer.components.exes.hydra-explorer;
+  pkgs = import ./pkgs.nix { inherit inputs system; };
 
-    packages.docker = pkgs.dockerTools.streamLayeredImage {
+  project = import ./project.nix { inherit inputs pkgs lib; };
+
+  mkShell = ghc: import ./shell.nix {
+    inherit inputs pkgs lib project ghc;
+  };
+
+  projectFlake = project.flake {};
+
+  apps = projectFlake.apps;
+
+  packages = rec {
+    hydra-explorer-web = import ../hydra-explorer/web/hydra-explorer.nix
+    {
+      inherit pkgs;
+    };
+
+    hydra-explorer-static =
+      project.projectCross.musl64.hsPkgs.hydra-explorer.components.exes.hydra-explorer;
+
+    # Broken due to above being broken.
+    docker = pkgs.dockerTools.streamLayeredImage {
       name = "hydra-explorer";
       tag = "latest";
       created = "now";
       config = {
-        Entrypoint = [ "${packages.hydra-explorer-static}/bin/hydra-explorer" ];
+        Entrypoint = [ "${hydra-explorer-static}/bin/hydra-explorer" ];
         WorkingDir = "/";
       };
       # Copy the static files to /static in the docker image
       contents = [
         (pkgs.runCommand "hydra-explorer-static-files" { } ''
           mkdir $out
-          ln -s ${packages.hydra-explorer-web} $out/static
+          ln -s ${hydra-explorer-web} $out/static
         '')
       ];
     };
 
+    # Broken; I don't know why.
     # A place to hack on the image to see how it works.
-    packages.qemu = inputs.nixos-generators.nixosGenerate {
-      inherit system;
+    qemu = inputs.nixos-generators.nixosGenerate {
       specialArgs = {
-        inherit
-          inputs;
+        # inherit inputs;
         diskSize = 10 * 1024;
       };
 
@@ -41,11 +54,22 @@ in
 
       modules = [
         (import ./hydra-explorer-configuration.nix {
+          inherit inputs pkgs lib;
           cardano-node-module = inputs.cardano-node.nixosModules.cardano-node;
           hydra-explorer = inputs.self.packages.x86_64-linux.hydra-explorer;
           hydra-explorer-web = inputs.self.packages.x86_64-linux.hydra-explorer-web;
         })
       ];
     };
+  } // project.hsPkgs.hydra-explorer.components.exes ;
+
+  devShells = rec {
+    default = mkShell "ghc966";
+  };
+
+in
+  {
+    inherit apps;
+    inherit packages;
+    inherit devShells;
   }
-]

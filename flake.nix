@@ -2,11 +2,25 @@
   description = "hydra-explorer application and system image";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-24.11";
+    unstableNixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+
+    haskell-nix = {
+      url = "github:input-output-hk/haskell.nix";
+      inputs.hackage.follows = "hackage";
+    };
+
+    nixpkgs.follows = "haskell-nix/nixpkgs";
+
+    flake-utils.url = "github:numtide/flake-utils";
 
     CHaP = {
       url = "github:IntersectMBO/cardano-haskell-packages?ref=repo";
       flake = false;
+    };
+
+    iohk-nix = {
+      url = "github:input-output-hk/iohk-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     cardano-node.url = "github:IntersectMBO/cardano-node/10.1.4";
@@ -16,19 +30,6 @@
     hackage = {
       url = "github:input-output-hk/hackage.nix";
       flake = false;
-    };
-
-    haskell-nix = {
-      url = "github:input-output-hk/haskell.nix";
-      inputs.hackage.follows = "hackage";
-    };
-
-    iogx = {
-      url = "github:input-output-hk/iogx";
-      inputs.hackage.follows = "hackage";
-      inputs.CHaP.follows = "CHaP";
-      inputs.haskell-nix.follows = "haskell-nix";
-      inputs.nixpkgs.follows = "haskell-nix/nixpkgs";
     };
 
     nixos-generators = {
@@ -41,41 +42,37 @@
     agenix.url = "github:ryantm/agenix";
   };
 
-  outputs = inputs: inputs.iogx.lib.mkFlake {
-    inherit inputs;
-    systems = [ "x86_64-linux" "x86_64-darwin" "aarch64-darwin" "aarch64-linux" ];
-    repoRoot = ./.;
 
-    nixpkgsArgs.overlays = [
-      inputs.nix-npm-buildpackage.overlays.default
-      (final: prev: {
-        cardano-node = inputs.cardano-node.packages.${final.system}.cardano-node;
-        cardano-cli = inputs.cardano-node.packages.${final.system}.cardano-cli;
-        hydra-chain-observer = inputs.hydra.packages.${final.system}.hydra-chain-observer;
-        hydra-node = inputs.hydra.packages.${final.system}.hydra-node;
-      })
-    ];
-
-    flake = _: {
-      nixosConfigurations.explorer =
-        inputs.nixpkgs.lib.nixosSystem
-          {
-            system = "x86_64-linux";
-            specialArgs = inputs;
-            modules = [
-              {
-                imports = [
-                  "${inputs.nixpkgs}/nixos/modules/virtualisation/amazon-image.nix"
-                  (import ./nix/hydra-explorer-configuration.nix)
-                ];
-              }
-              inputs.agenix.nixosModules.default
-            ];
-          };
-    };
-
-    outputs = import ./nix/outputs.nix;
-  };
+  outputs = inputs:
+    let
+      output = inputs.flake-utils.lib.eachDefaultSystem (system:
+        import ./nix/outputs.nix { inherit inputs system; }
+        ) // {
+          nixosConfigurations.explorer =
+            let
+              unstablePkgs = import inputs.unstableNixpkgs {
+                system = "x86_64-linux";
+              };
+              # Newer version as 0.236.0 is incompatible; and that's the
+              # latest version from haskell.nix's nixpkgs.
+              github-runner-new = unstablePkgs.github-runner;
+            in
+            inputs.nixpkgs.lib.nixosSystem
+            {
+              system = "x86_64-linux";
+              specialArgs = { inherit inputs github-runner-new; };
+              modules = [
+                {
+                  imports = [
+                    "${inputs.nixpkgs}/nixos/modules/virtualisation/amazon-image.nix"
+                    (import ./nix/hydra-explorer-configuration.nix)
+                  ];
+                }
+                inputs.agenix.nixosModules.default
+              ];
+            };
+      };
+    in output;
 
   nixConfig = {
     extra-substituters = [
@@ -86,5 +83,4 @@
     ];
     allow-import-from-derivation = true;
   };
-
 }
