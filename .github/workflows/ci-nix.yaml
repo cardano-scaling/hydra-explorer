@@ -42,7 +42,7 @@ jobs:
         nix build .#hydra-explorer-web
         nix build .#docker
 
-        nix run .#apps.x86_64-linux.hydra-explorer -- --help
+        nix run .#apps.x86_64-linux."hydra-explorer:exe:hydra-explorer" -- --help
 
         # Note: The tests need to find `json-schemas/client-api.yaml`;
         # so they need to be run in this specific folder.

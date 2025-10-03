@@ -11,8 +11,10 @@ let
     inherit inputs pkgs lib project ghc;
   };
 
+  projectFlake = project.flake {};
+
   packages = rec {
-    hydra-explorer = project.hsPkgs.hydra-explorer.components.exes.hydra-explorer;
+    # hydra-explorer = project.hsPkgs.hydra-explorer.components.exes.hydra-explorer;
 
     hydra-explorer-web = import ../hydra-explorer/web/hydra-explorer.nix
     {
@@ -21,7 +23,6 @@ let
 
     hydra-explorer-static =
       project.projectCross.musl64.hsPkgs.hydra-explorer.components.exes.hydra-explorer;
-
 
     # Broken due to above being broken.
     docker = pkgs.dockerTools.streamLayeredImage {
@@ -68,6 +69,7 @@ let
 
 in
   {
+    apps = projectFlake.apps;
     inherit packages;
     inherit devShells;
   }
