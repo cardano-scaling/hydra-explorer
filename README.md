@@ -85,8 +85,10 @@ The NixOS system for `explorer.hydra.family` contains:
 The system can be deployed with:
 
 ```sh
-nixos-rebuild switch --target-host root@explorer.hydra.family --flake .#explorer --use-remote-sudo
+nixos-rebuild switch --target-host root@explorer.hydra.family --flake .#explorer --sudo --ask-sudo-password
 ```
+
+When prompted for the password, just press enter.
 
 ### Testing locally
 
