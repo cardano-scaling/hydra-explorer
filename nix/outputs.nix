@@ -12,7 +12,8 @@ let
   };
 
   packages = rec {
-    bleh = project;
+    hydra-explorer = project.hsPkgs.hydra-explorer.components.exes.hydra-explorer;
+
     hydra-explorer-web = import ../hydra-explorer/web/hydra-explorer.nix
     {
       inherit pkgs;
