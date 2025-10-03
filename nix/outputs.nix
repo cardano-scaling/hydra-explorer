@@ -12,18 +12,14 @@ let
   };
 
   packages = rec {
+    bleh = project;
     hydra-explorer-web = import ../hydra-explorer/web/hydra-explorer.nix
     {
       inherit pkgs;
     };
 
-    # Broken; we've lost this 'cross' attribute; there's a different way
-    # to do it now:
-    #
-    # <https://input-output-hk.github.io/haskell.nix/tutorials/cross-compilation.html?highlight=cross#cross-compilation>
-    #
-    hydra-explorer-static = builtins.throw "Broken";
-      # project.cross.musl64.cabalProject.hsPkgs.hydra-explorer.components.exes.hydra-explorer;
+    hydra-explorer-static =
+      project.projectCross.musl64.hsPkgs.hydra-explorer.components.exes.hydra-explorer;
 
 
     # Broken due to above being broken.
