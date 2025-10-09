@@ -34,7 +34,7 @@ services:
       [ "--node-socket", "/data/node.socket"
       , "--testnet-magic", "2"
       # NOTE: Block in which 1.0.0 scripts were published
-      , "--start-chain-from", "3672890.ab165d330848472a4afaf03ae611dc5aeebc7af02481f28c7c2d6059b33ea070"
+      , "--start-chain-from", "93287427.ab165d330848472a4afaf03ae611dc5aeebc7af02481f28c7c2d6059b33ea070"
       , "--explorer", "http://hydra-explorer:8001"
       ]
     depends_on:
@@ -55,7 +55,7 @@ services:
       [ "--node-socket", "/data/node.socket"
       , "--testnet-magic", "1"
       # NOTE: Block in which 1.0.0 scripts were published
-      , "--start-chain-from", "3988801.53bd33ef5f8b6b29f2223926ed08de3334f0bbfc5f92b49ec197b09a0221f88d"
+      , "--start-chain-from", "104261385.53bd33ef5f8b6b29f2223926ed08de3334f0bbfc5f92b49ec197b09a0221f88d"
       , "--explorer", "http://hydra-explorer:8001"
       ]
     depends_on:
@@ -76,7 +76,7 @@ services:
       [ "--node-socket", "/data/node.socket"
       , "--mainnet"
       # NOTE: Block in which 1.0.0 scripts were published
-      , "--start-chain-from", "12492015.acbe55d4758c8f141a03daf589477670f0b7103d5a46b32c145a4a676ceb4fd9"
+      , "--start-chain-from", "168379683.acbe55d4758c8f141a03daf589477670f0b7103d5a46b32c145a4a676ceb4fd9"
       , "--explorer", "http://hydra-explorer:8001"
       ]
     depends_on:
