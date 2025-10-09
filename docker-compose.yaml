@@ -24,6 +24,71 @@ services:
 
   # List of hydra-chain-observers
 
+  ## 1.0.0
+
+  hydra-chain-observer-preview-1.0.0:
+    image: ghcr.io/cardano-scaling/hydra-chain-observer:1.0.0
+    volumes:
+      - "/data/cardano/preview:/data"
+    command:
+      [ "--node-socket", "/data/node.socket"
+      , "--testnet-magic", "2"
+      # NOTE: Block in which 1.0.0 scripts were published
+      , "--start-chain-from", "3672890.ab165d330848472a4afaf03ae611dc5aeebc7af02481f28c7c2d6059b33ea070"
+      , "--explorer", "http://hydra-explorer:8001"
+      ]
+    depends_on:
+      hydra-explorer:
+        condition: service_started
+        restart: true
+    networks:
+      - hydra-explorer
+    restart: always
+    logging:
+      driver: journald
+
+  hydra-chain-observer-preprod-1.0.0:
+    image: ghcr.io/cardano-scaling/hydra-chain-observer:1.0.0
+    volumes:
+      - "/data/cardano/preprod:/data"
+    command:
+      [ "--node-socket", "/data/node.socket"
+      , "--testnet-magic", "1"
+      # NOTE: Block in which 1.0.0 scripts were published
+      , "--start-chain-from", "3988801.53bd33ef5f8b6b29f2223926ed08de3334f0bbfc5f92b49ec197b09a0221f88d"
+      , "--explorer", "http://hydra-explorer:8001"
+      ]
+    depends_on:
+      hydra-explorer:
+        condition: service_started
+        restart: true
+    networks:
+      - hydra-explorer
+    restart: always
+    logging:
+      driver: journald
+
+  hydra-chain-observer-mainnet-1.0.0:
+    image: ghcr.io/cardano-scaling/hydra-chain-observer:1.0.0
+    volumes:
+      - "/data/cardano/mainnet:/data"
+    command:
+      [ "--node-socket", "/data/node.socket"
+      , "--mainnet"
+      # NOTE: Block in which 1.0.0 scripts were published
+      , "--start-chain-from", "12492015.acbe55d4758c8f141a03daf589477670f0b7103d5a46b32c145a4a676ceb4fd9"
+      , "--explorer", "http://hydra-explorer:8001"
+      ]
+    depends_on:
+      hydra-explorer:
+        condition: service_started
+        restart: true
+    networks:
+      - hydra-explorer
+    restart: always
+    logging:
+      driver: journald
+
   ## 0.22
 
   hydra-chain-observer-preview-0.22:
