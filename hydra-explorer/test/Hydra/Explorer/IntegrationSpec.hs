@@ -10,12 +10,14 @@ import Test.Hydra.Prelude
 -- XXX: Depends on hydra-node for this
 import Hydra.Logging (showLogsOnFailure)
 
-import CardanoClient (RunningNode (..), queryTip)
 import CardanoNode (NodeLog, withCardanoNodeDevnet)
 import Control.Lens ((^.), (^?))
 import Data.Aeson as Aeson
 import Data.Aeson.Lens (key, nth, _Array, _Number, _String)
-import Hydra.Cardano.Api (NetworkId (..), NetworkMagic (..), toNetworkMagic, unFile)
+import Hydra.Chain.Direct (DirectBackend (..))
+import Hydra.Chain.Backend (queryTip)
+import Hydra.Options (DirectOptions (..))
+import Hydra.Cardano.Api (NetworkId (..), NetworkMagic (..), unFile, toNetworkMagic)
 import Hydra.Cluster.Faucet (FaucetLog, publishHydraScriptsAs)
 import Hydra.Cluster.Fixture (Actor (..))
 import Hydra.Cluster.Scenarios (EndToEndLog, singlePartyHeadFullLifeCycle, singlePartyOpenAHead)
@@ -35,31 +37,31 @@ spec = do
       showLogsOnFailure "IntegrationSpec" $ \tracer -> do
         withTempDir "hydra-explorer-history" $ \tmpDir -> do
           withHydraExplorer $ \explorer -> do
-            withCardanoNodeDevnet (contramap FromCardanoNode tracer) tmpDir $ \node -> do
-              scriptsTxId <- publishHydraScriptsAs node Faucet
-              withChainObserver node explorer $ do
+            withCardanoNodeDevnet (contramap FromCardanoNode tracer) tmpDir $ \_ backend@(DirectBackend DirectOptions{networkId}) -> do
+              scriptsTxId <- publishHydraScriptsAs backend Faucet
+              withChainObserver backend explorer $ do
                 -- Open and close a head
-                singlePartyHeadFullLifeCycle (contramap FromScenario tracer) tmpDir node scriptsTxId
+                singlePartyHeadFullLifeCycle (contramap FromScenario tracer) tmpDir backend scriptsTxId
                 -- Query client api
                 allHeads <- getHeads explorer
                 length (allHeads ^. _Array) `shouldBe` 1
                 allHeads ^? nth 0 . key "network" `shouldBe` Just "Testnet"
-                allHeads ^? nth 0 . key "networkMagic" . _Number `shouldBe` Just (fromIntegral . unNetworkMagic . toNetworkMagic $ networkId node)
+                allHeads ^? nth 0 . key "networkMagic" . _Number `shouldBe` Just (fromIntegral . unNetworkMagic . toNetworkMagic $ networkId )
                 -- NOTE: This deliberately pins the latest version of hydra we test against.
-                allHeads ^? nth 0 . key "version" `shouldBe` Just "0.22.0-cbbc35457a5b6252a9e690e6e9a0922799d317e3"
+                allHeads ^? nth 0 . key "version" `shouldBe` Just "1.0.0-b5e33b55e9fba442c562f82cec6c36b1716d9847"
 
   it "aggregates hydra transactions of multiple heads into /heads" $
     failAfter 60 $
       showLogsOnFailure "IntegrationSpec" $ \tracer -> do
         withHydraExplorer $ \explorer -> do
           withTempDir "hydra-explorer-history" $ \tmpDir -> do
-            withCardanoNodeDevnet (contramap FromCardanoNode tracer) tmpDir $ \node -> do
-              withChainObserver node explorer $ do
-                scriptsTxId <- publishHydraScriptsAs node Faucet
+            withCardanoNodeDevnet (contramap FromCardanoNode tracer) tmpDir $ \_ backend -> do
+              withChainObserver backend explorer $ do
+                scriptsTxId <- publishHydraScriptsAs backend Faucet
                 -- Open two heads as alice (different head ids)
                 let tr = contramap FromScenario tracer
-                headId1 <- withTempDir "explorer-head1" $ \d -> singlePartyOpenAHead tr d node scriptsTxId $ \_ _ headId -> pure headId
-                headId2 <- withTempDir "explorer-head2" $ \d -> singlePartyOpenAHead tr d node scriptsTxId $ \_ _ headId -> pure headId
+                headId1 <- withTempDir "explorer-head1" $ \d -> singlePartyOpenAHead tr d backend scriptsTxId Nothing $ \_ _ headId -> pure headId
+                headId2 <- withTempDir "explorer-head2" $ \d -> singlePartyOpenAHead tr d backend scriptsTxId Nothing $ \_ _ headId -> pure headId
 
                 allHeads <- getHeads explorer
                 length (allHeads ^. _Array) `shouldBe` 2
@@ -73,10 +75,10 @@ spec = do
       showLogsOnFailure "IntegrationSpec" $ \tracer -> do
         withTempDir "hydra-explorer-get-tick" $ \tmpDir -> do
           withHydraExplorer $ \explorer -> do
-            withCardanoNodeDevnet (contramap FromCardanoNode tracer) tmpDir $ \node@RunningNode{nodeSocket, networkId} -> do
-              withChainObserver node explorer $ do
+            withCardanoNodeDevnet (contramap FromCardanoNode tracer) tmpDir $ \_ backend -> do
+              withChainObserver backend explorer $ do
                 threadDelay 1
-                tip <- toJSON <$> queryTip networkId nodeSocket
+                tip <- toJSON <$> queryTip backend
 
                 allTicks <- getTicks explorer
                 length (allTicks ^. _Array) `shouldBe` 1
@@ -140,19 +142,16 @@ data IntegrationTestLog
 -- TODO: DRY with hydra-chain-observer integration tests in hydra-cluster?
 
 -- | Starts a 'hydra-chain-observer' on some Cardano network and have it connect to given 'hydra-explorer' port.
-withChainObserver :: RunningNode -> HydraExplorerClient -> IO () -> IO ()
-withChainObserver node HydraExplorerClient{observerPort} action =
+withChainObserver :: DirectBackend -> HydraExplorerClient -> IO () -> IO ()
+withChainObserver (DirectBackend DirectOptions{networkId,nodeSocket}) HydraExplorerClient{observerPort} action =
   withProcessExpect process $ const action
- where
-  process =
-    proc "hydra-chain-observer" $
-      ["--node-socket", unFile nodeSocket]
-        <> case networkId of
-          Mainnet -> ["--mainnet"]
-          Testnet (NetworkMagic magic) -> ["--testnet-magic", show magic]
-        <> ["--explorer", "http://127.0.0.1:" <> show observerPort]
-
-  RunningNode{nodeSocket, networkId} = node
+  where
+    process = proc "hydra-chain-observer" $
+        ["--node-socket", unFile nodeSocket]
+          <> case networkId of
+            Mainnet -> ["--mainnet"]
+            Testnet (NetworkMagic magic) -> ["--testnet-magic", show magic]
+          <> ["--explorer", "http://127.0.0.1:" <> show observerPort]
 
 -- * Helpers
 
@@ -166,6 +165,6 @@ withProcessExpect pc action =
   -- NOTE: Not using withProcessTerm_ as we want the sub-process to exit upon
   -- completion of acion, but not fail in that case.
   withProcessTerm (setStderr createPipe pc) $ \p ->
-    race_ (check p) (action p)
+    raceLabelled_ ("checking", check p) ("running", action p)
  where
   check p = checkProcessHasNotDied (show pc) (unsafeProcessHandle p) (Just $ getStderr p)

@@ -23,9 +23,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    cardano-node.url = "github:IntersectMBO/cardano-node/10.1.4";
-    # 0.21.0 + new HeadObservation api
-    hydra.url = "github:cardano-scaling/hydra/cbbc35457a5b6252a9e690e6e9a0922799d317e3";
+    cardano-node.url = "github:IntersectMBO/cardano-node/10.4.1";
+    hydra.url = "github:cardano-scaling/hydra/1.0.0";
 
     hackage = {
       url = "github:input-output-hk/hackage.nix";

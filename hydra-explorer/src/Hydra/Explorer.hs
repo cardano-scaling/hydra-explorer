@@ -2,7 +2,7 @@
 
 module Hydra.Explorer where
 
-import Hydra.Prelude hiding (race_)
+import Hydra.Prelude
 
 import Blammo.Logging (Logger, MonadLogger)
 import Blammo.Logging.Logger (newLogger)
