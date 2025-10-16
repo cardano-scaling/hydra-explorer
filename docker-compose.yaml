@@ -89,6 +89,74 @@ services:
     logging:
       driver: journald
 
+  ## 0.22.4
+
+  hydra-chain-observer-preview-0.22.4:
+    image: ghcr.io/cardano-scaling/hydra-chain-observer:0.22.4
+    volumes:
+      - "/data/cardano/preview:/data"
+    command:
+      [ "--node-socket", "/data/node.socket"
+      , "--testnet-magic", "2"
+      # NOTE: Block in which 0.22.0 scripts were published
+      , "--start-chain-from", "83494816.03d86af365c9ff1638aeacb891343c26a3c50066b6319b5c5ac0ed77d633a9c6"
+      # NOTE: Reachable via hydra-explorer network
+      , "--explorer", "http://hydra-explorer:8001"
+      ]
+    depends_on:
+      hydra-explorer:
+        condition: service_started
+        restart: true
+    networks:
+      - hydra-explorer
+    restart: always
+    logging:
+      driver: journald
+
+  hydra-chain-observer-preprod-0.22.4:
+    image: ghcr.io/cardano-scaling/hydra-chain-observer:0.22.4
+    volumes:
+      - "/data/cardano/preprod:/data"
+    command:
+      [ "--node-socket", "/data/node.socket"
+      , "--testnet-magic", "1"
+      # NOTE: Block in which 0.22.0 scripts were published
+      , "--start-chain-from", "94474101.da5a870f317943ea8e92b070875b9fb806659b6df3a2871a6addf8f9b8fdd2ea"
+      # NOTE: Reachable via hydra-explorer network
+      , "--explorer", "http://hydra-explorer:8001"
+      ]
+    depends_on:
+      hydra-explorer:
+        condition: service_started
+        restart: true
+    networks:
+      - hydra-explorer
+    restart: always
+    logging:
+      driver: journald
+
+  hydra-chain-observer-mainnet-0.22.4:
+    image: ghcr.io/cardano-scaling/hydra-chain-observer:0.22.4
+    volumes:
+      - "/data/cardano/mainnet:/data"
+    command:
+      [ "--node-socket", "/data/node.socket"
+      , "--mainnet"
+      # NOTE: Block in which 0.22.0 scripts were published
+      , "--start-chain-from", "158590430.97a33745faba570583613f5bf994ff7fbe0933933ac2ad0e635173102a84a962"
+      # NOTE: Reachable via hydra-explorer network
+      , "--explorer", "http://hydra-explorer:8001"
+      ]
+    depends_on:
+      hydra-explorer:
+        condition: service_started
+        restart: true
+    networks:
+      - hydra-explorer
+    restart: always
+    logging:
+      driver: journald
+
   ## 0.22
 
   hydra-chain-observer-preview-0.22:
