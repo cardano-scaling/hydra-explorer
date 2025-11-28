@@ -45,6 +45,8 @@
     git
     jq
     isd
+    inputs.mithril.packages.x86_64-linux.mithril-client-cli # Efficient syncing of the cardano node
+    inputs.cardano-node.packages.x86_64-linux.cardano-cli # For any ad-hoc cardano actions we may like to run
   ];
 
   # Github runner registered with cardano-scaling organization
