@@ -364,7 +364,7 @@ services:
   # One cardano node per network
 
   cardano-node-preview:
-    image: ghcr.io/intersectmbo/cardano-node:10.1.4
+    image: ghcr.io/intersectmbo/cardano-node:10.6.2
     volumes:
       - /data/cardano/preview:/data
     environment:
@@ -381,7 +381,7 @@ services:
       driver: journald
 
   cardano-node-preprod:
-    image: ghcr.io/intersectmbo/cardano-node:10.1.4
+    image: ghcr.io/intersectmbo/cardano-node:10.6.2
     volumes:
       - /data/cardano/preprod:/data
     environment:
@@ -398,7 +398,7 @@ services:
       driver: journald
 
   cardano-node-mainnet:
-    image: ghcr.io/intersectmbo/cardano-node:10.1.4
+    image: ghcr.io/intersectmbo/cardano-node:10.6.2
     volumes:
       - /data/cardano/mainnet:/data
     environment:
