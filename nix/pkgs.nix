@@ -8,7 +8,6 @@ import inputs.nixpkgs {
     inputs.haskell-nix.overlay
     inputs.iohk-nix.overlays.haskell-nix-crypto
     inputs.iohk-nix.overlays.haskell-nix-extra
-    inputs.nix-npm-buildpackage.overlays.default
     (final: prev: {
       cardano-node = inputs.cardano-node.packages.${final.system}.cardano-node;
       cardano-cli = inputs.cardano-node.packages.${final.system}.cardano-cli;

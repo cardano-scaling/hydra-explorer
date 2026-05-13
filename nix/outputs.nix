@@ -18,7 +18,10 @@ let
   packages = rec {
     hydra-explorer-web = import ../hydra-explorer/web/hydra-explorer.nix
     {
-      inherit pkgs;
+      pkgs = import inputs.nixpkgs {
+        inherit system;
+        overlays = [ inputs.nix-npm-buildpackage.overlays.default ];
+      };
     };
 
     hydra-explorer-static =
@@ -64,7 +67,7 @@ let
   } // project.hsPkgs.hydra-explorer.components.exes ;
 
   devShells = rec {
-    default = mkShell "ghc966";
+    default = mkShell "ghc967";
   };
 
 in

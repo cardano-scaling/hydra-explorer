@@ -1,8 +1,8 @@
 { inputs, pkgs, lib, project, ghc }:
 let
   allTools = {
-    "ghc966".cabal                    = project.projectVariants.ghc966.tool "cabal" "latest";
-    "ghc966".haskell-language-server  = project.projectVariants.ghc966.tool "haskell-language-server" "latest";
+    "ghc967".cabal                    = project.projectVariants.ghc967.tool "cabal" "latest";
+    "ghc967".haskell-language-server  = project.projectVariants.ghc967.tool "haskell-language-server" "latest";
   };
 
   tools = allTools.${ghc};

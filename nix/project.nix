@@ -5,7 +5,7 @@ let
     { config, pkgs, ... }:
     {
       name = "hydra-explorer";
-      compiler-nix-name = lib.mkDefault "ghc966";
+      compiler-nix-name = lib.mkDefault "ghc967";
       src = lib.cleanSource ../.;
       # shell.withHoogle = true;
       inputMap = { "https://chap.intersectmbo.org/" = inputs.CHaP; };
@@ -19,7 +19,7 @@ let
         }
       ];
       flake.variants = {
-        ghc966 = {};
+        ghc967 = {};
       };
     }
   );
