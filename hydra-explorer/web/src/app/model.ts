@@ -1,14 +1,18 @@
-export interface UTxO {
-    [key: string]: {
-        address: string
-        datum: any
-        datumhash: any
-        inlineDatum: any
-        referenceScript: any
-        value: {
-            lovelace: number
-        }
+export type HeadStatus = 'Initializing' | 'Open' | 'Closed' | 'Finalized' | 'Aborted'
+
+export interface UTxOEntry {
+    address: string
+    datum: unknown
+    datumhash: unknown
+    inlineDatum: unknown
+    referenceScript: unknown
+    value: {
+        lovelace: number
     }
+}
+
+export interface UTxO {
+    [key: string]: UTxOEntry
 }
 
 export interface HeadMember {
@@ -30,7 +34,7 @@ export interface HeadState {
     version: string
     headId: string
     seedTxIn: string | null
-    status: string
+    status: HeadStatus
     contestationPeriod: number | null
     members: HeadMember[] | null
     contestations: number | null

@@ -6,3 +6,16 @@ hspec-results.md
 
 .pre-commit-config.yaml
 /.direnv/
+
+_bmad
+_bmad-output
+.agent
+.agents
+.claude
+.github/agents
+
+# Frontend
+hydra-explorer/web/node_modules
+hydra-explorer/web/.next
+hydra-explorer/web/out
+hydra-explorer/web/.env.local

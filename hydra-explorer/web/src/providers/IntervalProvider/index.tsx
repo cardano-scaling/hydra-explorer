@@ -1,4 +1,4 @@
-"use client" // This is a client component 👈🏽
+"use client"
 
 import React, { useContext, useState } from 'react'
 
@@ -20,30 +20,28 @@ export const useIntervalContext = () => {
     return context
 }
 
-const IntervalSettingProvider: React.FC<any> = ({
+const IntervalSettingProvider: React.FC<{ children: React.ReactNode }> = ({
     children
 }) => {
-    const defaultInterval = process.env.NEXT_PUBLIC_PULL_INTERVAL
-        ? process.env.NEXT_PUBLIC_PULL_INTERVAL
-        : 1000
+    const defaultInterval = Number(process.env.NEXT_PUBLIC_PULL_INTERVAL) || 1000
 
-    const [intervalTime, setIntervalTime] = useState(defaultInterval)
+    const [intervalTime, setIntervalTime] = useState<number>(defaultInterval)
     const [isAutoUpdateOn, setAutoUpdate] = useState(true)
 
     const handleToggleAutoUpdate = () => {
-        setAutoUpdate((prevAutoUpdate) => !prevAutoUpdate)
+        setAutoUpdate((prev) => !prev)
     }
 
-    const handleIntervalTimeChange = (seconds: number) => {
-        setIntervalTime(seconds)
+    const handleIntervalTimeChange = (ms: number) => {
+        setIntervalTime(ms)
     }
 
     return (
         <IntervalContext.Provider value={{
             isAutoUpdate: isAutoUpdateOn,
-            intervalTime: intervalTime,
+            intervalTime,
             toggleAutoUpdate: handleToggleAutoUpdate,
-            updateIntervalTime: handleIntervalTimeChange
+            updateIntervalTime: handleIntervalTimeChange,
         }}>
             {children}
         </IntervalContext.Provider>
