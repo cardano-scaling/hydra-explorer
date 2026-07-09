@@ -52,6 +52,11 @@
             let
               unstablePkgs = import inputs.unstableNixpkgs {
                 system = "x86_64-linux";
+                # github-runner bundles nodejs_20 (EOL) to run JS actions.
+                config.permittedInsecurePackages = [
+                  "nodejs-20.20.2"
+                  "nodejs-slim-20.20.2"
+                ];
               };
               # Newer version as 0.236.0 is incompatible; and that's the
               # latest version from haskell.nix's nixpkgs.
