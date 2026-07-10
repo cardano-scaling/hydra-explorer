@@ -4,6 +4,7 @@ import React, { useEffect } from 'react'
 import { HeadMember } from '@/app/model'
 import { useCardanoExplorer } from '@/providers/CardanoExplorer'
 import { Button } from '@/components/ui/button'
+import { formatNumber } from '@/utils'
 
 interface MemberCommitDetailsProps {
   member: HeadMember
@@ -65,7 +66,7 @@ const MemberCommitDetails: React.FC<MemberCommitDetailsProps> = ({ member, onClo
                             {commit.address.slice(0, 8)}…{commit.address.slice(-8)}
                           </a>
                         </td>
-                        <td className="truncate text-center px-4 py-2 text-sm">{commit.value.lovelace / 1000000} ₳</td>
+                        <td className="truncate text-center px-4 py-2 text-sm">{formatNumber(commit.value.lovelace / 1000000, { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ₳</td>
                       </tr>
                     )
                   })}

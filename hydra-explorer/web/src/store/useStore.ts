@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { HeadState, TickState } from '@/app/model'
+import { totalLovelaceValueLocked } from '@/utils'
 
 export const mainnetNetworkMagic = 764824073
 
@@ -77,3 +78,29 @@ export const useStore = create<StoreState>((set) => ({
     setHeadsLoading: (loading: boolean) => set({ headsLoading: loading }),
     setTicksLoading: (loading: boolean) => set({ ticksLoading: loading }),
 }))
+
+export const selectTotalHeads = (state: StoreState) => {
+    return (state.heads || []).filter(
+        (head) => head && head.networkMagic === state.currentNetworkMagic
+    ).length
+}
+
+export const selectActiveHeads = (state: StoreState) => {
+    return (state.heads || []).filter(
+        (head) => head && head.networkMagic === state.currentNetworkMagic && head.status === "Open"
+    ).length
+}
+
+export const selectTVLInAda = (state: StoreState) => {
+    const filtered = (state.heads || []).filter(
+        (head) => head && head.networkMagic === state.currentNetworkMagic
+    )
+    const totalLovelace = filtered.reduce((total, head) => total + totalLovelaceValueLocked(head), 0)
+    return totalLovelace / 1_000_000
+}
+
+export const selectActiveTick = (state: StoreState) => {
+    return (state.ticks || []).find(
+        (tick) => tick?.networkMagic === state.currentNetworkMagic
+    )
+}

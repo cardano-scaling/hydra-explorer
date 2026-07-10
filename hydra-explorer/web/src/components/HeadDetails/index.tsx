@@ -5,6 +5,7 @@ import { HeadState, HeadMember } from '@/app/model'
 import MemberCommitDetails from '../MemberCommitDetails'
 import { useCardanoExplorer } from '@/providers/CardanoExplorer'
 import { Button } from '@/components/ui/button'
+import { formatNumber } from '@/utils'
 
 interface HeadDetailsProps {
     head: HeadState
@@ -89,15 +90,15 @@ const HeadDetails: React.FC<HeadDetailsProps> = ({ head, onClose }) => {
                     </div>
                     <div className="border border-border p-4 rounded-lg bg-background/40">
                         <h3 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Contestation Period</h3>
-                        <p className="text-sm">{head.contestationPeriod}</p>
+                        <p className="text-sm">{formatNumber(head.contestationPeriod)}</p>
                     </div>
                     <div className="border border-border p-4 rounded-lg bg-background/40">
                         <h3 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Contestations</h3>
-                        <p className="text-sm">{head.contestations}</p>
+                        <p className="text-sm">{formatNumber(head.contestations)}</p>
                     </div>
                     <div className="border border-border p-4 rounded-lg bg-background/40">
                         <h3 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Snapshot Number</h3>
-                        <p className="text-sm">{head.snapshotNumber}</p>
+                        <p className="text-sm">{formatNumber(head.snapshotNumber)}</p>
                     </div>
                     <div className="border border-border p-4 rounded-lg bg-background/40">
                         <h3 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Contestation Deadline</h3>
@@ -110,7 +111,7 @@ const HeadDetails: React.FC<HeadDetailsProps> = ({ head, onClose }) => {
                             <a href={explorer.block(head.point.blockHash)} target="_blank" rel="noreferrer" className="text-data hover:text-primary-vivid transition-colors" title={head.point.blockHash}>
                                 {head.point.blockHash.slice(0, 8)}…{head.point.blockHash.slice(-8)}
                             </a> <br />
-                            <span className="text-muted-foreground">Slot:</span> {head.point.slot}
+                            <span className="text-muted-foreground">Slot:</span> {formatNumber(head.point.slot)}
                         </p>
                     </div>
                     <div className="border border-border p-4 rounded-lg bg-background/40 col-span-1 md:col-span-2">
@@ -134,7 +135,7 @@ const HeadDetails: React.FC<HeadDetailsProps> = ({ head, onClose }) => {
                                             <td className="truncate text-center border-r border-border px-4 py-2 text-data" title={member.party?.vkey || undefined}>
                                                 {member.party?.vkey ? `${member.party.vkey.slice(0, 6)}…${member.party.vkey.slice(-4)}` : ""}
                                             </td>
-                                            <td className="truncate text-center border-r border-border px-4 py-2 text-sm">{getTotalCommittedLovelace(member) / 1000000} ₳</td>
+                                            <td className="truncate text-center border-r border-border px-4 py-2 text-sm">{formatNumber(getTotalCommittedLovelace(member) / 1000000, { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ₳</td>
                                             <td className="text-center px-4 py-2">
                                                 <Button
                                                     variant="outline"

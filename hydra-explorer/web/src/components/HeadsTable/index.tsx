@@ -5,7 +5,7 @@ import { useSearchParams, useRouter, usePathname, ReadonlyURLSearchParams } from
 import Image from "next/image"
 import { HeadState } from "@/app/model"
 import { useStore, mainnetNetworkMagic } from "@/store/useStore"
-import { totalLovelaceValueLocked } from "@/utils"
+import { totalLovelaceValueLocked, formatNumber } from "@/utils"
 import { useCardanoExplorer } from "@/providers/CardanoExplorer"
 import HeadDetails from "../HeadDetails"
 import { HeadsSelectTable, FilterState, filterStateFromUrl } from "./select"
@@ -176,14 +176,14 @@ const HeadsTable: React.FC = () => {
                                             </td>
                                             <td className="truncate text-center border px-4 py-2 text-sm">{head.version}</td>
                                             <td className="truncate text-center border px-4 py-2 text-sm">{head.status}</td>
-                                            <td className="truncate text-center border px-4 py-2 text-sm">{head.point.slot}</td>
-                                            <td className="truncate text-center border px-4 py-2 text-sm">{head.blockNo}</td>
+                                            <td className="truncate text-center border px-4 py-2 text-sm">{formatNumber(head.point.slot)}</td>
+                                            <td className="truncate text-center border px-4 py-2 text-sm">{formatNumber(head.blockNo)}</td>
                                             <td className="truncate text-center border px-4 py-2">
                                                 <a href={explorer.block(head.point.blockHash)} target="_blank" rel="noreferrer" className="text-data hover:text-primary-vivid transition-colors" title={head.point.blockHash}>
                                                     {head.point.blockHash.slice(0, 6)}…{head.point.blockHash.slice(-4)}
                                                 </a>
                                             </td>
-                                            <td className="truncate text-center border px-4 py-2 text-sm">{totalLovelaceValueLocked(head) / 1000000} ₳</td>
+                                            <td className="truncate text-center border px-4 py-2 text-sm">{formatNumber(totalLovelaceValueLocked(head) / 1000000, { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ₳</td>
                                             <td className="text-center border px-4 py-2">
                                                 <Button variant="outline" size="sm" onClick={() => setSelectedHead(head)}>
                                                     View
