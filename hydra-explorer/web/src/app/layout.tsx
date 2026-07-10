@@ -4,13 +4,13 @@ import { Geist } from "next/font/google"
 import { cn } from "@/lib/utils"
 import { Toaster } from "sonner"
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-sans' })
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" })
 
 export const metadata: Metadata = {
   title: "Hydrascan",
   description: "Hydra Head Explorer",
   icons: {
-    icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
   },
 }
 

@@ -2,9 +2,15 @@
 
 import { Button } from "@/components/ui/button"
 import { useStore } from "@/store/useStore"
-import { ChangeEvent } from "react"
 import { Pause, Play } from "lucide-react"
 import { cn } from "@/lib/utils"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 const IntervalSetter = () => {
   const isAutoUpdate = useStore((state) => state.isAutoUpdate)
@@ -34,11 +40,15 @@ const IntervalSetter = () => {
             "flex items-center gap-1.5 h-8 px-2.5 rounded-md transition-all outline-none font-medium",
             isAutoUpdate
               ? "bg-primary-muted text-primary-vivid hover:bg-primary-muted/80 border-transparent"
-              : "hover:bg-muted text-foreground"
+              : "hover:bg-muted text-foreground",
           )}
           aria-label={isAutoUpdate ? "Pause updates" : "Resume updates"}
         >
-          {isAutoUpdate ? <Pause size={14} className="shrink-0" /> : <Play size={14} className="shrink-0" />}
+          {isAutoUpdate ? (
+            <Pause size={14} className="shrink-0" />
+          ) : (
+            <Play size={14} className="shrink-0" />
+          )}
           <span>{isAutoUpdate ? "Live" : "Paused"}</span>
         </Button>
       </div>
@@ -46,18 +56,24 @@ const IntervalSetter = () => {
       {/* Interval Selector */}
       <div className="flex items-center gap-1.5">
         <span className="text-sm font-medium text-muted-foreground">Interval:</span>
-        <select
-          value={intervalTime}
-          onChange={(e: ChangeEvent<HTMLSelectElement>) => {
-            const intervalValue = parseInt(e.target.value, 10)
-            updateIntervalTime(intervalValue)
+        <Select
+          value={String(intervalTime)}
+          onValueChange={(val) => {
+            if (val) {
+              const intervalValue = parseInt(val, 10)
+              updateIntervalTime(intervalValue)
+            }
           }}
-          className="py-1.5 px-3 bg-background text-foreground border border-input rounded-md focus:outline-none focus:ring-1 focus:ring-ring text-sm"
         >
-          <option value={1000}>1s</option>
-          <option value={5000}>5s</option>
-          <option value={10000}>10s</option>
-        </select>
+          <SelectTrigger className="w-[80px] h-8 text-xs border-border bg-background">
+            <SelectValue placeholder="1s" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="1000">1s</SelectItem>
+            <SelectItem value="5000">5s</SelectItem>
+            <SelectItem value="10000">10s</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
     </div>
   )

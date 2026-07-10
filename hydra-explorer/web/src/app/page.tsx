@@ -1,7 +1,6 @@
 "use client"
 
 import IntervalSetter from "@/components/IntervalSetter"
-import TickBox from "@/components/TickBox"
 import HeadsDashboard from "@/components/HeadsDashboard"
 import { CardanoExplorerProvider } from "@/providers/CardanoExplorer"
 import Layout from "@/components/Layout"
@@ -21,12 +20,11 @@ export default function Home() {
         headerRightSlot={
           <>
             <NetworkSetter />
-            <IntervalSetter />
+            {/* <IntervalSetter /> */}
           </>
         }
       >
         <HeadsDashboard />
-        <TickBox />
         <HeadsTable />
       </Layout>
     </CardanoExplorerProvider>

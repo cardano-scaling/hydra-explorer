@@ -1,166 +1,379 @@
-"use client" // This is a client component 👈🏽
+"use client"
 
-import React, { useState, useEffect } from 'react'
-import { HeadState, HeadMember } from '@/app/model'
-import MemberCommitDetails from '../MemberCommitDetails'
-import { useCardanoExplorer } from '@/providers/CardanoExplorer'
-import { Button } from '@/components/ui/button'
-import { formatNumber } from '@/utils'
+import React, { useState, useEffect } from "react"
+import { useStore } from "@/store/useStore"
+import { useCardanoExplorer } from "@/providers/CardanoExplorer"
+import { formatNumber, formatRelativeDeadline } from "@/utils"
+import HashDisplay from "@/components/HashDisplay"
+import StatusBadge from "@/components/StatusBadge"
+import MemberTable from "@/components/MemberTable"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetBody } from "@/components/ui/sheet"
 
+// ─── MetadataField ──────────────────────────────────────────────────────────
+interface MetadataFieldProps {
+  label: string
+  children: React.ReactNode
+  colSpan?: "full" | "half"
+}
+
+function MetadataField({ label, children, colSpan = "half" }: MetadataFieldProps) {
+  return (
+    <div
+      className={[
+        "border border-border p-4 rounded-[var(--radius-lg)] bg-background/40",
+        colSpan === "full" ? "md:col-span-2" : "",
+      ].join(" ")}
+    >
+      <dt className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1.5">
+        {label}
+      </dt>
+      <dd className="text-sm leading-relaxed">{children}</dd>
+    </div>
+  )
+}
+
+// ─── ContestationDeadlineCell ────────────────────────────────────────────────
+interface ContestationDeadlineCellProps {
+  timestampSeconds: number | null | undefined
+}
+
+function ContestationDeadlineCell({ timestampSeconds }: ContestationDeadlineCellProps) {
+  const [tick, setTick] = useState(0)
+
+  useEffect(() => {
+    if (!timestampSeconds) return
+    const id = setInterval(() => {
+      setTick((t) => t + 1)
+    }, 1000)
+    return () => clearInterval(id)
+  }, [timestampSeconds])
+
+  const display = formatRelativeDeadline(timestampSeconds)
+
+  if (!display) {
+    return <span className="text-muted-foreground">—</span>
+  }
+
+  const isPast = display.relative.startsWith("expired")
+
+  return (
+    <span
+      title={display.absoluteUtc}
+      className={[
+        "font-mono cursor-help",
+        isPast ? "text-[var(--status-closed)]" : "text-foreground",
+      ].join(" ")}
+    >
+      {display.relative}
+    </span>
+  )
+}
+
+// ─── HeadDetails ────────────────────────────────────────────────────────────
 interface HeadDetailsProps {
-    head: HeadState
-    onClose: () => void
+  headId: string | null
+  open: boolean
+  onClose: () => void
 }
 
-const HeadDetails: React.FC<HeadDetailsProps> = ({ head, onClose }) => {
-    const [selectedMember, setSelectedMember] = useState<HeadMember | null>(null)
-    const [showMemberCommitDetails, setShowMemberCommitDetails] = useState(false)
+const HeadDetails: React.FC<HeadDetailsProps> = ({ headId, open, onClose }) => {
+  const heads = useStore((state) => state.heads)
+  const isLoading = useStore((state) => state.headsLoading)
+  const head = headId ? heads.find((h) => h.headId === headId) : null
 
-    const handleMemberClick = (member: HeadMember) => {
-        setSelectedMember(member)
-        setShowMemberCommitDetails(true)
+  const [activeTab, setActiveTab] = useState<"metadata" | "members">("metadata")
+
+  const [prevHeadId, setPrevHeadId] = useState(headId)
+  const [prevOpen, setPrevOpen] = useState(open)
+
+  if (headId !== prevHeadId || open !== prevOpen) {
+    setPrevHeadId(headId)
+    setPrevOpen(open)
+    if (open) {
+      setActiveTab("metadata")
     }
+  }
 
-    useEffect(() => {
-        const handleKeyPress = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
-                if (showMemberCommitDetails) {
-                    setShowMemberCommitDetails(false)
-                } else {
-                    onClose()
-                }
-            }
-        }
+  const explorer = useCardanoExplorer()
 
-        window.addEventListener('keydown', handleKeyPress)
+  // Format contestation period (seconds) → human-readable
+  const formatContestationPeriod = (secs: number | null | undefined): string => {
+    if (secs === null || secs === undefined) return "—"
+    if (secs < 60) return `${formatNumber(secs)}s`
+    if (secs < 3600) {
+      const m = Math.floor(secs / 60)
+      const s = secs % 60
+      return s > 0 ? `${m}m ${s}s` : `${m}m`
+    }
+    const h = Math.floor(secs / 3600)
+    const rem = secs % 3600
+    const m = Math.floor(rem / 60)
+    return m > 0 ? `${h}h ${m}m` : `${h}h`
+  }
 
-        return () => {
-            window.removeEventListener('keydown', handleKeyPress)
-        }
-    }, [onClose, showMemberCommitDetails])
+  // Truncated Head ID for panel title
+  const truncatedHeadId = headId ? `${headId.slice(0, 8)}…${headId.slice(-6)}` : ""
 
-    const explorer = useCardanoExplorer()
+  return (
+    <Sheet
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose()
+      }}
+    >
+      <SheetContent aria-label={`Head detail: ${headId ?? ""}`}>
+        {/* ── Panel Header ──────────────────────────────── */}
+        <SheetHeader>
+          <div className="flex flex-col gap-1 min-w-0 flex-1">
+            <SheetTitle className="text-[11px] font-medium tracking-wider uppercase text-muted-foreground">
+              Head Detail
+            </SheetTitle>
+            <p className="text-data truncate" title={headId ?? ""}>
+              {truncatedHeadId}
+            </p>
+            {isLoading ? (
+              <div className="flex items-center gap-2 mt-1">
+                <div className="h-5 w-16 bg-muted/60 rounded animate-skeleton-pulse" />
+                <div className="h-4 w-10 bg-muted/60 rounded animate-skeleton-pulse" />
+              </div>
+            ) : head ? (
+              <div className="flex items-center gap-2 mt-1">
+                {head.status ? (
+                  <StatusBadge status={head.status} />
+                ) : (
+                  <span className="text-muted-foreground">—</span>
+                )}
+                <span className="text-[11px] text-muted-foreground font-mono">
+                  v{head.version ?? "—"}
+                </span>
+              </div>
+            ) : null}
+          </div>
+        </SheetHeader>
 
-    return (
-        <div className="fixed inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-50 text-foreground">
-            <div className="bg-card border border-border p-6 rounded-xl shadow-2xl relative overflow-auto max-h-screen max-w-[800px] w-full mx-4">
-                <Button
-                    variant="destructive"
-                    size="sm"
-                    className="absolute top-4 right-4"
-                    onClick={onClose}
-                >
-                    Close
-                </Button>
-                <h2 className="text-xl font-bold mb-6 border-b border-border pb-2 text-foreground uppercase tracking-wide">Head Details</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="border border-border p-4 rounded-lg bg-background/40">
-                        <h3 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Head ID</h3>
-                        <p className="truncate">
-                            <a href={explorer.mintPolicy(head.headId)} target="_blank" rel="noreferrer" className="text-data hover:text-primary-vivid transition-colors" title={head.headId}>
-                                {head.headId}
-                            </a>
-                        </p>
-                    </div>
-                    <div className="border border-border p-4 rounded-lg bg-background/40">
-                        <h3 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Head Version</h3>
-                        <p className="text-sm">{head.version}</p>
-                    </div>
-                    <div className="border border-border p-4 rounded-lg bg-background/40 md:col-span-2">
-                        <h3 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Seed Tx In</h3>
-                        <p className="truncate">
-                            {head.seedTxIn ? (
-                                <a
-                                    href={explorer.tx(head.seedTxIn)}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="text-data hover:text-primary-vivid transition-colors"
-                                    title={head.seedTxIn}
-                                >
-                                    {head.seedTxIn}
-                                </a>
-                            ) : (
-                                <span className="text-sm text-muted-foreground">None</span>
-                            )}
-                        </p>
-                    </div>
-                    <div className="border border-border p-4 rounded-lg bg-background/40">
-                        <h3 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Status</h3>
-                        <p className="text-sm">{head.status}</p>
-                    </div>
-                    <div className="border border-border p-4 rounded-lg bg-background/40">
-                        <h3 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Contestation Period</h3>
-                        <p className="text-sm">{formatNumber(head.contestationPeriod)}</p>
-                    </div>
-                    <div className="border border-border p-4 rounded-lg bg-background/40">
-                        <h3 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Contestations</h3>
-                        <p className="text-sm">{formatNumber(head.contestations)}</p>
-                    </div>
-                    <div className="border border-border p-4 rounded-lg bg-background/40">
-                        <h3 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Snapshot Number</h3>
-                        <p className="text-sm">{formatNumber(head.snapshotNumber)}</p>
-                    </div>
-                    <div className="border border-border p-4 rounded-lg bg-background/40">
-                        <h3 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Contestation Deadline</h3>
-                        <p className="text-sm">{head.contestationDeadline || "N/A"}</p>
-                    </div>
-                    <div className="border border-border p-4 rounded-lg bg-background/40">
-                        <h3 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Point</h3>
-                        <p className="text-sm">
-                            <span className="text-muted-foreground">Block Hash:</span>{" "}
-                            <a href={explorer.block(head.point.blockHash)} target="_blank" rel="noreferrer" className="text-data hover:text-primary-vivid transition-colors" title={head.point.blockHash}>
-                                {head.point.blockHash.slice(0, 8)}…{head.point.blockHash.slice(-8)}
-                            </a> <br />
-                            <span className="text-muted-foreground">Slot:</span> {formatNumber(head.point.slot)}
-                        </p>
-                    </div>
-                    <div className="border border-border p-4 rounded-lg bg-background/40 col-span-1 md:col-span-2">
-                        <h3 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground mb-4">Members</h3>
-                        <div className="border border-border rounded-lg overflow-hidden">
-                            <table className="w-full border-collapse">
-                                <thead className="bg-muted text-muted-foreground uppercase text-[11px] tracking-wider border-b border-border">
-                                    <tr>
-                                        <th className="text-center px-4 py-2">On Chain ID</th>
-                                        <th className="text-center px-4 py-2">Party VKey</th>
-                                        <th className="text-center px-4 py-2">Total Value Committed</th>
-                                        <th className="text-center px-4 py-2">Details</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {head.members?.map((member, index) => (
-                                        <tr key={index} className="hover:bg-accent/50 transition-colors border-b border-border last:border-b-0">
-                                            <td className="truncate text-center border-r border-border px-4 py-2 text-data" title={member.onChainId || undefined}>
-                                                {member.onChainId ? `${member.onChainId.slice(0, 6)}…${member.onChainId.slice(-4)}` : ""}
-                                            </td>
-                                            <td className="truncate text-center border-r border-border px-4 py-2 text-data" title={member.party?.vkey || undefined}>
-                                                {member.party?.vkey ? `${member.party.vkey.slice(0, 6)}…${member.party.vkey.slice(-4)}` : ""}
-                                            </td>
-                                            <td className="truncate text-center border-r border-border px-4 py-2 text-sm">{formatNumber(getTotalCommittedLovelace(member) / 1000000, { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ₳</td>
-                                            <td className="text-center px-4 py-2">
-                                                <Button
-                                                    variant="outline"
-                                                    size="xs"
-                                                    onClick={() => handleMemberClick(member)}
-                                                >
-                                                    View
-                                                </Button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+        {/* ── Panel Body ────────────────────────────────── */}
+        <SheetBody>
+          {isLoading ? (
+            <div className="space-y-6">
+              {/* Section 1: Core Details Skeleton */}
+              <div>
+                <div className="h-3.5 bg-muted/40 rounded w-24 mb-3 animate-skeleton-pulse" />
+                <dl className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {/* 1. Head ID */}
+                  <MetadataField label="Head ID">
+                    <div className="h-5 bg-muted/60 rounded animate-skeleton-pulse w-24"></div>
+                  </MetadataField>
+
+                  {/* 2. Status */}
+                  <MetadataField label="Status">
+                    <div className="h-5 bg-muted/60 rounded animate-skeleton-pulse w-20"></div>
+                  </MetadataField>
+
+                  {/* 3. Seed TxIn */}
+                  <MetadataField label="Seed TxIn">
+                    <div className="h-5 bg-muted/60 rounded animate-skeleton-pulse w-24"></div>
+                  </MetadataField>
+
+                  {/* 4. Version */}
+                  <MetadataField label="Version">
+                    <div className="h-5 bg-muted/60 rounded animate-skeleton-pulse w-12"></div>
+                  </MetadataField>
+                </dl>
+              </div>
+
+              {/* Section 2: Contestation & Protocol Skeleton */}
+              <div>
+                <div className="h-3.5 bg-muted/40 rounded w-40 mb-3 animate-skeleton-pulse" />
+                <dl className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {/* 5. Contestation Period */}
+                  <MetadataField label="Contestation Period">
+                    <div className="h-5 bg-muted/60 rounded animate-skeleton-pulse w-16"></div>
+                  </MetadataField>
+
+                  {/* 6. Contestation Deadline */}
+                  <MetadataField label="Contestation Deadline">
+                    <div className="h-5 bg-muted/60 rounded animate-skeleton-pulse w-28"></div>
+                  </MetadataField>
+
+                  {/* 7. Contestation Count */}
+                  <MetadataField label="Contestation Count">
+                    <div className="h-5 bg-muted/60 rounded animate-skeleton-pulse w-10"></div>
+                  </MetadataField>
+                </dl>
+              </div>
+
+              {/* Section 3: Blockchain Point Skeleton */}
+              <div>
+                <div className="h-3.5 bg-muted/40 rounded w-32 mb-3 animate-skeleton-pulse" />
+                <dl className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {/* 8. Snapshot Number */}
+                  <MetadataField label="Snapshot Number">
+                    <div className="h-5 bg-muted/60 rounded animate-skeleton-pulse w-10"></div>
+                  </MetadataField>
+
+                  {/* 9. Slot */}
+                  <MetadataField label="Slot">
+                    <div className="h-5 bg-muted/60 rounded animate-skeleton-pulse w-20"></div>
+                  </MetadataField>
+
+                  {/* 10. Block Hash */}
+                  <MetadataField label="Block Hash">
+                    <div className="h-5 bg-muted/60 rounded animate-skeleton-pulse w-24"></div>
+                  </MetadataField>
+                </dl>
+              </div>
             </div>
-            {selectedMember && showMemberCommitDetails && <MemberCommitDetails member={selectedMember} onClose={() => setShowMemberCommitDetails(false)} />}
-        </div>
-    )
-}
+          ) : !head ? (
+            <p className="text-sm text-muted-foreground">Head not found.</p>
+          ) : (
+            <div className="flex flex-col h-full">
+              {/* Tab Navigation */}
+              <div className="flex border-b border-border mb-5 shrink-0">
+                <button
+                  onClick={() => setActiveTab("metadata")}
+                  className={[
+                    "px-4 py-2.5 -mb-px border-b-2 text-xs font-semibold uppercase tracking-wider transition-colors duration-150 cursor-pointer focus-visible:outline-none",
+                    activeTab === "metadata"
+                      ? "border-[#4C82F0] text-[#4C82F0]"
+                      : "border-transparent text-muted-foreground hover:text-foreground",
+                  ].join(" ")}
+                >
+                  Metadata
+                </button>
+                <button
+                  onClick={() => setActiveTab("members")}
+                  className={[
+                    "px-4 py-2.5 -mb-px border-b-2 text-xs font-semibold uppercase tracking-wider transition-colors duration-150 cursor-pointer focus-visible:outline-none",
+                    activeTab === "members"
+                      ? "border-[#4C82F0] text-[#4C82F0]"
+                      : "border-transparent text-muted-foreground hover:text-foreground",
+                  ].join(" ")}
+                >
+                  Members ({head.members?.length ?? 0})
+                </button>
+              </div>
 
-function getTotalCommittedLovelace(member: HeadMember): number {
-    if (!member.commits) return 0
-    return Object.values(member.commits).reduce((total, commit) => total + commit.value.lovelace, 0)
+              {/* Tab Content Panels */}
+              <div className="flex-1 min-h-0">
+                {activeTab === "metadata" && (
+                  <div className="space-y-6">
+                    {/* Section 1: Core Details */}
+                    <div>
+                      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">
+                        Core Details
+                      </h3>
+                      <dl className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {/* 1. Head ID */}
+                        <MetadataField label="Head ID">
+                          {head.headId ? (
+                            <HashDisplay
+                              value={head.headId}
+                              href={explorer.mintPolicy(head.headId, head.networkMagic)}
+                            />
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </MetadataField>
+
+                        {/* 2. Status */}
+                        <MetadataField label="Status">
+                          {head.status ? (
+                            <StatusBadge status={head.status} />
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </MetadataField>
+
+                        {/* 3. Seed TxIn */}
+                        <MetadataField label="Seed TxIn">
+                          {head.seedTxIn ? (
+                            <HashDisplay
+                              value={head.seedTxIn}
+                              href={explorer.tx(head.seedTxIn, head.networkMagic)}
+                            />
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </MetadataField>
+
+                        {/* 4. Version */}
+                        <MetadataField label="Version">
+                          <span className="font-mono">{head.version ?? "—"}</span>
+                        </MetadataField>
+                      </dl>
+                    </div>
+
+                    {/* Section 2: Contestation & Protocol */}
+                    <div>
+                      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">
+                        Contestation & Protocol
+                      </h3>
+                      <dl className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {/* 5. Contestation Period */}
+                        <MetadataField label="Contestation Period">
+                          <span className="font-mono">
+                            {formatContestationPeriod(head.contestationPeriod)}
+                          </span>
+                        </MetadataField>
+
+                        {/* 6. Contestation Deadline */}
+                        <MetadataField label="Contestation Deadline">
+                          <ContestationDeadlineCell timestampSeconds={head.contestationDeadline} />
+                        </MetadataField>
+
+                        {/* 7. Contestation Count */}
+                        <MetadataField label="Contestation Count">
+                          <span className="font-mono">{formatNumber(head.contestations)}</span>
+                        </MetadataField>
+                      </dl>
+                    </div>
+
+                    {/* Section 3: Blockchain Point */}
+                    <div>
+                      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-3 px-1">
+                        Blockchain Point
+                      </h3>
+                      <dl className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {/* 8. Snapshot Number */}
+                        <MetadataField label="Snapshot Number">
+                          <span className="font-mono">{formatNumber(head.snapshotNumber)}</span>
+                        </MetadataField>
+
+                        {/* 9. Slot */}
+                        <MetadataField label="Slot">
+                          <span className="font-mono text-data">
+                            {formatNumber(head.point.slot)}
+                          </span>
+                        </MetadataField>
+
+                        {/* 10. Block Hash */}
+                        <MetadataField label="Block Hash">
+                          {head.point.blockHash ? (
+                            <HashDisplay
+                              value={head.point.blockHash}
+                              href={explorer.block(head.point.blockHash, head.networkMagic)}
+                            />
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </MetadataField>
+                      </dl>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "members" && (
+                  <div className="space-y-4">
+                    <MemberTable members={head.members} networkMagic={head.networkMagic} />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </SheetBody>
+      </SheetContent>
+    </Sheet>
+  )
 }
 
 export default HeadDetails

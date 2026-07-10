@@ -42,26 +42,26 @@
   --sidebar-ring: oklch(0.708 0 0);
 
   /* Brand Family */
-  --primary: #0033AD;
-  --primary-vivid: #4C82F0;
-  --primary-muted: #0A1F5C;
+  --primary: #0033ad;
+  --primary-vivid: #4c82f0;
+  --primary-muted: #0a1f5c;
 
   /* Status Semantic Palette */
-  --status-open: #22C55E;
-  --status-open-bg: #052E16;
-  --status-initializing: #60A5FA;
+  --status-open: #22c55e;
+  --status-open-bg: #052e16;
+  --status-initializing: #60a5fa;
   --status-initializing-bg: #172554;
-  --status-closed: #F59E0B;
+  --status-closed: #f59e0b;
   --status-closed-bg: #431407;
-  --status-finalized: #94A3B8;
-  --status-finalized-bg: #0F172A;
-  --status-aborted: #F87171;
-  --status-aborted-bg: #450A0A;
+  --status-finalized: #94a3b8;
+  --status-finalized-bg: #0f172a;
+  --status-aborted: #f87171;
+  --status-aborted-bg: #450a0a;
 
   /* Data Ink & Doom Badge */
-  --data-ink: #8DA3C4;
-  --doom-badge-bg: #92400E;
-  --doom-badge-fg: #FDE68A;
+  --data-ink: #8da3c4;
+  --doom-badge-bg: #92400e;
+  --doom-badge-fg: #fde68a;
 
   /* Custom Corner Radii */
   --radius-sm: 4px;
@@ -179,7 +179,7 @@ body {
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: #0033AD;
+  --primary: #0033ad;
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
@@ -223,7 +223,8 @@ body {
 }
 
 @keyframes skeleton-pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {

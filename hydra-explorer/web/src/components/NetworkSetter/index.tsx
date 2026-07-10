@@ -4,6 +4,7 @@ import React from "react"
 import { useStore, mainnetNetworkMagic } from "@/store/useStore"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 
 const NetworkSetter: React.FC = () => {
   const currentNetworkMagic = useStore((state) => state.currentNetworkMagic)
@@ -38,20 +39,22 @@ const NetworkSetter: React.FC = () => {
       {networks.map((net) => {
         const isActive = currentNetworkMagic === net.magic
         return (
-          <button
+          <Button
             key={net.magic}
             type="button"
             onClick={() => handleNetworkChange(net.magic)}
             aria-pressed={isActive}
+            variant={isActive ? "secondary" : "ghost"}
+            size="xs"
             className={cn(
-              "px-3 py-1.5 text-xs font-medium rounded-md transition-all outline-none",
+              "px-3 py-1.5 text-xs font-medium rounded-md transition-all outline-none border-transparent",
               isActive
-                ? "bg-primary-muted text-primary-vivid"
+                ? "bg-primary-muted text-primary-vivid hover:bg-primary-muted/80"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
             {net.name}
-          </button>
+          </Button>
         )
       })}
     </div>
