@@ -1,6 +1,6 @@
 "use client" // This is a client component 👈🏽
 
-import { mainnetNetworkMagic, useNetworkContext } from "@/providers/NetworkProvider"
+import { useStore, mainnetNetworkMagic } from "@/store/useStore"
 import React, { PropsWithChildren, useContext } from "react"
 
 export interface CardanoExplorer {
@@ -27,7 +27,7 @@ export type CardanoExplorerProps = {
 export const CardanoExplorerProvider: React.FC<PropsWithChildren<CardanoExplorerProps>> =
     ({ children }) => {
 
-        const { currentNetworkMagic } = useNetworkContext()
+        const currentNetworkMagic = useStore((state) => state.currentNetworkMagic)
 
         let explorerUrl: string
         // XXX: This seems to be an in-progress change across cexplorer, so

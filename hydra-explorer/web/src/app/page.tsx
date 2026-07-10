@@ -1,64 +1,34 @@
 "use client"
 
-import Image from "next/image"
-import IntervalSettingProvider from "@/providers/IntervalProvider"
 import IntervalSetter from "@/components/IntervalSetter"
 import TickBox from "@/components/TickBox"
-import { HeadsDataProvider } from "@/providers/HeadsDataProvider"
 import HeadsDashboard from "@/components/HeadsDashboard"
 import { CardanoExplorerProvider } from "@/providers/CardanoExplorer"
-import NetworkSetter from "@/components/NetworkSetter"
+import Layout from "@/components/Layout"
+import { usePollingEngine } from "@/hooks/usePollingEngine"
 
 import dynamic from "next/dynamic"
 const HeadsTable = dynamic(() => import("@/components/HeadsTable"), { ssr: false })
-const NetworkSettingProvider = dynamic(() => import("@/providers/NetworkProvider"), { ssr: false })
+const NetworkSetter = dynamic(() => import("@/components/NetworkSetter"), { ssr: false })
 
 export default function Home() {
+  // Chạy ngầm bộ polling để fetch dữ liệu từ API
+  usePollingEngine()
+
   return (
-    <main className="items-center">
-      <div className="pt-28">
-        <IntervalSettingProvider>
-          <NetworkSettingProvider>
-            <div className="flex flex-col items-center justify-center h-screen">
-              <HeadsDataProvider>
-
-                <div className="flex">
-                  <h1 className="text-3xl font-bold flex items-center">
-                    <div className="mr-4">
-                      <Image
-                        src="/hydra.svg"
-                        alt="Hydra Logo"
-                        className="dark:invert"
-                        width={50}
-                        height={50}
-                        priority
-                      />
-                    </div>
-                    Hydrascan
-                  </h1>
-                  <div className="ml-10">
-                    <div className="flex items-start space-x-4">
-                      <NetworkSetter />
-                    </div>
-                  </div>
-                  <div className="ml-10">
-                    <HeadsDashboard />
-                  </div>
-                </div>
-
-                <CardanoExplorerProvider>
-                  <div className="flex items-start space-x-4">
-                    <TickBox />
-                    <IntervalSetter />
-                  </div>
-                  <HeadsTable />
-                </CardanoExplorerProvider>
-
-              </HeadsDataProvider>
-            </div>
-          </NetworkSettingProvider>
-        </IntervalSettingProvider>
-      </div>
-    </main>
+    <CardanoExplorerProvider>
+      <Layout
+        headerRightSlot={
+          <>
+            <NetworkSetter />
+            <IntervalSetter />
+          </>
+        }
+      >
+        <HeadsDashboard />
+        <TickBox />
+        <HeadsTable />
+      </Layout>
+    </CardanoExplorerProvider>
   )
 }

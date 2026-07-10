@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react"
 import Select from "react-select"
 import { HeadState } from "@/app/model"
 import { ReadonlyURLSearchParams } from "next/navigation"
+import { Button } from "@/components/ui/button"
 
 export interface FilterState {
     headId: string | null
@@ -33,6 +34,8 @@ export const emptyFilterState: FilterState = {
     blockHash: null,
 }
 
+import { useStore } from "@/store/useStore"
+
 interface HeadsSelectProps {
     filters: FilterState
     setFilterState: React.Dispatch<React.SetStateAction<FilterState>>
@@ -40,6 +43,9 @@ interface HeadsSelectProps {
 }
 
 export const HeadsSelectTable: React.FC<HeadsSelectProps> = ({ filters, setFilterState, heads }) => {
+    const searchTerm = useStore((state) => state.searchTerm)
+    const setSearchTerm = useStore((state) => state.setSearchTerm)
+
     // Must be deleted once
     // https://github.com/JedWatson/react-select/issues/5459 is fixed.
     const [isMounted, setIsMounted] = useState(false)
@@ -84,55 +90,81 @@ export const HeadsSelectTable: React.FC<HeadsSelectProps> = ({ filters, setFilte
         }
     }
 
-    const clearFilterState = () => setFilterState(emptyFilterState)
-
-    const grayColor = "rgb(31 41 55)"
+    const clearFilterState = () => {
+        setFilterState(emptyFilterState)
+        setSearchTerm("")
+    }
 
     return isMounted ? (
         <div className="mb-4 flex flex-wrap gap-4 items-center">
-            {(["headId", "status", "version", "slot", "blockNo", "blockHash"] as (keyof FilterState)[]).map((key) => (
-                <Select
-                    key={key}
-                    value={filters[key] ? { value: filters[key]!, label: filters[key]! } : null}
-                    options={getSelectOptions(key)}
-                    onChange={(selected) => setFilterState((prev) => ({ ...prev, [key]: selected ? selected.value : null }))}
-                    placeholder={`Filter by ${key}`}
-                    isClearable
+            {(["headId", "status", "version", "slot", "blockNo", "blockHash"] as (keyof FilterState)[]).map((key) => {
+                const isHeadId = key === "headId"
+                const value = isHeadId
+                    ? (searchTerm ? { value: searchTerm, label: searchTerm } : null)
+                    : (filters[key] ? { value: filters[key]!, label: filters[key]! } : null)
+
+                return (
+                    <Select
+                        key={key}
+                        value={value}
+                        options={getSelectOptions(key)}
+                        onChange={(selected) => {
+                            const val = selected ? selected.value : null
+                            if (isHeadId) {
+                                setSearchTerm(val || "")
+                            } else {
+                                setFilterState((prev) => ({ ...prev, [key]: val }))
+                            }
+                        }}
+                        placeholder={`Filter by ${key}`}
+                        isClearable
                     className="w-64"
                     styles={{
                         control: (provided) => ({
                             ...provided,
-                            backgroundColor: grayColor,
-                            color: "white",
-                            borderColor: grayColor,
+                            backgroundColor: "var(--card)",
+                            color: "var(--foreground)",
+                            borderColor: "var(--border)",
+                            boxShadow: "none",
                         }),
                         singleValue: (provided) => ({
                             ...provided,
-                            color: "white",
+                            color: "var(--foreground)",
                         }),
                         input: (provided) => ({
                             ...provided,
-                            color: "white",
+                            color: "var(--foreground)",
+                        }),
+                        placeholder: (provided) => ({
+                            ...provided,
+                            color: "var(--muted-foreground)",
+                        }),
+                        menu: (provided) => ({
+                            ...provided,
+                            backgroundColor: "var(--popover)",
+                            border: "1px solid var(--border)",
                         }),
                         option: (provided, state) => ({
                             ...provided,
-                            backgroundColor: state.isSelected ? grayColor : "transparent",
-                            color: state.isSelected ? "white" : "black",
+                            backgroundColor: state.isSelected ? "var(--accent)" : "transparent",
+                            color: "var(--foreground)",
                             "&:hover": {
-                                backgroundColor: grayColor,
-                                color: "white",
+                                backgroundColor: "var(--accent)",
+                                color: "var(--accent-foreground)",
                             },
                         }),
                     }}
                 />
-            ))}
-            <button
+                )
+            })}
+            <Button
                 type="button"
                 onClick={clearFilterState}
-                className="px-4 py-2 rounded bg-blue-500 hover:bg-blue-600 text-white"
+                size="sm"
+                className="bg-primary-vivid text-white hover:bg-primary-vivid/90 border-transparent"
             >
                 Clear All Filters
-            </button>
+            </Button>
         </div>
     ) : null
 }

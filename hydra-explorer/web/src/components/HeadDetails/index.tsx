@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { HeadState, HeadMember } from '@/app/model'
 import MemberCommitDetails from '../MemberCommitDetails'
 import { useCardanoExplorer } from '@/providers/CardanoExplorer'
+import { Button } from '@/components/ui/button'
 
 interface HeadDetailsProps {
     head: HeadState
@@ -40,100 +41,114 @@ const HeadDetails: React.FC<HeadDetailsProps> = ({ head, onClose }) => {
     const explorer = useCardanoExplorer()
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-50">
-            <div className="bg-gray-800 p-6 rounded-lg shadow-xl relative overflow-auto max-h-screen">
-                <button
-                    className="absolute top-4 right-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+        <div className="fixed inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-50 text-foreground">
+            <div className="bg-card border border-border p-6 rounded-xl shadow-2xl relative overflow-auto max-h-screen max-w-[800px] w-full mx-4">
+                <Button
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-4 right-4"
                     onClick={onClose}
                 >
                     Close
-                </button>
-                <h2 className="text-2xl font-bold mb-4">Head Details</h2>
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="border p-4">
-                        <h3 className="text-lg font-semibold mb-2">Head ID</h3>
-                        <p>
-                            <a href={explorer.mintPolicy(head.headId)} target="_blank" className="text-blue-300 hover:text-blue-500">
+                </Button>
+                <h2 className="text-xl font-bold mb-6 border-b border-border pb-2 text-foreground uppercase tracking-wide">Head Details</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="border border-border p-4 rounded-lg bg-background/40">
+                        <h3 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Head ID</h3>
+                        <p className="truncate">
+                            <a href={explorer.mintPolicy(head.headId)} target="_blank" rel="noreferrer" className="text-data hover:text-primary-vivid transition-colors" title={head.headId}>
                                 {head.headId}
                             </a>
                         </p>
                     </div>
-                    <div className="border p-4">
-                        <h3 className="text-lg font-semibold mb-2">Head Version</h3>
-                        <p>{head.version}</p>
+                    <div className="border border-border p-4 rounded-lg bg-background/40">
+                        <h3 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Head Version</h3>
+                        <p className="text-sm">{head.version}</p>
                     </div>
-                    <div className="border p-4">
-                        <h3 className="text-lg font-semibold mb-2">Seed Tx In</h3>
-                        <p>
-                            {head.seedTxIn && (
+                    <div className="border border-border p-4 rounded-lg bg-background/40 md:col-span-2">
+                        <h3 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Seed Tx In</h3>
+                        <p className="truncate">
+                            {head.seedTxIn ? (
                                 <a
                                     href={explorer.tx(head.seedTxIn)}
                                     target="_blank"
-                                    className="text-blue-300 hover:text-blue-500"
+                                    rel="noreferrer"
+                                    className="text-data hover:text-primary-vivid transition-colors"
+                                    title={head.seedTxIn}
                                 >
                                     {head.seedTxIn}
                                 </a>
+                            ) : (
+                                <span className="text-sm text-muted-foreground">None</span>
                             )}
                         </p>
                     </div>
-                    <div className="border p-4">
-                        <h3 className="text-lg font-semibold mb-2">Status</h3>
-                        <p>{head.status}</p>
+                    <div className="border border-border p-4 rounded-lg bg-background/40">
+                        <h3 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Status</h3>
+                        <p className="text-sm">{head.status}</p>
                     </div>
-                    <div className="border p-4">
-                        <h3 className="text-lg font-semibold mb-2">Contestation Period</h3>
-                        <p>{head.contestationPeriod}</p>
+                    <div className="border border-border p-4 rounded-lg bg-background/40">
+                        <h3 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Contestation Period</h3>
+                        <p className="text-sm">{head.contestationPeriod}</p>
                     </div>
-                    <div className="border p-4">
-                        <h3 className="text-lg font-semibold mb-2">Contestations</h3>
-                        <p>{head.contestations}</p>
+                    <div className="border border-border p-4 rounded-lg bg-background/40">
+                        <h3 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Contestations</h3>
+                        <p className="text-sm">{head.contestations}</p>
                     </div>
-                    <div className="border p-4">
-                        <h3 className="text-lg font-semibold mb-2">Snapshot Number</h3>
-                        <p>{head.snapshotNumber}</p>
+                    <div className="border border-border p-4 rounded-lg bg-background/40">
+                        <h3 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Snapshot Number</h3>
+                        <p className="text-sm">{head.snapshotNumber}</p>
                     </div>
-                    <div className="border p-4">
-                        <h3 className="text-lg font-semibold mb-2">Contestation Deadline</h3>
-                        <p>{head.contestationDeadline}</p>
+                    <div className="border border-border p-4 rounded-lg bg-background/40">
+                        <h3 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Contestation Deadline</h3>
+                        <p className="text-sm">{head.contestationDeadline || "N/A"}</p>
                     </div>
-                    <div className="border p-4">
-                        <h3 className="text-lg font-semibold mb-2">Point</h3>
-                        <p>
-                            Block Hash: <a href={explorer.block(head.point.blockHash)} target="_blank" className="text-blue-300 hover:text-blue-500">
-                                {head.point.blockHash}
+                    <div className="border border-border p-4 rounded-lg bg-background/40">
+                        <h3 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground mb-2">Point</h3>
+                        <p className="text-sm">
+                            <span className="text-muted-foreground">Block Hash:</span>{" "}
+                            <a href={explorer.block(head.point.blockHash)} target="_blank" rel="noreferrer" className="text-data hover:text-primary-vivid transition-colors" title={head.point.blockHash}>
+                                {head.point.blockHash.slice(0, 8)}…{head.point.blockHash.slice(-8)}
                             </a> <br />
-                            Slot: {head.point.slot}
+                            <span className="text-muted-foreground">Slot:</span> {head.point.slot}
                         </p>
                     </div>
-                    <div className="border p-4 col-span-2">
-                        <h3 className="text-lg font-semibold mb-2">Members</h3>
-                        <table className="w-full">
-                            <thead>
-                                <tr>
-                                    <th className="text-center px-4 py-2">On Chain ID</th>
-                                    <th className="text-center px-4 py-2">Party VKey</th>
-                                    <th className="text-center px-4 py-2">Total Value Committed</th>
-                                    <th className="text-center px-4 py-2">Details</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {head.members?.map((member, index) => (
-                                    <tr key={index} className={`${index % 2 === 0 ? 'bg-gray-700' : 'bg-gray-600'}`}>
-                                        <td className="truncate text-center border px-4 py-2">{member.onChainId}</td>
-                                        <td className="truncate text-center border px-4 py-2">{member.party.vkey}</td>
-                                        <td className="truncate text-center border px-4 py-2">{getTotalCommittedLovelace(member) / 1000000} ₳</td>
-                                        <td className="text-center border px-4 py-2">
-                                            <button
-                                                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded"
-                                                onClick={() => handleMemberClick(member)}
-                                            >
-                                                View
-                                            </button>
-                                        </td>
+                    <div className="border border-border p-4 rounded-lg bg-background/40 col-span-1 md:col-span-2">
+                        <h3 className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground mb-4">Members</h3>
+                        <div className="border border-border rounded-lg overflow-hidden">
+                            <table className="w-full border-collapse">
+                                <thead className="bg-muted text-muted-foreground uppercase text-[11px] tracking-wider border-b border-border">
+                                    <tr>
+                                        <th className="text-center px-4 py-2">On Chain ID</th>
+                                        <th className="text-center px-4 py-2">Party VKey</th>
+                                        <th className="text-center px-4 py-2">Total Value Committed</th>
+                                        <th className="text-center px-4 py-2">Details</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {head.members?.map((member, index) => (
+                                        <tr key={index} className="hover:bg-accent/50 transition-colors border-b border-border last:border-b-0">
+                                            <td className="truncate text-center border-r border-border px-4 py-2 text-data" title={member.onChainId || undefined}>
+                                                {member.onChainId ? `${member.onChainId.slice(0, 6)}…${member.onChainId.slice(-4)}` : ""}
+                                            </td>
+                                            <td className="truncate text-center border-r border-border px-4 py-2 text-data" title={member.party?.vkey || undefined}>
+                                                {member.party?.vkey ? `${member.party.vkey.slice(0, 6)}…${member.party.vkey.slice(-4)}` : ""}
+                                            </td>
+                                            <td className="truncate text-center border-r border-border px-4 py-2 text-sm">{getTotalCommittedLovelace(member) / 1000000} ₳</td>
+                                            <td className="text-center px-4 py-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="xs"
+                                                    onClick={() => handleMemberClick(member)}
+                                                >
+                                                    View
+                                                </Button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>

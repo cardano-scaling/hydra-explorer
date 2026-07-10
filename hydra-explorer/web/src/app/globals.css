@@ -40,6 +40,43 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Brand Family */
+  --primary: #0033AD;
+  --primary-vivid: #4C82F0;
+  --primary-muted: #0A1F5C;
+
+  /* Status Semantic Palette */
+  --status-open: #22C55E;
+  --status-open-bg: #052E16;
+  --status-initializing: #60A5FA;
+  --status-initializing-bg: #172554;
+  --status-closed: #F59E0B;
+  --status-closed-bg: #431407;
+  --status-finalized: #94A3B8;
+  --status-finalized-bg: #0F172A;
+  --status-aborted: #F87171;
+  --status-aborted-bg: #450A0A;
+
+  /* Data Ink & Doom Badge */
+  --data-ink: #8DA3C4;
+  --doom-badge-bg: #92400E;
+  --doom-badge-fg: #FDE68A;
+
+  /* Custom Corner Radii */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-full: 9999px;
+
+  /* Layout Spacing */
+  --content-max-width: 1280px;
+  --header-height: 56px;
+  --stats-ribbon-height: 96px;
+  --panel-width-desktop: 50%;
+  --panel-width-tablet: 70%;
+  --table-row-height: 44px;
 }
 
 body {
@@ -55,6 +92,7 @@ body {
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: var(--font-sans);
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -86,13 +124,52 @@ body {
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
+
+  /* Mapped Brand Family Colors */
+  --color-primary-vivid: var(--primary-vivid);
+  --color-primary-muted: var(--primary-muted);
+
+  /* Mapped Status Palette Colors */
+  --color-status-open: var(--status-open);
+  --color-status-open-bg: var(--status-open-bg);
+  --color-status-initializing: var(--status-initializing);
+  --color-status-initializing-bg: var(--status-initializing-bg);
+  --color-status-closed: var(--status-closed);
+  --color-status-closed-bg: var(--status-closed-bg);
+  --color-status-finalized: var(--status-finalized);
+  --color-status-finalized-bg: var(--status-finalized-bg);
+  --color-status-aborted: var(--status-aborted);
+  --color-status-aborted-bg: var(--status-aborted-bg);
+
+  /* Mapped Data & Doom Badge Colors */
+  --color-data-ink: var(--data-ink);
+  --color-doom-badge-bg: var(--doom-badge-bg);
+  --color-doom-badge-fg: var(--doom-badge-fg);
+
+  /* Overridden Custom Radii */
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-full: var(--radius-full);
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Mapped Spacing Tokens */
+  --spacing-header-height: var(--header-height);
+  --spacing-stats-ribbon-height: var(--stats-ribbon-height);
+  --spacing-table-row-height: var(--table-row-height);
+  --spacing-content-max-width: var(--content-max-width);
+  --spacing-panel-width-desktop: var(--panel-width-desktop);
+  --spacing-panel-width-tablet: var(--panel-width-tablet);
+}
+
+@utility text-data {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--data-ink);
 }
 
 .dark {
@@ -102,8 +179,8 @@ body {
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: #0033AD;
+  --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);

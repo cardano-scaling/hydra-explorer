@@ -1,15 +1,21 @@
-"use client" // This is a client component 👈🏽
-
-import { useHeadsData } from '@/providers/HeadsDataProvider'
 import { totalLovelaceValueLocked } from '@/utils'
-import React from 'react'
+import React, { useMemo } from 'react'
+import { useStore } from '@/store/useStore'
 
 const HeadsDashboard = () => {
-    const { heads, error } = useHeadsData()
+    const heads = useStore((state) => state.heads)
+    const error = useStore((state) => state.headsError)
+    const currentNetworkMagic = useStore((state) => state.currentNetworkMagic)
 
-    const totalHeads = heads.length
+    const filteredHeads = useMemo(() => {
+        return (heads || []).filter((head) => head?.networkMagic === currentNetworkMagic)
+    }, [heads, currentNetworkMagic])
 
-    const totalLockedMoney = heads.reduce((total, head) => total + totalLovelaceValueLocked(head), 0)
+    const totalHeads = filteredHeads.length
+
+    const totalLockedMoney = useMemo(() => {
+        return filteredHeads.reduce((total, head) => total + totalLovelaceValueLocked(head), 0)
+    }, [filteredHeads])
 
     return (
         <div style={{ maxWidth: 'fit-content' }}>

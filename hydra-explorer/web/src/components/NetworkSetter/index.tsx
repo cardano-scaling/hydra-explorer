@@ -1,33 +1,59 @@
-"use client" // This is a client component 👈🏽
+"use client"
 
-import React, { ChangeEvent } from 'react'
-import { mainnetNetworkMagic, useNetworkContext } from "@/providers/NetworkProvider"
+import React from "react"
+import { useStore, mainnetNetworkMagic } from "@/store/useStore"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
 
-const NetworkSetter = () => {
-  const { currentNetworkMagic, updateNetwork } = useNetworkContext()
+const NetworkSetter: React.FC = () => {
+  const currentNetworkMagic = useStore((state) => state.currentNetworkMagic)
+  const updateNetwork = useStore((state) => state.updateNetwork)
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
+
+  const handleNetworkChange = (magic: number) => {
+    updateNetwork(magic)
+
+    const params = new URLSearchParams(searchParams.toString())
+    params.set("network", magic.toString())
+    params.delete("page") // Reset to page 1
+
+    const newUrl = `${pathname}?${params.toString()}`
+    router.replace(newUrl, { scroll: false })
+  }
+
+  const networks = [
+    { name: "Mainnet", magic: mainnetNetworkMagic },
+    { name: "Preprod", magic: 1 },
+    { name: "Preview", magic: 2 },
+  ]
 
   return (
-    <div className="flex">
-
-      <div className="mt-9">
-        <label className="px-4 text-sm font-medium text-gray-200">Select Network:</label>
-        <div className="ml-4 py-2">
-          <select
-            value={currentNetworkMagic}
-            onChange={(e: ChangeEvent<HTMLSelectElement>) => {
-              const networkMagicSelected = Number(e.target.value)
-              updateNetwork(networkMagicSelected)
-            }
-            }
-            className="py-2 px-3 bg-gray-800 text-gray-200 rounded-md"
+    <div
+      className="inline-flex rounded-md border border-border bg-input/30 p-0.5"
+      role="group"
+      aria-label="Network switcher"
+    >
+      {networks.map((net) => {
+        const isActive = currentNetworkMagic === net.magic
+        return (
+          <button
+            key={net.magic}
+            type="button"
+            onClick={() => handleNetworkChange(net.magic)}
+            aria-pressed={isActive}
+            className={cn(
+              "px-3 py-1.5 text-xs font-medium rounded-md transition-all outline-none",
+              isActive
+                ? "bg-primary-muted text-primary-vivid"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+            )}
           >
-            <option value={mainnetNetworkMagic}>mainnet</option>
-            <option value={1}>preprod</option>
-            <option value={2}>preview</option>
-          </select>
-        </div>
-      </div>
-
+            {net.name}
+          </button>
+        )
+      })}
     </div>
   )
 }
