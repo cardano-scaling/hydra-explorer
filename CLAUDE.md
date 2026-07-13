@@ -10,7 +10,7 @@ All Haskell work happens inside a Nix dev shell. Enter it with:
 nix develop
 ```
 
-The shell provides `cabal`, `haskell-language-server`, `fourmolu`, `yarn`, `cardano-node`, `hydra-chain-observer`, and `hydra-node`.
+The shell provides `cabal`, `haskell-language-server`, `fourmolu`, `pnpm`, `cardano-node`, `hydra-chain-observer`, and `hydra-node`.
 
 **Haskell:**
 ```sh
@@ -21,9 +21,9 @@ cabal test all          # run all tests
 
 **Frontend** (from `hydra-explorer/web/`):
 ```sh
-yarn dev                # dev server
-yarn build              # production build
-yarn lint               # ESLint
+pnpm dev                # dev server
+pnpm build              # production build
+pnpm lint               # ESLint
 ```
 
 **Nix artifacts:**
@@ -39,7 +39,7 @@ nix build .#docker               # Docker image (load with: ./result | docker lo
 fourmolu --mode inplace src/ exe/ test/
 
 # Frontend
-cd web && yarn lint
+cd web && pnpm lint
 ```
 
 GHC warnings are treated as errors (`-Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -Wunused-packages`).
