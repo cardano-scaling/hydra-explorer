@@ -9,6 +9,6 @@ fmt:
 # deploy to the server
 deploy:
   nixos-rebuild switch \
-    --target-host root@34.51.251.235 \
+    --target-host root@34.51.167.25 \
     --flake .#explorer-gce \
     --sudo --ask-sudo-password
