@@ -1,20 +1,24 @@
-import Head from "next/head"
+import Head from "next/head";
 
-import Image from "next/image"
-import IntervalSettingProvider from "@/providers/IntervalProvider"
-import IntervalSetter from "@/components/IntervalSetter"
-import TickBox from "@/components/TickBox"
-import { HeadsDataProvider } from "@/providers/HeadsDataProvider"
-import HeadsDashboard from "@/components/HeadsDashboard"
-import { CardanoExplorerProvider } from "@/providers/CardanoExplorer"
-import NetworkSetter from "@/components/NetworkSetter"
+import Image from "next/image";
+import IntervalSettingProvider from "@/providers/IntervalProvider";
+import IntervalSetter from "@/components/IntervalSetter";
+import TickBox from "@/components/TickBox";
+import { HeadsDataProvider } from "@/providers/HeadsDataProvider";
+import HeadsDashboard from "@/components/HeadsDashboard";
+import { CardanoExplorerProvider } from "@/providers/CardanoExplorer";
+import NetworkSetter from "@/components/NetworkSetter";
 
-import dynamic from "next/dynamic"
-const HeadsTable = dynamic(() => import("@/components/HeadsTable"), { ssr: false })
-const NetworkSettingProvider = dynamic(() => import("@/providers/NetworkProvider"), { ssr: false })
+import dynamic from "next/dynamic";
+const HeadsTable = dynamic(() => import("@/components/HeadsTable"), {
+  ssr: false,
+});
+const NetworkSettingProvider = dynamic(
+  () => import("@/providers/NetworkProvider"),
+  { ssr: false },
+);
 
 export default function Home() {
-
   return (
     <main className="items-center">
       <div className="pt-28">
@@ -27,7 +31,6 @@ export default function Home() {
           <NetworkSettingProvider>
             <div className="flex flex-col items-center justify-center h-screen">
               <HeadsDataProvider>
-
                 <div className="flex ">
                   <h1 className="text-3xl font-bold flex items-center">
                     <div className="mr-4">
@@ -62,17 +65,14 @@ export default function Home() {
                     <div>
                       <IntervalSetter />
                     </div>
-
                   </div>
                   <HeadsTable />
                 </CardanoExplorerProvider>
-
-
               </HeadsDataProvider>
             </div>
           </NetworkSettingProvider>
         </IntervalSettingProvider>
       </div>
     </main>
-  )
+  );
 }

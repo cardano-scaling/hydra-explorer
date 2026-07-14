@@ -7,17 +7,29 @@ let
 
   project = import ./project.nix { inherit inputs pkgs lib; };
 
-  mkShell = ghc: import ./shell.nix {
-    inherit inputs pkgs lib project ghc;
-  };
+  # Plain nixpkgs (no haskell.nix overlay) for the formatters.
+  treefmtEval = inputs.treefmt-nix.lib.evalModule (import inputs.nixpkgs {
+    inherit system;
+  }) ./treefmt.nix;
 
-  projectFlake = project.flake {};
+  mkShell =
+    ghc:
+    import ./shell.nix {
+      inherit
+        inputs
+        pkgs
+        lib
+        project
+        ghc
+        ;
+    };
+
+  projectFlake = project.flake { };
 
   apps = projectFlake.apps;
 
   packages = rec {
-    hydra-explorer-web = import ../hydra-explorer/web/hydra-explorer.nix
-    {
+    hydra-explorer-web = import ../hydra-explorer/web/hydra-explorer.nix {
       pkgs = import inputs.nixpkgs {
         inherit system;
         overlays = [ inputs.nix-npm-buildpackage.overlays.default ];
@@ -64,19 +76,21 @@ let
         })
       ];
     };
-  } // project.hsPkgs.hydra-explorer.components.exes
-    // lib.optionalAttrs (system == "x86_64-linux") {
-      # GCP image (.raw.tar.gz). Build with: nix build .#gce
-      gce = inputs.self.nixosConfigurations.explorer-gce.config.system.build.googleComputeImage;
-    };
+  }
+  // project.hsPkgs.hydra-explorer.components.exes
+  // lib.optionalAttrs (system == "x86_64-linux") {
+    # GCP image (.raw.tar.gz). Build with: nix build .#gce
+    gce = inputs.self.nixosConfigurations.explorer-gce.config.system.build.googleComputeImage;
+  };
 
   devShells = rec {
     default = mkShell "ghc967";
   };
 
 in
-  {
-    inherit apps;
-    inherit packages;
-    inherit devShells;
-  }
+{
+  inherit apps;
+  inherit packages;
+  inherit devShells;
+  formatter = treefmtEval.config.build.wrapper;
+}

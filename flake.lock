@@ -4354,6 +4354,7 @@
           "haskell-nix",
           "nixpkgs"
         ],
+        "treefmt-nix": "treefmt-nix_7",
         "unstableNixpkgs": "unstableNixpkgs"
       }
     },
@@ -4757,6 +4758,26 @@
         "owner": "numtide",
         "repo": "treefmt-nix",
         "rev": "761ae7aff00907b607125b2f57338b74177697ed",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "treefmt-nix_7": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1780220602,
+        "narHash": "sha256-eynAfOmbmxJnkp7YewvCEbShNnnYJ9gLLqkzsYtBPeM=",
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "rev": "db947814a175b7ca6ded66e21383d938df01c227",
         "type": "github"
       },
       "original": {

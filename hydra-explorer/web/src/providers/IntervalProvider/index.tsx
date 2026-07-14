@@ -1,53 +1,55 @@
-"use client" // This is a client component 👈🏽
+"use client"; // This is a client component 👈🏽
 
-import React, { useContext, useState } from 'react'
+import React, { useContext, useState } from "react";
 
 export interface IntervalSettingService {
-    isAutoUpdate: boolean
-    intervalTime: number
-    toggleAutoUpdate: () => void
-    updateIntervalTime: (seconds: number) => void
+  isAutoUpdate: boolean;
+  intervalTime: number;
+  toggleAutoUpdate: () => void;
+  updateIntervalTime: (seconds: number) => void;
 }
 
 const IntervalContext: React.Context<IntervalSettingService> =
-    React.createContext({} as IntervalSettingService)
+  React.createContext({} as IntervalSettingService);
 
 export const useIntervalContext = () => {
-    const context = useContext(IntervalContext)
-    if (!context) {
-        throw new Error("useIntervalContext must be used within a IntervalSettingProvider")
-    }
-    return context
-}
+  const context = useContext(IntervalContext);
+  if (!context) {
+    throw new Error(
+      "useIntervalContext must be used within a IntervalSettingProvider",
+    );
+  }
+  return context;
+};
 
-const IntervalSettingProvider: React.FC<any> = ({
-    children
-}) => {
-    const defaultInterval = process.env.NEXT_PUBLIC_PULL_INTERVAL
-        ? process.env.NEXT_PUBLIC_PULL_INTERVAL
-        : 1000
+const IntervalSettingProvider: React.FC<any> = ({ children }) => {
+  const defaultInterval = process.env.NEXT_PUBLIC_PULL_INTERVAL
+    ? process.env.NEXT_PUBLIC_PULL_INTERVAL
+    : 1000;
 
-    const [intervalTime, setIntervalTime] = useState(defaultInterval)
-    const [isAutoUpdateOn, setAutoUpdate] = useState(true)
+  const [intervalTime, setIntervalTime] = useState(defaultInterval);
+  const [isAutoUpdateOn, setAutoUpdate] = useState(true);
 
-    const handleToggleAutoUpdate = () => {
-        setAutoUpdate((prevAutoUpdate) => !prevAutoUpdate)
-    }
+  const handleToggleAutoUpdate = () => {
+    setAutoUpdate((prevAutoUpdate) => !prevAutoUpdate);
+  };
 
-    const handleIntervalTimeChange = (seconds: number) => {
-        setIntervalTime(seconds)
-    }
+  const handleIntervalTimeChange = (seconds: number) => {
+    setIntervalTime(seconds);
+  };
 
-    return (
-        <IntervalContext.Provider value={{
-            isAutoUpdate: isAutoUpdateOn,
-            intervalTime: intervalTime,
-            toggleAutoUpdate: handleToggleAutoUpdate,
-            updateIntervalTime: handleIntervalTimeChange
-        }}>
-            {children}
-        </IntervalContext.Provider>
-    )
-}
+  return (
+    <IntervalContext.Provider
+      value={{
+        isAutoUpdate: isAutoUpdateOn,
+        intervalTime: intervalTime,
+        toggleAutoUpdate: handleToggleAutoUpdate,
+        updateIntervalTime: handleIntervalTimeChange,
+      }}
+    >
+      {children}
+    </IntervalContext.Provider>
+  );
+};
 
-export default IntervalSettingProvider
+export default IntervalSettingProvider;

@@ -2,6 +2,10 @@
 default:
   @just --list
 
+# format Nix, Haskell and JavaScript
+fmt:
+  nix fmt
+
 # deploy to the server
 deploy:
   nixos-rebuild switch \

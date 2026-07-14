@@ -2,9 +2,9 @@ module Hydra.Explorer.Env where
 
 import Hydra.Prelude
 
-import qualified Blammo.Logging.LogSettings.Env as Env
-import Env (helpDoc, Parser, Error)
 import Blammo.Logging.LogSettings (LogSettings)
+import Blammo.Logging.LogSettings.Env qualified as Env
+import Env (Error, Parser, helpDoc)
 
 envHelp :: IsString s => s
 envHelp = fromString $ helpDoc 0 parser
