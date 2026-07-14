@@ -64,7 +64,11 @@ let
         })
       ];
     };
-  } // project.hsPkgs.hydra-explorer.components.exes ;
+  } // project.hsPkgs.hydra-explorer.components.exes
+    // lib.optionalAttrs (system == "x86_64-linux") {
+      # GCP image (.raw.tar.gz). Build with: nix build .#gce
+      gce = inputs.self.nixosConfigurations.explorer-gce.config.system.build.googleComputeImage;
+    };
 
   devShells = rec {
     default = mkShell "ghc967";

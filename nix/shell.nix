@@ -18,7 +18,7 @@ let
 
     pkgs.check-jsonschema # For hydra-explorer:test:tests
     pkgs.yarn # For hacking on the UI
-    pkgs.isd # interactive systemd viewer
+    pkgs.just
   ];
 
   shell = project.shellFor {
