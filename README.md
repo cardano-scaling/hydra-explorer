@@ -114,3 +114,10 @@ cp result/nixos.qcow2 .
 chmod 755 nixos.qcow2
 qemu-system-x86_64 -enable-kvm -m 8000 -drive file=nixos.qcow2,media=disk,if=virtio -nic user,model=virtio
 ```
+
+#### Todo
+
+- [ ] Run cardano-nodes as systemd services, not docker; it's really annoying.
+- [ ] Have the mithril bootstrap automatic; without it it takes way too long
+- [ ] Obtain the right version of the cardano configs automatically; it's crazy to do it by hand
+- [ ] Remove all the autodeployment
