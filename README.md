@@ -75,6 +75,16 @@ cabal build
 cabal test
 ```
 
+## Formatting
+
+Format all Nix, Haskell and JavaScript sources with:
+
+```sh
+just fmt
+```
+
+This runs `nix fmt`, which uses [treefmt](https://github.com/numtide/treefmt-nix) to drive `nixfmt` (Nix), `fourmolu` (Haskell) and `prettier` (JavaScript/TypeScript).
+
 ## Deployment
 
 The NixOS system for `explorer.hydra.family` contains:
@@ -82,13 +92,19 @@ The NixOS system for `explorer.hydra.family` contains:
 - Github runner registered to the `cardano-scaling` organization
 - Contiuously deployed `docker-compose` project, see [docker-compose.yaml](./docker-compose.yaml) and [github workflow](.github/workflows/cd.yaml)
 
-The system can be deployed with:
+The service runs on a Google Compute Engine instance. Build the GCE system image (a `.raw.tar.gz` under `result/`, suitable for creating a GCP custom image) with:
 
 ```sh
-nixos-rebuild switch --target-host root@explorer.hydra.family --flake .#explorer --sudo --ask-sudo-password
+nix build .#gce
 ```
 
-When prompted for the password, just press enter.
+Configuration changes are deployed to the running instance with:
+
+```sh
+just deploy
+```
+
+which runs `nixos-rebuild switch --flake .#explorer-gce` against the GCE host. When prompted for the password, just press enter.
 
 ### Testing locally
 
@@ -98,3 +114,10 @@ cp result/nixos.qcow2 .
 chmod 755 nixos.qcow2
 qemu-system-x86_64 -enable-kvm -m 8000 -drive file=nixos.qcow2,media=disk,if=virtio -nic user,model=virtio
 ```
+
+#### Todo
+
+- [ ] Run cardano-nodes as systemd services, not docker; it's really annoying.
+- [ ] Have the mithril bootstrap automatic; without it it takes way too long
+- [ ] Obtain the right version of the cardano configs automatically; it's crazy to do it by hand
+- [ ] Remove all the autodeployment

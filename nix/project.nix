@@ -1,4 +1,8 @@
-{ inputs, pkgs, lib }:
+{
+  inputs,
+  pkgs,
+  lib,
+}:
 
 let
   cabalProject = pkgs.haskell-nix.cabalProject' (
@@ -8,7 +12,9 @@ let
       compiler-nix-name = lib.mkDefault "ghc967";
       src = lib.cleanSource ../.;
       # shell.withHoogle = true;
-      inputMap = { "https://chap.intersectmbo.org/" = inputs.CHaP; };
+      inputMap = {
+        "https://chap.intersectmbo.org/" = inputs.CHaP;
+      };
       modules = [
         # XXX: This should not be needed here as proto-lens-protobuf,
         # proto-lens-etcd and hydra-node should not be needed
@@ -19,9 +25,9 @@ let
         }
       ];
       flake.variants = {
-        ghc967 = {};
+        ghc967 = { };
       };
     }
   );
 in
-  cabalProject
+cabalProject

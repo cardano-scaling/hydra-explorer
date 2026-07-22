@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  output: "export",
   env: {
-    NETWORK_URL: process.env.NETWORK_URL
+    NETWORK_URL: process.env.NETWORK_URL,
   },
 };
 

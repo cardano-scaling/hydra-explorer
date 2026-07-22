@@ -14,13 +14,13 @@ import CardanoNode (NodeLog, withCardanoNodeDevnet)
 import Control.Lens ((^.), (^?))
 import Data.Aeson as Aeson
 import Data.Aeson.Lens (key, nth, _Array, _Number, _String)
-import Hydra.Chain.Direct (DirectBackend (..))
+import Hydra.Cardano.Api (NetworkId (..), NetworkMagic (..), toNetworkMagic, unFile)
 import Hydra.Chain.Backend (queryTip)
-import Hydra.Options (DirectOptions (..))
-import Hydra.Cardano.Api (NetworkId (..), NetworkMagic (..), unFile, toNetworkMagic)
+import Hydra.Chain.Direct (DirectBackend (..))
 import Hydra.Cluster.Faucet (FaucetLog, publishHydraScriptsAs)
 import Hydra.Cluster.Fixture (Actor (..))
 import Hydra.Cluster.Scenarios (EndToEndLog, singlePartyHeadFullLifeCycle, singlePartyOpenAHead)
+import Hydra.Options (DirectOptions (..))
 import HydraNode (HydraNodeLog)
 import Network.HTTP.Simple (getResponseBody, httpJSON, parseRequestThrow)
 import Network.Socket (PortNumber)
@@ -46,7 +46,7 @@ spec = do
                 allHeads <- getHeads explorer
                 length (allHeads ^. _Array) `shouldBe` 1
                 allHeads ^? nth 0 . key "network" `shouldBe` Just "Testnet"
-                allHeads ^? nth 0 . key "networkMagic" . _Number `shouldBe` Just (fromIntegral . unNetworkMagic . toNetworkMagic $ networkId )
+                allHeads ^? nth 0 . key "networkMagic" . _Number `shouldBe` Just (fromIntegral . unNetworkMagic . toNetworkMagic $ networkId)
                 -- NOTE: This deliberately pins the latest version of hydra we test against.
                 allHeads ^? nth 0 . key "version" `shouldBe` Just "1.0.0-b5e33b55e9fba442c562f82cec6c36b1716d9847"
 
@@ -143,15 +143,16 @@ data IntegrationTestLog
 
 -- | Starts a 'hydra-chain-observer' on some Cardano network and have it connect to given 'hydra-explorer' port.
 withChainObserver :: DirectBackend -> HydraExplorerClient -> IO () -> IO ()
-withChainObserver (DirectBackend DirectOptions{networkId,nodeSocket}) HydraExplorerClient{observerPort} action =
+withChainObserver (DirectBackend DirectOptions{networkId, nodeSocket}) HydraExplorerClient{observerPort} action =
   withProcessExpect process $ const action
-  where
-    process = proc "hydra-chain-observer" $
-        ["--node-socket", unFile nodeSocket]
-          <> case networkId of
-            Mainnet -> ["--mainnet"]
-            Testnet (NetworkMagic magic) -> ["--testnet-magic", show magic]
-          <> ["--explorer", "http://127.0.0.1:" <> show observerPort]
+ where
+  process =
+    proc "hydra-chain-observer" $
+      ["--node-socket", unFile nodeSocket]
+        <> case networkId of
+          Mainnet -> ["--mainnet"]
+          Testnet (NetworkMagic magic) -> ["--testnet-magic", show magic]
+        <> ["--explorer", "http://127.0.0.1:" <> show observerPort]
 
 -- * Helpers
 

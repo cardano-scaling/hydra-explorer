@@ -7,7 +7,7 @@ import Hydra.Prelude
 import Blammo.Logging (Logger, MonadLogger)
 import Blammo.Logging.Logger (newLogger)
 import Blammo.Logging.Setup (LoggingT, runLoggerLoggingT)
-import Blammo.Logging.Simple (Message ((:#)), logError, logInfo, logDebug, withThreadContext, (.=))
+import Blammo.Logging.Simple (Message ((:#)), logDebug, logError, logInfo, withThreadContext, (.=))
 import Control.Concurrent.Class.MonadSTM (modifyTVar', newTBQueueIO, newTVarIO, readTBQueue, readTVarIO, writeTBQueue)
 import Hydra.Cardano.Api (NetworkId, chainPointToSlotNo)
 import Hydra.Explorer.Env qualified as Env

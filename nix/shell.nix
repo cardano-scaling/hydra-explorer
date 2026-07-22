@@ -1,8 +1,15 @@
-{ inputs, pkgs, lib, project, ghc }:
+{
+  inputs,
+  pkgs,
+  lib,
+  project,
+  ghc,
+}:
 let
   allTools = {
-    "ghc967".cabal                    = project.projectVariants.ghc967.tool "cabal" "latest";
-    "ghc967".haskell-language-server  = project.projectVariants.ghc967.tool "haskell-language-server" "latest";
+    "ghc967".cabal = project.projectVariants.ghc967.tool "cabal" "latest";
+    "ghc967".haskell-language-server =
+      project.projectVariants.ghc967.tool "haskell-language-server" "latest";
   };
 
   tools = allTools.${ghc};
@@ -18,7 +25,7 @@ let
 
     pkgs.check-jsonschema # For hydra-explorer:test:tests
     pkgs.yarn # For hacking on the UI
-    pkgs.isd # interactive systemd viewer
+    pkgs.just
   ];
 
   shell = project.shellFor {
@@ -30,4 +37,4 @@ let
     withHoogle = true;
   };
 in
-  shell
+shell
