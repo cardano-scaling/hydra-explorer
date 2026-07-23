@@ -14,7 +14,8 @@ A Next.js frontend application designed to monitor and inspect Hydra Heads acros
 
 ### Prerequisites
 
-Ensure you have [pnpm](https://pnpm.io/) installed.
+Ensure you have [pnpm](https://pnpm.io/) installed. Alternatively, `nix develop`
+in the repository root provides `pnpm` and `node`.
 
 ### Development
 
@@ -34,15 +35,23 @@ Ensure you have [pnpm](https://pnpm.io/) installed.
 
 ### Other Commands
 
-- **Build**: `pnpm build` - Build for production.
-- **Start**: `pnpm start` - Run the built production application.
+- **Build**: `pnpm build` - Build the static site into `out/` (the app uses
+  `output: "export"`, so there is no `next start` server; `out/` is served as
+  static files by `hydra-explorer`).
 - **Lint**: `pnpm lint` - Check codebase for style/lint issues.
 - **Format**: `pnpm format` - Run Prettier to format source files.
+
+The production artifact can also be built with Nix from the repository root:
+
+```bash
+nix build .#hydra-explorer-web
+```
 
 ## Configuration
 
 Configure the interface by creating a `.env.local` file (or set environment variables):
 
-| Variable                   | Description                                |
-| -------------------------- | ------------------------------------------ |
-| `NEXT_PUBLIC_EXPLORER_URL` | The URL of the Hydra Explorer API backend. |
+| Variable                    | Description                                            |
+| --------------------------- | ------------------------------------------------------ |
+| `NEXT_PUBLIC_EXPLORER_URL`  | The URL of the Hydra Explorer API backend.             |
+| `NEXT_PUBLIC_PULL_INTERVAL` | Default polling interval in milliseconds (default: 5000). |

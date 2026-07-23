@@ -4,6 +4,6 @@ const nextConfig = {
   env: {
     NETWORK_URL: process.env.NETWORK_URL,
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig

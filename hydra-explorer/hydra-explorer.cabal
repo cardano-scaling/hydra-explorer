@@ -48,6 +48,7 @@ library
     , envparse
     , hydra-cardano-api
     , hydra-prelude
+    , hydra-test-utils
     , hydra-tx
     , hydra-tx:testlib
     , io-classes

@@ -39,9 +39,12 @@ jobs:
 
     - name: ❓ Build and test
       run: |
+        # Build the web frontend; it is part of the docker image built on
+        # main and would otherwise only break after merging.
+        nix build .#hydra-explorer-web
+
         # XXX: All this is too slow.
         #
-        # nix build .#hydra-explorer-web
         # nix build .#docker
         # nix run .#apps.x86_64-linux."hydra-explorer:exe:hydra-explorer" -- --help
 

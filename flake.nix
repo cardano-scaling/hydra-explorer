@@ -28,8 +28,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    cardano-node.url = "github:IntersectMBO/cardano-node/10.6.2";
-    hydra.url = "github:cardano-scaling/hydra/1.0.0";
+    cardano-node.url = "github:IntersectMBO/cardano-node/11.0.1";
+    hydra.url = "github:cardano-scaling/hydra/2.3.0";
+    # Rust accumulator library required (via pkg-config) by hydra-tx >= 2.x;
+    # pinned to the same revision as hydra 2.3.0.
+    rust-accumulator.url = "github:cardano-scaling/rust-accumulator/e5f6cfc13b075282fc0580700a66ce693c5d2d53";
     mithril.url = "github:input-output-hk/mithril/2543.1-hotfix";
 
     hackage = {
@@ -41,8 +44,6 @@
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    nix-npm-buildpackage.url = "github:serokell/nix-npm-buildpackage";
 
     agenix.url = "github:ryantm/agenix";
   };

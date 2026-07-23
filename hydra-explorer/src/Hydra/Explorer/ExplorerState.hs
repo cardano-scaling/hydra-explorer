@@ -12,10 +12,7 @@ import Hydra.Tx.ContestationPeriod (ContestationPeriod, toNominalDiffTime)
 import Hydra.Tx.HeadId (HeadId (..), HeadSeed, headSeedToTxIn)
 import Hydra.Tx.HeadParameters (HeadParameters (..))
 import Hydra.Tx.Observe (
-  AbortObservation (..),
   CloseObservation (..),
-  CollectComObservation (..),
-  CommitObservation (..),
   ContestObservation (..),
   DecrementObservation (..),
   DepositObservation (..),
@@ -23,12 +20,14 @@ import Hydra.Tx.Observe (
   HeadObservation (..),
   IncrementObservation (..),
   InitObservation (..),
+  PartialFanoutObservation (..),
   RecoverObservation (..),
  )
 import Hydra.Tx.OnChainId (OnChainId)
 import Hydra.Tx.Party (Party)
 import Hydra.Tx.Snapshot (SnapshotNumber (..))
-import Test.QuickCheck (oneof)
+import Test.Hydra.Prelude (genericArbitrary)
+import Test.QuickCheck (Arbitrary (..), genericShrink, oneof)
 
 data HeadMember = HeadMember
   { party :: Party
@@ -171,133 +170,6 @@ aggregateInitObservation
         , point = point
         , blockNo = blockNo
         }
-
-aggregateAbortObservation ::
-  NetworkId ->
-  HydraVersion ->
-  HeadId ->
-  ChainPoint ->
-  BlockNo ->
-  [HeadState] ->
-  [HeadState]
-aggregateAbortObservation networkId version headId point blockNo currentHeads =
-  case findHeadState headId currentHeads of
-    Just headState ->
-      let newHeadState = headState{status = Aborted}
-       in replaceHeadState newHeadState currentHeads
-    Nothing -> currentHeads <> [newUnknownHeadState]
- where
-  newUnknownHeadState =
-    HeadState
-      { network = toShelleyNetwork networkId
-      , networkMagic = toNetworkMagic networkId
-      , version
-      , headId
-      , seedTxIn = Unknown
-      , status = Aborted
-      , contestationPeriod = Unknown
-      , members = Unknown
-      , contestations = Seen 0
-      , snapshotNumber = Seen 0
-      , contestationDeadline = Unknown
-      , point = point
-      , blockNo = blockNo
-      }
-
-aggregateCommitObservation ::
-  NetworkId ->
-  HydraVersion ->
-  HeadId ->
-  ChainPoint ->
-  BlockNo ->
-  Party ->
-  UTxO ->
-  [HeadState] ->
-  [HeadState]
-aggregateCommitObservation networkId version headId point blockNo party committed currentHeads =
-  case findHeadState headId currentHeads of
-    Just headState ->
-      let newHeadState = updateMember headState
-       in replaceHeadState newHeadState currentHeads
-    Nothing -> currentHeads <> [newUnknownHeadState]
- where
-  updateMember headState@HeadState{members} =
-    let members' = case members of
-          Unknown -> []
-          Seen ms -> ms
-     in case find (\HeadMember{party = partyMember} -> partyMember == party) members' of
-          Nothing -> headState{members = Seen $ newUnknownMember : members'}
-          Just headMember@HeadMember{commits = currentCommits} ->
-            let currentCommits' = case currentCommits of
-                  Unknown -> mempty
-                  Seen utxo -> utxo
-                newMember = headMember{commits = Seen $ committed <> currentCommits'}
-                newMembers = replaceMember members' newMember
-             in headState{members = Seen newMembers}
-
-  replaceMember members newMember@HeadMember{party = newHeadMember} =
-    case members of
-      [] -> [newMember]
-      (headMember@HeadMember{party = currentHeadMember} : tailMembers) ->
-        if newHeadMember == currentHeadMember
-          then newMember : tailMembers
-          else headMember : replaceMember tailMembers newMember
-
-  newUnknownMember =
-    HeadMember
-      { party
-      , onChainId = Unknown
-      , commits = Seen committed
-      }
-
-  newUnknownHeadState =
-    HeadState
-      { network = toShelleyNetwork networkId
-      , networkMagic = toNetworkMagic networkId
-      , version
-      , headId
-      , seedTxIn = Unknown
-      , status = Initializing
-      , contestationPeriod = Unknown
-      , members = Seen [newUnknownMember]
-      , contestations = Seen 0
-      , snapshotNumber = Seen 0
-      , contestationDeadline = Unknown
-      , point = point
-      , blockNo = blockNo
-      }
-
-aggregateCollectComObservation ::
-  NetworkId ->
-  HydraVersion ->
-  HeadId ->
-  ChainPoint ->
-  BlockNo ->
-  [HeadState] ->
-  [HeadState]
-aggregateCollectComObservation networkId version headId point blockNo currentHeads =
-  case findHeadState headId currentHeads of
-    Just headState ->
-      let newHeadState = headState{status = Open}
-       in replaceHeadState newHeadState currentHeads
-    Nothing -> currentHeads <> [newUnknownHeadState]
- where
-  newUnknownHeadState =
-    HeadState
-      { network = toShelleyNetwork networkId
-      , networkMagic = toNetworkMagic networkId
-      , version
-      , headId
-      , seedTxIn = Unknown
-      , status = Open
-      , contestationPeriod = Unknown
-      , members = Unknown
-      , contestations = Seen 0
-      , snapshotNumber = Seen 0
-      , contestationDeadline = Unknown
-      , point = point
-      , blockNo = blockNo
-      }
 
 aggregateDepositObservation ::
   NetworkId ->
@@ -516,6 +388,40 @@ aggregateContestObservation networkId version headId point blockNo (UnsafeSnapsh
       , blockNo = blockNo
       }
 
+-- | A partial fanout only distributes a part of the head's UTxO; the head
+-- stays 'Closed' until the final fanout is observed.
+aggregatePartialFanoutObservation ::
+  NetworkId ->
+  HydraVersion ->
+  HeadId ->
+  ChainPoint ->
+  BlockNo ->
+  [HeadState] ->
+  [HeadState]
+aggregatePartialFanoutObservation networkId version headId point blockNo currentHeads =
+  case findHeadState headId currentHeads of
+    Just headState ->
+      let newHeadState = headState{status = Closed}
+       in replaceHeadState newHeadState currentHeads
+    Nothing -> currentHeads <> [newUnknownHeadState]
+ where
+  newUnknownHeadState =
+    HeadState
+      { network = toShelleyNetwork networkId
+      , networkMagic = toNetworkMagic networkId
+      , version
+      , headId
+      , seedTxIn = Unknown
+      , status = Closed
+      , contestationPeriod = Unknown
+      , members = Unknown
+      , contestations = Unknown
+      , snapshotNumber = Unknown
+      , contestationDeadline = Unknown
+      , point = point
+      , blockNo = blockNo
+      }
+
 aggregateFanoutObservation ::
   NetworkId ->
   HydraVersion ->
@@ -607,21 +513,6 @@ aggregateObservation networkId version Observation{point, blockNo, observed} Exp
         { heads = aggregateInitObservation networkId version headId point blockNo headSeed headParameters participants heads
         , ticks = aggregateTickObservation networkId point blockNo ticks
         }
-    Abort AbortObservation{headId} ->
-      ExplorerState
-        { heads = aggregateAbortObservation networkId version headId point blockNo heads
-        , ticks = aggregateTickObservation networkId point blockNo ticks
-        }
-    Commit CommitObservation{headId, party, committed} ->
-      ExplorerState
-        { heads = aggregateCommitObservation networkId version headId point blockNo party committed heads
-        , ticks = aggregateTickObservation networkId point blockNo ticks
-        }
-    CollectCom CollectComObservation{headId} ->
-      ExplorerState
-        { heads = aggregateCollectComObservation networkId version headId point blockNo heads
-        , ticks = aggregateTickObservation networkId point blockNo ticks
-        }
     Deposit DepositObservation{headId} ->
       ExplorerState
         { heads = aggregateDepositObservation networkId version headId point blockNo heads
@@ -652,7 +543,17 @@ aggregateObservation networkId version Observation{point, blockNo, observed} Exp
         { heads = aggregateContestObservation networkId version headId point blockNo snapshotNumber heads
         , ticks = aggregateTickObservation networkId point blockNo ticks
         }
+    PartialFanout PartialFanoutObservation{headId} ->
+      ExplorerState
+        { heads = aggregatePartialFanoutObservation networkId version headId point blockNo heads
+        , ticks = aggregateTickObservation networkId point blockNo ticks
+        }
     Fanout FanoutObservation{headId} ->
+      ExplorerState
+        { heads = aggregateFanoutObservation networkId version headId point blockNo heads
+        , ticks = aggregateTickObservation networkId point blockNo ticks
+        }
+    FinalPartialFanout FanoutObservation{headId} ->
       ExplorerState
         { heads = aggregateFanoutObservation networkId version headId point blockNo heads
         , ticks = aggregateTickObservation networkId point blockNo ticks

@@ -6,6 +6,12 @@
   ghc,
 }:
 let
+  # Unstable nixpkgs for frontend tooling; the primary (haskell.nix) pin
+  # predates pnpm 11 as used by hydra-explorer/web.
+  unstablePkgs = import inputs.unstableNixpkgs {
+    inherit (pkgs.stdenv.hostPlatform) system;
+  };
+
   allTools = {
     "ghc967".cabal = project.projectVariants.ghc967.tool "cabal" "latest";
     "ghc967".haskell-language-server =
@@ -24,7 +30,8 @@ let
     pkgs.hydra-node
 
     pkgs.check-jsonschema # For hydra-explorer:test:tests
-    pkgs.yarn # For hacking on the UI
+    unstablePkgs.pnpm_11 # For hacking on the UI
+    unstablePkgs.nodejs # For hacking on the UI
     pkgs.just
   ];
 
