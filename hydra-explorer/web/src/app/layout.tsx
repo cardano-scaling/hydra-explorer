@@ -1,22 +1,30 @@
-import type { Metadata } from "next";
-import "./globals.css";
+import type { Metadata } from "next"
+import "./globals.css"
+import { Geist } from "next/font/google"
+import { cn } from "@/lib/utils"
+import { Toaster } from "sonner"
+
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" })
 
 export const metadata: Metadata = {
   title: "Hydrascan",
-  description: "hydra-explorer UI",
-};
+  description: "Hydra Head Explorer",
+  icons: {
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+  },
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={cn("dark font-sans", geist.variable)}>
       <body>
-        <link rel="icon" href="/favicon.svg?v=1" type="image/svg+xml" />
         {children}
+        <Toaster theme="dark" closeButton position="bottom-right" />
       </body>
     </html>
-  );
+  )
 }
