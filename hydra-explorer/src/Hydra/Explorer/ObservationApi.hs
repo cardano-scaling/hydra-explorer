@@ -11,14 +11,14 @@ import Test.Hydra.Tx.Gen ()
 import Data.Aeson (Value (..), withObject, (.!=), (.:), (.:?))
 import Data.Aeson.Types (Parser, typeMismatch)
 import Hydra.Cardano.Api (BlockNo, ChainPoint, NetworkId (..), NetworkMagic (..), fromNetworkMagic)
-import Hydra.Tx.CollectCom (UTxOHash (..))
 import Hydra.Tx.Observe (
-  CollectComObservation (..),
   ContestObservation (..),
   DepositObservation (..),
   HeadObservation (..),
+  IncrementObservation (..),
  )
 import Servant (Capture, FromHttpApiData (..), JSON, Post, ReqBody, (:>))
+import Test.QuickCheck (Arbitrary (..))
 
 data Observation = Observation
   { point :: ChainPoint
@@ -47,14 +47,20 @@ parseOldObservation = \case
     tag <- o .: "tag"
     case tag :: Text of
       "OnInitTx" -> Init <$> parseJSON (Object o)
-      "OnAbortTx" -> Abort <$> parseJSON (Object o)
-      "OnCommitTx" -> Commit <$> parseJSON (Object o)
-      "OnCollectComTx" -> do
+      -- NOTE: Abort, commit and collectCom transactions are not representable
+      -- anymore since hydra-tx 2.x, where heads open directly without a
+      -- commit phase. Observations of these transactions (sent by old
+      -- observers for old heads) are accepted, but ignored.
+      "OnAbortTx" -> pure NoHeadTx
+      "OnCommitTx" -> pure NoHeadTx
+      "OnCollectComTx" -> pure NoHeadTx
+      "OnIncrementTx" -> do
         headId <- o .: "headId"
-        -- NOTE: OnChainTx did not have 'utxoHash'
-        utxoHash <- o .:? "utxoHash" .!= UTxOHash "unknown"
-        pure $ CollectCom CollectComObservation{..}
-      "OnIncrementTx" -> Increment <$> parseJSON (Object o)
+        newVersion <- o .: "newVersion"
+        depositTxId <- o .: "depositTxId"
+        -- NOTE: 'deposited' only exists since hydra-tx 2.x
+        deposited <- o .:? "deposited" .!= mempty
+        pure $ Increment IncrementObservation{..}
       "OnDecrementTx" -> Decrement <$> parseJSON (Object o)
       "OnCloseTx" -> Close <$> parseJSON (Object o)
       "OnContestTx" -> do

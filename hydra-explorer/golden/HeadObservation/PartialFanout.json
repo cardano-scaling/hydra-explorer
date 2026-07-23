@@ -1,0 +1,22 @@
+{
+    "samples": [
+        {
+            "distributedOutputs": {
+                "0101000100000001010001000001000001010101000100010001010101000000#42": {
+                    "address": "addr_test1xr0rp3qm4skgunvqun93r49svww9t35wzvt2vnxr46q0mc7lawvms8zfcks6uwdfh2qev4lph5063ekzhh6m7mphknqst0hkl0",
+                    "datum": null,
+                    "datumhash": null,
+                    "inlineDatum": null,
+                    "inlineDatumRaw": null,
+                    "referenceScript": null,
+                    "value": {
+                        "lovelace": 45000000000000000
+                    }
+                }
+            },
+            "headId": "00010100000101000100000101000101",
+            "tag": "PartialFanout"
+        }
+    ],
+    "seed": 1902975697
+}

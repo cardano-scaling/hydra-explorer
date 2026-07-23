@@ -18,6 +18,43 @@ hydra-explorer \
   --client-port 9000
 ```
 
+## Running locally
+
+In a `nix develop` shell, start the backend:
+
+```shell
+cabal run hydra-explorer
+```
+
+This serves the client API on port `9090` and the observer API on port `8080`.
+
+To display live data, connect a `hydra-chain-observer` (available in the shell)
+to a synced `cardano-node` and point it at the observer API, e.g. for preview:
+
+```shell
+hydra-chain-observer \
+  --node-socket /path/to/preview/node.socket \
+  --testnet-magic 2 \
+  --explorer http://localhost:8080
+```
+
+For the frontend there are two options. Either build the static site and let
+`hydra-explorer` serve it on the client API port:
+
+```shell
+nix build .#hydra-explorer-web
+cabal run hydra-explorer -- --static-path result
+```
+
+then open http://localhost:9090. Or run the Next.js dev server with hot
+reloading against the client API (see [web/README.md](./hydra-explorer/web/README.md)):
+
+```shell
+cd hydra-explorer/web
+NEXT_PUBLIC_EXPLORER_URL=http://localhost:9090 pnpm dev
+```
+
+then open http://localhost:3000.
 
 ## Architecture
 

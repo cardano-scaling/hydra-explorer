@@ -87,7 +87,8 @@ const sheetVariants = cva(
 
 // ─── Content ────────────────────────────────────────────────────────────────
 interface SheetContentProps
-  extends React.ComponentPropsWithoutRef<typeof Dialog.Popup>, VariantProps<typeof sheetVariants> {}
+  extends React.ComponentPropsWithoutRef<typeof Dialog.Popup>,
+    VariantProps<typeof sheetVariants> {}
 
 function SheetContent({ className, children, side, ...props }: SheetContentProps) {
   return (

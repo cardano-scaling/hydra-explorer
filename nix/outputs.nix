@@ -29,11 +29,9 @@ let
   apps = projectFlake.apps;
 
   packages = rec {
+    # Uses unstable nixpkgs as the primary (haskell.nix) pin predates pnpm 11.
     hydra-explorer-web = import ../hydra-explorer/web/hydra-explorer.nix {
-      pkgs = import inputs.nixpkgs {
-        inherit system;
-        overlays = [ inputs.nix-npm-buildpackage.overlays.default ];
-      };
+      pkgs = import inputs.unstableNixpkgs { inherit system; };
     };
 
     hydra-explorer-static =

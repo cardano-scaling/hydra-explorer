@@ -13,6 +13,13 @@ import inputs.nixpkgs {
       cardano-cli = inputs.cardano-node.packages.${final.system}.cardano-cli;
       hydra-chain-observer = inputs.hydra.packages.${final.system}.hydra-chain-observer;
       hydra-node = inputs.hydra.packages.${final.system}.hydra-node;
+      # Rust accumulator library required (via pkg-config) by hydra-tx >= 2.x.
+      librust_accumulator = inputs.rust-accumulator.packages.${final.system}.default;
+      haskell-nix = prev.haskell-nix // {
+        extraPkgconfigMappings = prev.haskell-nix.extraPkgconfigMappings or { } // {
+          "librust_accumulator" = [ "librust_accumulator" ];
+        };
+      };
     })
   ];
 }
