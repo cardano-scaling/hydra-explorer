@@ -96,6 +96,32 @@
                 inputs.agenix.nixosModules.default
               ];
             };
+
+            # EC2 system image (UEFI). Build with `nix build .#ami`; deploy with
+            # `nixos-rebuild switch --flake .#explorer-ec2`.
+            nixosConfigurations.explorer-ec2 = inputs.nixpkgs.lib.nixosSystem {
+              system = "x86_64-linux";
+              specialArgs = { inherit inputs github-runner-new; };
+              modules = [
+                {
+                  imports = [
+                    # Adds system.build.amazonImage on top of
+                    # modules/virtualisation/amazon-image.nix. Must be the same
+                    # inputs.nixpkgs path the config uses, else amazon-init is
+                    # declared twice.
+                    "${inputs.nixpkgs}/nixos/maintainers/scripts/ec2/amazon-image.nix"
+                    (import ./nix/hydra-explorer-configuration.nix)
+                  ];
+                  ec2.efi = true;
+                  # coldsnap uploads a raw disk; the default format is vpc (.vhd).
+                  amazonImage.format = "raw";
+                  # The maintainer script pins 4G (mkOverride 1490), which the
+                  # closure does not fit in; root grows to the EBS volume on boot.
+                  virtualisation.diskSize = "auto";
+                }
+                inputs.agenix.nixosModules.default
+              ];
+            };
           }
         );
     in

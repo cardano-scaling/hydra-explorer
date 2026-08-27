@@ -5,7 +5,7 @@ let
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBJd9BiDoUNl0pCVDeIKnlwJu6oOmLIz7l3Ct7xoYjBS" # noonio
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF/nkV4og13MWwILyhxQ2n3NWb2QQ4HqTuKgE9YmbIOx" # vrom911
   ];
-  hostKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAu90XurvqxizckbEAViD/X1VMLS7U5FsZ0nbx1KRAes";
+  hostKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKdMk+5kAbPYHfY3Ww7Bd16Ds8X4VzCdtFv7aPyxMsZe";
 in
 {
   "github-runner-token.age".publicKeys = users ++ [ hostKey ];

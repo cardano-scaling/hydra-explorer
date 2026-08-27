@@ -92,19 +92,128 @@ The NixOS system for `explorer.hydra.family` contains:
 - Github runner registered to the `cardano-scaling` organization
 - Contiuously deployed `docker-compose` project, see [docker-compose.yaml](./docker-compose.yaml) and [github workflow](.github/workflows/cd.yaml)
 
-The service runs on a Google Compute Engine instance. Build the GCE system image (a `.raw.tar.gz` under `result/`, suitable for creating a GCP custom image) with:
+There are two system images, one per cloud. They share
+[nix/hydra-explorer-configuration.nix](./nix/hydra-explorer-configuration.nix) and differ only
+in the bootloader, drivers and guest agent, so **an image must only ever be deployed to the
+cloud it was built for**. Deploying `.#explorer-gce` to an EC2 host, or the reverse, leaves the
+box unbootable.
+
+| Cloud | Image | System |
+|---|---|---|
+| GCE (currently live) | `nix build .#gce` -> `result/*.raw.tar.gz` | `.#explorer-gce` |
+| EC2 | `nix build .#ami` -> `result-ami/*.img` | `.#explorer-ec2` |
+
+Configuration changes go to a running EC2 instance with:
 
 ```sh
-nix build .#gce
+just deploy-ec2 <host>
 ```
 
-Configuration changes are deployed to the running instance with:
+which runs `nixos-rebuild switch --flake .#explorer-ec2` against it. When prompted for the
+password, just press enter. The host is a required argument until the address settles, at
+which point give the parameter a default. The GCE equivalent is commented out in the
+[justfile](./justfile) as `deploy-gce`, with its address baked in.
+
+Each recipe is hardwired to one flake target, so the only way to cross the two clouds is to run
+`nixos-rebuild` by hand.
+
+Every recipe runs inside the `.#deploy` shell, which carries `aws`, `coldsnap`, `jq`,
+`nixos-rebuild` and `openssh` and is separate from the Haskell `nix develop`. Nothing has to be
+entered first; `nix develop .#deploy` is there for running the steps by hand.
+
+### Provisioning an EC2 instance
 
 ```sh
-just deploy
+aws configure sso --profile hydra    # once; or 'aws configure' for static keys
+aws sso login --profile hydra
+
+just profile=hydra region=eu-central-1 provision
 ```
 
-which runs `nixos-rebuild switch --flake .#explorer-gce` against the GCE host. When prompted for the password, just press enter.
+`just provision` builds the image, uploads it into an EBS snapshot with
+[coldsnap](https://github.com/awslabs/coldsnap) (no import job or S3 bucket involved),
+registers a UEFI AMI, creates the security group and launches the instance, printing the
+address at the end. The image is a raw UEFI disk: GPT, an `ESP` partition and an ext4 root
+labelled `nixos`.
+
+Settings are just variables, so they can be overridden per invocation or exported as the
+matching `EC2_*` environment variable:
+
+| Variable | Default | Notes |
+|---|---|---|
+| `region` | the profile's region | |
+| `profile` | default credential chain | |
+| `instance_type` | `m6i.2xlarge` | must be a Nitro type that supports UEFI boot; `m6i`/`c6i`/`m7i` do |
+| `volume_size` | `500` | GiB. The image is ~7 GiB; the root partition grows to fill the volume on first boot |
+| `name` | `hydra-explorer` | name tag, security group name and AMI name prefix |
+| `key_name` | none | an EC2 key pair, as a break-glass root key (see below) |
+| `snapshot`, `ami` | none | resume a run that failed late without redoing the earlier steps |
+
+The security group and the host key are reused if they already exist, so re-running is cheap.
+`EC2_SUBNET_ID`, `EC2_SSH_CIDR` and `EC2_WEB_CIDR` are honoured too, but only as environment
+variables.
+
+The AWS credentials need `ebs:StartSnapshot`, `ebs:PutSnapshotBlock`, `ebs:CompleteSnapshot`,
+`ec2:DescribeSnapshots`, `ec2:RegisterImage`, `ec2:RunInstances` and the describe/security
+group calls.
+
+One wrinkle worth knowing about, since it looks like a credentials problem on your side and is
+not: coldsnap builds `aws-config` with `default-features = false` and no `sso` feature, so it
+cannot use an IAM Identity Center profile and fails with `the credentials provider was not
+properly configured` even though the CLI is happily authenticated. `provision` works around it
+by resolving credentials with `aws configure export-credentials` and passing them to coldsnap
+in the environment, which covers SSO, `credential_process` and assumed roles alike.
+
+### SSH keys and the `hydra` user
+
+The login account is **`hydra`**, not root. Its keys, in
+`users.users.hydra.openssh.authorizedKeys.keys`, are baked into the image and land in
+`/etc/ssh/authorized_keys.d/hydra`; nothing on the instance side has to fetch them, which is
+why the GCE variant force-disables OS Login.
+
+`hydra` is in `wheel` with `security.sudo.wheelNeedsPassword = false`, so the deploy recipes'
+`--sudo --ask-sudo-password` prompt still just takes an enter. It is also in `docker` (this box
+runs its workload as a docker-compose project) and in `nix.settings.trusted-users`, which
+`nixos-rebuild --target-host` needs: the closure is copied over ssh as `hydra` before sudo
+takes over, and an untrusted user cannot add unsigned paths to the store.
+
+Root keeps no keys of its own. If you pass `key_name=<ec2 key pair>`, `apply-ec2-data` appends
+that key to `/root/.ssh/authorized_keys` on first boot, which is worth having purely as
+break-glass for when the baked-in keys turn out to be wrong. It costs nothing and is off by
+default.
+
+> **One-time transition.** The deploy that first introduces the `hydra` user is the last one
+> that works over `root@`, since it is the same switch that removes root's keys. Run it against
+> the old target, then move to `hydra@` for everything after.
+
+### Host keys and agenix
+
+`age.secrets.github-runner-token` is encrypted to the `hostKey` in
+[secrets/secrets.nix](./secrets/secrets.nix), and agenix decrypts it during system activation
+using `/etc/ssh/ssh_host_ed25519_key`. On a freshly provisioned cloud instance that key is
+generated on first boot and is random, so it can never match `secrets.nix`, and the runner and
+ACME units fail with `no identity matched any of the recipients`.
+
+`just provision` works around this: it generates a persistent host key under
+`secrets/host-keys/<name>/` and hands it to the instance through user-data, which
+`ec2-data.nix` installs on first boot. It reuses an existing key, so reprovisioning the same
+box keeps its identity. At the end of the run it prints the public key; put that in
+`secrets/secrets.nix` as `hostKey`, then rekey:
+
+```sh
+cd secrets && nix run github:ryantm/agenix -- -r   # needs a private key from 'users'
+```
+
+Two things to know:
+
+- **The first boot still fails.** agenix runs during activation, `apply-ec2-data` runs later in
+  `multi-user.target`, so the key only exists from the second boot onwards. Reboot once after
+  provisioning and the secret decrypts.
+- **The private host key sits in user-data in the clear**, readable on the instance through
+  IMDS and to anyone holding `ec2:DescribeInstanceAttribute`. `secrets/host-keys/` is
+  gitignored and must stay that way.
+
+Set `EC2_USER_DATA=<path>` to supply your own user-data instead and skip all of this.
 
 ### Testing locally
 

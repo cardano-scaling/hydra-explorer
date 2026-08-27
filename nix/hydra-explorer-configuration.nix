@@ -27,7 +27,9 @@
   security.acme.defaults.email = "sebastian.nagel@iohk.io";
 
   nix = {
-    settings.trusted-users = [ "root" ];
+    # nixos-rebuild --target-host hydra@... copies the closure over ssh as that
+    # user before sudo takes over, so the daemon has to trust it.
+    settings.trusted-users = [ "hydra" ]; # root is already trusted by default
     extraOptions = ''
       experimental-features = nix-command flakes recursive-nix ca-derivations
       log-lines = 300
@@ -37,8 +39,14 @@
     '';
   };
 
-  users.users.root = {
+  # The admin account. Root has no keys of its own; get in as hydra and sudo.
+  users.users.hydra = {
+    isNormalUser = true;
     initialPassword = ""; # No password
+    extraGroups = [
+      "wheel"
+      "docker"
+    ];
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBJd9BiDoUNl0pCVDeIKnlwJu6oOmLIz7l3Ct7xoYjBS" # noonio
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIATz/Jv+AnBft+9Q01UF07OydvgTTaTdCa+nMqabkUNl" # noonio
@@ -49,7 +57,10 @@
     ];
   };
 
-  services.getty.autologinUser = "root";
+  # The deploy recipes pass --sudo --ask-sudo-password; press enter at the prompt.
+  security.sudo.wheelNeedsPassword = false;
+
+  services.getty.autologinUser = "hydra";
 
   environment.systemPackages = with pkgs; [
     git
