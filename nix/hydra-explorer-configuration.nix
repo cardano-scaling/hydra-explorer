@@ -15,6 +15,8 @@
 # in
 
 {
+  imports = [ ./cardano-nodes.nix ];
+
   networking.hostName = "explorer";
   networking.firewall.allowedTCPPorts = [
     80
@@ -93,8 +95,12 @@
     ];
     serviceOverrides = {
       # See: https://discourse.nixos.org/t/github-runners-cp-read-only-filesystem/36513/2
+      # The nodes own /data/cardano themselves now, so the runner should no
+      # longer need to write here. Left in place but absence-tolerant (the '-'
+      # prefix): under ProtectSystem=strict a ReadWritePaths entry that does not
+      # exist yet fails the unit outright.
       ReadWritePaths = [
-        "/data/cardano"
+        "-/data/cardano"
       ];
     };
   };

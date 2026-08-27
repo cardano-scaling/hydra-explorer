@@ -89,8 +89,60 @@ This runs `nix fmt`, which uses [treefmt](https://github.com/numtide/treefmt-nix
 
 The NixOS system for `explorer.hydra.family` contains:
 
+- One `cardano-node` systemd service per network, see [nix/cardano-nodes.nix](./nix/cardano-nodes.nix)
 - Github runner registered to the `cardano-scaling` organization
 - Contiuously deployed `docker-compose` project, see [docker-compose.yaml](./docker-compose.yaml) and [github workflow](.github/workflows/cd.yaml)
+
+### Cardano nodes
+
+`preview`, `preprod` and `mainnet` each run as `cardano-node-<network>.service` under a
+dedicated `cardano` user, with state in `/data/cardano/<network>/` (`db/` and `node.socket`).
+The chain observers still run under docker and bind-mount those directories; there are no
+cardano nodes in `docker-compose.yaml` any more.
+
+```sh
+systemctl status cardano-node-mainnet
+cardano-logs                      # journalctl -f -u 'cardano-node-*'
+```
+
+`config.json` and `topology.json` are generated from the pinned `cardano-node` flake input
+rather than downloaded at runtime, so they move in lockstep with the node binary and a rebuild
+is the only way they change. The peer snapshot ships alongside the topology in the same store
+directory, which is how the node resolves the relative path in it.
+
+Each node runs a Mithril restore as `ExecStartPre`, and **only when it needs to**: if
+`db/immutable` already holds chunks, the step logs that and exits, and the node catches up from
+wherever it is. If the database is missing, or a previous restore died part way through, the
+partial directory is removed and `mithril-client cardano-db download latest` fetches it again,
+verifying the certificate chain against the network's genesis key and the ancillary files
+against its ancillary key. `--include-ancillary` also pulls the latest ledger state, which
+saves hours of replay on first boot. Aggregator URL and both keys come from the `cardano-node`
+flake, so there is nothing to curl and nothing to hardcode.
+
+That check is an `ExecStartPre` rather than a unit of its own on purpose: systemd does not
+reliably re-run a `Requires=` dependency on its own restarts, and a node quietly syncing
+mainnet from genesis because the restore was skipped is exactly the failure worth avoiding.
+The units restart on failure with no start-rate limit (`StartLimitIntervalSec=0`), so a reboot
+or a transient crash recovers on its own, and `TimeoutStartSec=12h` leaves room for a cold
+mainnet download.
+
+Sizing: three nodes on one host want roughly 24 GiB of RAM once mainnet's ledger state is
+loaded, and mainnet's database alone is a couple of hundred GiB. The provisioning defaults
+(`m6i.2xlarge`, 500 GiB) are sized for that, not generous.
+
+> **Migrating an existing box.** The layout is the one the containers already used, so the
+> databases carry over and nothing has to be re-downloaded. Two things still need doing by
+> hand. The old containers keep running until a CD run reaches the new `docker-compose.yaml`
+> (which already passes `--remove-orphans`), and two nodes writing one database is worse than
+> either of them being down; and the containers ran as root whereas the services do not.
+>
+> ```sh
+> docker compose down                       # before the switch, not after
+> just deploy-ec2 <host>
+> chown -R cardano:cardano /data/cardano    # the switch creates the user
+> systemctl restart 'cardano-node-*'        # they will have failed until the chown
+> docker compose up -d --remove-orphans
+> ```
 
 There are two system images, one per cloud. They share
 [nix/hydra-explorer-configuration.nix](./nix/hydra-explorer-configuration.nix) and differ only
@@ -226,7 +278,7 @@ qemu-system-x86_64 -enable-kvm -m 8000 -drive file=nixos.qcow2,media=disk,if=vir
 
 #### Todo
 
-- [ ] Run cardano-nodes as systemd services, not docker; it's really annoying.
-- [ ] Have the mithril bootstrap automatic; without it it takes way too long
-- [ ] Obtain the right version of the cardano configs automatically; it's crazy to do it by hand
+- [x] Run cardano-nodes as systemd services, not docker; it's really annoying.
+- [x] Have the mithril bootstrap automatic; without it it takes way too long
+- [x] Obtain the right version of the cardano configs automatically; it's crazy to do it by hand
 - [ ] Remove all the autodeployment
