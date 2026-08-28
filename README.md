@@ -103,7 +103,14 @@ cardano nodes in `docker-compose.yaml` any more.
 ```sh
 systemctl status cardano-node-mainnet
 cardano-logs                      # journalctl -f -u 'cardano-node-*'
+logs-mainnet -n 10 -f             # per network, arguments pass through
+stop-mainnet                      # sudo systemctl stop cardano-node-mainnet
+start-mainnet                     # sudo systemctl start cardano-node-mainnet
 ```
+
+`logs-<network>`, `stop-<network>` and `start-<network>` exist for all three. They are plain shell aliases rather
+than wrapper scripts precisely so that arguments compose: `logs-preprod -n 10 -f` expands to
+`journalctl -u cardano-node-preprod -n 10 -f`.
 
 `config.json` and `topology.json` are generated from the pinned `cardano-node` flake input
 rather than downloaded at runtime, so they move in lockstep with the node binary and a rebuild
@@ -120,6 +127,11 @@ certificate chain against the network's genesis key and the ancillary files agai
 ancillary key. `--include-ancillary` also pulls the latest ledger state, which saves hours of
 replay on first boot. Aggregator URL and both keys come from the `cardano-node` flake, so there
 is nothing to curl and nothing to hardcode.
+
+`--json` is not cosmetic here. Without it Mithril reports progress through indicatif, which
+draws to stdout and suppresses itself completely when stdout is not a terminal, so a multi-hour
+restore under systemd says nothing at all. With it, steps and throttled progress go to stderr
+via `eprintln` and land in the journal, where `logs-mainnet -f` can see them.
 
 Do not test for immutable chunks instead: a restore interrupted after the first chunks land has
 plenty of them and no marker, and calling that a database hands `cardano-node` a directory it

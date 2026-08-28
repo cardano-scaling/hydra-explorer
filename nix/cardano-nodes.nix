@@ -128,12 +128,29 @@ let
           # download verifies the certificate chain against the genesis key and
           # the ancillary files against the ancillary key. --include-ancillary
           # pulls the latest ledger state too, which saves hours of replay.
+          #
+          # --json matters under systemd: without it mithril reports progress
+          # through indicatif, which draws to stdout and suppresses itself
+          # entirely when stdout is not a terminal, so a multi-hour restore
+          # says nothing at all. With it, steps and progress go to stderr via
+          # eprintln (throttled to ~3/s) and land in the journal.
           AGGREGATOR_ENDPOINT=${lib.escapeShellArg env.mithrilAggregatorEndpointUrl} \
           GENESIS_VERIFICATION_KEY=${lib.escapeShellArg env.mithrilGenesisVerificationKey} \
           ANCILLARY_VERIFICATION_KEY=${lib.escapeShellArg env.mithrilAncillaryVerificationKey} \
             mithril-client cardano-db download latest \
               --download-dir ${dir} \
-              --include-ancillary
+              --include-ancillary \
+              --json
+
+          # An immutable-only restore leaves the node to rebuild the ledger from
+          # genesis, which is days on mainnet. That is a correct but miserable
+          # outcome, and silent, so say so loudly.
+          if [ -z "$(ls -A "$db/ledger" 2>/dev/null)" ]; then
+            echo "${name}: WARNING: no ledger snapshot in $db/ledger after the restore."
+            echo "${name}: WARNING: --include-ancillary did not deliver one, so the node"
+            echo "${name}: WARNING: will replay the chain from genesis. Look for the"
+            echo "${name}: WARNING: ancillary lines above."
+          fi
 
           echo "${name}: restored $db from Mithril."
         }
@@ -218,7 +235,14 @@ in
 
   systemd.services = mapAttrs' nodeService networks;
 
+  # Plain aliases, not scripts, so that extra arguments compose:
+  # `logs-mainnet -n 10 -f` expands to `journalctl -u cardano-node-mainnet -n 10 -f`.
   environment.shellAliases = {
     cardano-logs = "journalctl -f -u 'cardano-node-*'";
-  };
+  }
+  // lib.concatMapAttrs (name: _: {
+    "start-${name}" = "sudo systemctl start cardano-node-${name}";
+    "stop-${name}" = "sudo systemctl stop cardano-node-${name}";
+    "logs-${name}" = "journalctl -u cardano-node-${name}";
+  }) networks;
 }
