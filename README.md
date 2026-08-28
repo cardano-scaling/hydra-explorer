@@ -191,6 +191,38 @@ Every recipe runs inside the `.#deploy` shell, which carries `aws`, `coldsnap`, 
 `nixos-rebuild` and `openssh` and is separate from the Haskell `nix develop`. Nothing has to be
 entered first; `nix develop .#deploy` is there for running the steps by hand.
 
+### Github runner
+
+The runner is registered to the `cardano-scaling` organization with the labels `nixos`,
+`self-hosted`, `explorer` and `cardano`, so hydra's [smoke
+test](https://github.com/cardano-scaling/hydra/blob/master/.github/workflows/smoke-test.yaml)
+(`runs-on: [self-hosted, cardano]`) lands here and drives the nodes above through
+`/data/cardano/<network>/`.
+
+It runs as `root`, which is what lets it clean up the root-owned files docker leaves in its
+work directory, but that root is not the usual one: the nixpkgs module empties
+`CapabilityBoundingSet` and sets `PrivateUsers=true`, so it has no `CAP_DAC_OVERRIDE` and the
+`cardano` uid is not mapped into its user namespace. Against the node's files it gets only the
+"other" permission bits. That is why three things have to line up:
+
+- the runner's own group is `cardano` (a supplementary group would not survive `PrivateUsers`,
+  the unit's own group does),
+- the nodes run with `UMask=0002`, since `connect(2)` on `node.socket` needs the write bit and
+  the socket is created with the unit's umask, and
+- `/data/cardano/<network>` is `2775`, since the smoke test writes its hydra-node state next to
+  `db/` and setgid keeps that in the group.
+
+`ReadWritePaths` stays too: under `ProtectSystem=strict` the whole of `/data` would be mounted
+read-only for the job.
+
+The socket only picks up a new mode when it is recreated, so after changing any of this:
+
+```sh
+just deploy-ec2 <host>
+systemctl restart 'cardano-node-*'
+ls -l /data/cardano/preview/node.socket   # srwxrwxr-x cardano cardano
+```
+
 ### Provisioning an EC2 instance
 
 ```sh

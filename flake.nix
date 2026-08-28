@@ -28,9 +28,9 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    cardano-node.url = "github:IntersectMBO/cardano-node/10.6.2";
-    hydra.url = "github:cardano-scaling/hydra/1.0.0";
-    mithril.url = "github:input-output-hk/mithril/2543.1-hotfix";
+    cardano-node.url = "github:IntersectMBO/cardano-node/11.0.1";
+    hydra.url = "github:cardano-scaling/hydra/master";
+    mithril.url = "github:input-output-hk/mithril/2630.0";
 
     hackage = {
       url = "github:input-output-hk/hackage.nix";

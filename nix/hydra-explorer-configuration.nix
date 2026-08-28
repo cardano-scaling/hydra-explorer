@@ -77,8 +77,6 @@
   # Github runner registered with cardano-scaling organization
   age.secrets.github-runner-token.file = ../secrets/github-runner-token.age;
 
-  # TODO: Run this with 'runner' user? If yes, then we need to fix permissions
-  # on the /data paths and/or make the containers rootless (run by 'runner')?
   services.github-runners.explorer = {
     enable = true;
     url = "https://github.com/cardano-scaling";
@@ -86,6 +84,13 @@
     replace = true;
     # Surprisingly required for this to be able to delete files owned by root.
     user = "root";
+    # The nixpkgs module strips every capability and runs the unit in a user
+    # namespace, so this root has no CAP_DAC_OVERRIDE and gets plain "other"
+    # permissions on the cardano-owned /data/cardano tree. Hydra's smoke test
+    # connects to node.socket and writes its hydra-node state there, so run as
+    # the node group instead; the unit's own group is one of the few mapped
+    # into that namespace, unlike SupplementaryGroups.
+    group = "cardano";
     package = github-runner-new;
     extraLabels = [
       "nixos"
@@ -95,10 +100,10 @@
     ];
     serviceOverrides = {
       # See: https://discourse.nixos.org/t/github-runners-cp-read-only-filesystem/36513/2
-      # The nodes own /data/cardano themselves now, so the runner should no
-      # longer need to write here. Left in place but absence-tolerant (the '-'
-      # prefix): under ProtectSystem=strict a ReadWritePaths entry that does not
-      # exist yet fails the unit outright.
+      # Still needed: ProtectSystem=strict would otherwise mount /data
+      # read-only for the smoke test. Absence-tolerant (the '-' prefix) because
+      # under ProtectSystem=strict a ReadWritePaths entry that does not exist
+      # yet fails the unit outright.
       ReadWritePaths = [
         "-/data/cardano"
       ];

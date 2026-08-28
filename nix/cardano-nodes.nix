@@ -181,6 +181,11 @@ let
 
         ExecStart = lib.getExe (nodeScript name { inherit port prometheusPort; });
 
+        # connect(2) on a unix socket needs the write bit, and node.socket is
+        # created with the unit's umask. 0002 leaves it group-writable so
+        # members of the 'cardano' group (the github runner) can reach the node.
+        UMask = "0002";
+
         Restart = "on-failure";
         RestartSec = 30;
         # Let it flush the ledger rather than killing it mid-write.
@@ -207,7 +212,9 @@ in
   systemd.tmpfiles.rules = [
     "d ${dataRoot} 0755 ${user} ${user} -"
   ]
-  ++ mapAttrsToList (name: _: "d ${dirOf name} 0755 ${user} ${user} -") networks;
+  # 2775: the github runner writes hydra-node state next to db/ during the
+  # hydra smoke test, and setgid keeps what it creates in the 'cardano' group.
+  ++ mapAttrsToList (name: _: "d ${dirOf name} 2775 ${user} ${user} -") networks;
 
   systemd.services = mapAttrs' nodeService networks;
 
