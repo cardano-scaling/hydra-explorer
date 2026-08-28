@@ -43,7 +43,7 @@ provision:
 #     --sudo --ask-sudo-password
 
 # deploy to the ec2 server; give `host` a default once the address settles
-deploy-ec2 host:
+deploy-ec2 host="13.61.152.73":
   nix develop .#deploy -c nixos-rebuild switch \
     --target-host hydra@{{host}} \
     --flake .#explorer-ec2 \
