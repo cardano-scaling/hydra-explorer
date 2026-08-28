@@ -110,21 +110,39 @@ rather than downloaded at runtime, so they move in lockstep with the node binary
 is the only way they change. The peer snapshot ships alongside the topology in the same store
 directory, which is how the node resolves the relative path in it.
 
-Each node runs a Mithril restore as `ExecStartPre`, and **only when it needs to**: if
-`db/immutable` already holds chunks, the step logs that and exits, and the node catches up from
-wherever it is. If the database is missing, or a previous restore died part way through, the
-partial directory is removed and `mithril-client cardano-db download latest` fetches it again,
-verifying the certificate chain against the network's genesis key and the ancillary files
-against its ancillary key. `--include-ancillary` also pulls the latest ledger state, which
-saves hours of replay on first boot. Aggregator URL and both keys come from the `cardano-node`
-flake, so there is nothing to curl and nothing to hardcode.
+Each node runs a Mithril restore as `ExecStartPre`, and **only when it needs to**. The test is
+`db/protocolMagicId`: Mithril writes it as the very last step of a restore, `cardano-node`
+writes it when it initialises an empty database, and `cardano-node` refuses to start on a
+non-empty directory that lacks it (`NoDbMarkerAndNotEmpty`). If it is there the step logs and
+exits, and the node catches up from wherever it is. If it is not, the directory is cleared and
+`mithril-client cardano-db download latest` fetches the database again, verifying the
+certificate chain against the network's genesis key and the ancillary files against its
+ancillary key. `--include-ancillary` also pulls the latest ledger state, which saves hours of
+replay on first boot. Aggregator URL and both keys come from the `cardano-node` flake, so there
+is nothing to curl and nothing to hardcode.
 
-That check is an `ExecStartPre` rather than a unit of its own on purpose: systemd does not
-reliably re-run a `Requires=` dependency on its own restarts, and a node quietly syncing
-mainnet from genesis because the restore was skipped is exactly the failure worth avoiding.
+Do not test for immutable chunks instead: a restore interrupted after the first chunks land has
+plenty of them and no marker, and calling that a database hands `cardano-node` a directory it
+will refuse. **A `nixos-rebuild switch` during a cold restore is exactly that interruption** —
+it restarts the unit and kills the download. That state now heals itself on the next start, but
+it restarts the download from the beginning, so leave a fresh mainnet alone while it works.
+
+The restore and the node are one `ExecStart` — a script that restores if it has to and then
+`exec`s `cardano-node` — rather than an `ExecStartPre` plus an `ExecStart`. Two reasons. A
+`Type=simple` start job is not complete until every `ExecStartPre` has finished, and
+`switch-to-configuration` blocks on that job, so a cold mainnet restore under `ExecStartPre`
+holds `nixos-rebuild switch` open for hours. And a separate restore *unit* would not be
+re-checked on systemd's own restarts, which do not reliably re-run a `Requires=` dependency.
+As `ExecStart` the unit is active the moment the script forks, the deploy returns, and the
+check still runs on every single start.
+
 The units restart on failure with no start-rate limit (`StartLimitIntervalSec=0`), so a reboot
-or a transient crash recovers on its own, and `TimeoutStartSec=12h` leaves room for a cold
-mainnet download.
+or a transient crash recovers on its own.
+
+Each node also gets its own Prometheus port (12798 preview, 12799 preprod, 12800 mainnet).
+Every network's defaults specify `PrometheusSimple 127.0.0.1 12798`, so on one host only the
+first node to start would bind it and the others log
+`Network.Socket.bind: resource busy` and run without metrics.
 
 Sizing: three nodes on one host want roughly 24 GiB of RAM once mainnet's ledger state is
 loaded, and mainnet's database alone is a couple of hundred GiB. The provisioning defaults
