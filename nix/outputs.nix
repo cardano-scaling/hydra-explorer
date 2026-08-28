@@ -81,10 +81,28 @@ let
   // lib.optionalAttrs (system == "x86_64-linux") {
     # GCP image (.raw.tar.gz). Build with: nix build .#gce
     gce = inputs.self.nixosConfigurations.explorer-gce.config.system.build.googleComputeImage;
+
+    # EC2 image (.raw, UEFI). Build with: nix build .#ami
+    ami = inputs.self.nixosConfigurations.explorer-ec2.config.system.build.amazonImage;
   };
 
   devShells = rec {
     default = mkShell "ghc967";
+
+    # Tooling for the Deployment section of the README: provisioning EC2 and
+    # running nixos-rebuild against a live host. Kept separate from the Haskell
+    # shell, which is far heavier than this needs to be.
+    deploy = pkgs.mkShellNoCC {
+      name = "hydra-explorer-deploy-shell";
+      packages = [
+        pkgs.awscli2
+        pkgs.coldsnap
+        pkgs.jq
+        pkgs.just
+        pkgs.openssh
+      ]
+      ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [ pkgs.nixos-rebuild ];
+    };
   };
 
 in

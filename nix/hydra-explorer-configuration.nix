@@ -15,6 +15,8 @@
 # in
 
 {
+  imports = [ ./cardano-nodes.nix ];
+
   networking.hostName = "explorer";
   networking.firewall.allowedTCPPorts = [
     80
@@ -27,7 +29,9 @@
   security.acme.defaults.email = "sebastian.nagel@iohk.io";
 
   nix = {
-    settings.trusted-users = [ "root" ];
+    # nixos-rebuild --target-host hydra@... copies the closure over ssh as that
+    # user before sudo takes over, so the daemon has to trust it.
+    settings.trusted-users = [ "hydra" ]; # root is already trusted by default
     extraOptions = ''
       experimental-features = nix-command flakes recursive-nix ca-derivations
       log-lines = 300
@@ -37,8 +41,14 @@
     '';
   };
 
-  users.users.root = {
+  # The admin account. Root has no keys of its own; get in as hydra and sudo.
+  users.users.hydra = {
+    isNormalUser = true;
     initialPassword = ""; # No password
+    extraGroups = [
+      "wheel"
+      "docker"
+    ];
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBJd9BiDoUNl0pCVDeIKnlwJu6oOmLIz7l3Ct7xoYjBS" # noonio
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIATz/Jv+AnBft+9Q01UF07OydvgTTaTdCa+nMqabkUNl" # noonio
@@ -49,7 +59,10 @@
     ];
   };
 
-  services.getty.autologinUser = "root";
+  # The deploy recipes pass --sudo --ask-sudo-password; press enter at the prompt.
+  security.sudo.wheelNeedsPassword = false;
+
+  services.getty.autologinUser = "hydra";
 
   environment.systemPackages = with pkgs; [
     git
@@ -64,29 +77,50 @@
   # Github runner registered with cardano-scaling organization
   age.secrets.github-runner-token.file = ../secrets/github-runner-token.age;
 
-  # TODO: Run this with 'runner' user? If yes, then we need to fix permissions
-  # on the /data paths and/or make the containers rootless (run by 'runner')?
-  services.github-runners.explorer = {
-    enable = true;
-    url = "https://github.com/cardano-scaling";
-    tokenFile = "/run/agenix/github-runner-token";
-    replace = true;
-    # Surprisingly required for this to be able to delete files owned by root.
-    user = "root";
-    package = github-runner-new;
-    extraLabels = [
-      "nixos"
-      "self-hosted"
-      "explorer"
-      "cardano"
-    ];
-    serviceOverrides = {
-      # See: https://discourse.nixos.org/t/github-runners-cp-read-only-filesystem/36513/2
-      ReadWritePaths = [
-        "/data/cardano"
-      ];
+  # A runner takes one job at a time, so a single one serialises hydra's smoke
+  # test across networks even though those jobs sit in distinct `concurrency`
+  # groups and write to distinct /data/cardano/<network> state directories.
+  # Two identically labelled runners let preview and preprod run at once; each
+  # gets its own state and runtime directory from its attribute name.
+  services.github-runners =
+    let
+      runner = {
+        enable = true;
+        url = "https://github.com/cardano-scaling";
+        tokenFile = "/run/agenix/github-runner-token";
+        replace = true;
+        # Surprisingly required for this to be able to delete files owned by root.
+        user = "root";
+        # The nixpkgs module strips every capability and runs the unit in a user
+        # namespace, so this root has no CAP_DAC_OVERRIDE and gets plain "other"
+        # permissions on the cardano-owned /data/cardano tree. Hydra's smoke test
+        # connects to node.socket and writes its hydra-node state there, so run as
+        # the node group instead; the unit's own group is one of the few mapped
+        # into that namespace, unlike SupplementaryGroups.
+        group = "cardano";
+        package = github-runner-new;
+        extraLabels = [
+          "nixos"
+          "self-hosted"
+          "explorer"
+          "cardano"
+        ];
+        serviceOverrides = {
+          # See: https://discourse.nixos.org/t/github-runners-cp-read-only-filesystem/36513/2
+          # Still needed: ProtectSystem=strict would otherwise mount /data
+          # read-only for the smoke test. Absence-tolerant (the '-' prefix) because
+          # under ProtectSystem=strict a ReadWritePaths entry that does not exist
+          # yet fails the unit outright.
+          ReadWritePaths = [
+            "-/data/cardano"
+          ];
+        };
+      };
+    in
+    {
+      explorer = runner;
+      explorer-2 = runner;
     };
-  };
 
   # Use docker to manage containers
   virtualisation.docker.enable = true;

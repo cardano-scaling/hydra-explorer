@@ -1,5 +1,9 @@
 # Hydra explorer instance with it's chain observers as it is deployed to
 # explorer.hydra.family
+#
+# The cardano nodes are NOT here: they run as systemd services, see
+# nix/cardano-nodes.nix. The observers below bind-mount the per-network
+# directories those nodes write their sockets into.
 networks:
   hydra-explorer:
     driver: bridge
@@ -357,59 +361,6 @@ services:
         restart: true
     networks:
       - hydra-explorer
-    restart: always
-    logging:
-      driver: journald
-
-  # One cardano node per network
-
-  cardano-node-preview:
-    image: ghcr.io/intersectmbo/cardano-node:11.0.1
-    volumes:
-      - /data/cardano/preview:/data
-    environment:
-      - CARDANO_CONFIG=/data/config.json
-      - CARDANO_TOPOLOGY=/data/topology.json
-      - CARDANO_DATABASE_PATH=/data/db
-      - CARDANO_SOCKET_PATH=/data/node.socket # used by cardano-node
-      - CARDANO_NODE_SOCKET_PATH=/data/node.socket # used by cardano-cli
-      - CARDANO_LOG_DIR=/data/logs
-    command:
-      [ "run" ]
-    restart: always
-    logging:
-      driver: journald
-
-  cardano-node-preprod:
-    image: ghcr.io/intersectmbo/cardano-node:11.0.1
-    volumes:
-      - /data/cardano/preprod:/data
-    environment:
-      - CARDANO_CONFIG=/data/config.json
-      - CARDANO_TOPOLOGY=/data/topology.json
-      - CARDANO_DATABASE_PATH=/data/db
-      - CARDANO_SOCKET_PATH=/data/node.socket # used by cardano-node
-      - CARDANO_NODE_SOCKET_PATH=/data/node.socket # used by cardano-cli
-      - CARDANO_LOG_DIR=/data/logs
-    command:
-      [ "run" ]
-    restart: always
-    logging:
-      driver: journald
-
-  cardano-node-mainnet:
-    image: ghcr.io/intersectmbo/cardano-node:11.0.1
-    volumes:
-      - /data/cardano/mainnet:/data
-    environment:
-      - CARDANO_CONFIG=/data/config.json
-      - CARDANO_TOPOLOGY=/data/topology.json
-      - CARDANO_DATABASE_PATH=/data/db
-      - CARDANO_SOCKET_PATH=/data/node.socket # used by cardano-node
-      - CARDANO_NODE_SOCKET_PATH=/data/node.socket # used by cardano-cli
-      - CARDANO_LOG_DIR=/data/logs
-    command:
-      [ "run" ]
     restart: always
     logging:
       driver: journald
