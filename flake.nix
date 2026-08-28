@@ -28,8 +28,32 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    cardano-node.url = "github:IntersectMBO/cardano-node/11.0.1";
-    hydra.url = "github:cardano-scaling/hydra/master";
+    # These sub-inputs are fetched but never evaluated (we only use cabalProject',
+    # not stackProject). Pointing them at our haskell-nix collapses three ~1.2GB
+    # checkouts into one; the built derivations are unchanged.
+    cardano-node = {
+      url = "github:IntersectMBO/cardano-node/11.0.1";
+      inputs.haskellNix.inputs.stackage.follows = "haskell-nix/stackage";
+      inputs.haskellNix.inputs.hackage-for-stackage.follows = "haskell-nix/hackage-for-stackage";
+      inputs.haskellNix.inputs.nixpkgs-2305.follows = "haskell-nix/nixpkgs-2305";
+      inputs.haskellNix.inputs.nixpkgs-2311.follows = "haskell-nix/nixpkgs-2311";
+      inputs.haskellNix.inputs.nixpkgs-2405.follows = "haskell-nix/nixpkgs-2405";
+      inputs.haskellNix.inputs.nixpkgs-2411.follows = "haskell-nix/nixpkgs-2411";
+      inputs.haskellNix.inputs.nixpkgs-2505.follows = "haskell-nix/nixpkgs-2505";
+    };
+
+    hydra = {
+      url = "github:cardano-scaling/hydra/master";
+      inputs.cardano-node.follows = "cardano-node";
+      inputs.haskellNix.inputs.stackage.follows = "haskell-nix/stackage";
+      inputs.haskellNix.inputs.hackage-for-stackage.follows = "haskell-nix/hackage-for-stackage";
+      inputs.haskellNix.inputs.nixpkgs-2305.follows = "haskell-nix/nixpkgs-2305";
+      inputs.haskellNix.inputs.nixpkgs-2311.follows = "haskell-nix/nixpkgs-2311";
+      inputs.haskellNix.inputs.nixpkgs-2405.follows = "haskell-nix/nixpkgs-2405";
+      inputs.haskellNix.inputs.nixpkgs-2411.follows = "haskell-nix/nixpkgs-2411";
+      inputs.haskellNix.inputs.nixpkgs-2505.follows = "haskell-nix/nixpkgs-2505";
+      inputs.haskellNix.inputs.nixpkgs-2511.follows = "haskell-nix/nixpkgs-2511";
+    };
     mithril.url = "github:input-output-hk/mithril/2630.0";
 
     hackage = {
