@@ -77,38 +77,50 @@
   # Github runner registered with cardano-scaling organization
   age.secrets.github-runner-token.file = ../secrets/github-runner-token.age;
 
-  services.github-runners.explorer = {
-    enable = true;
-    url = "https://github.com/cardano-scaling";
-    tokenFile = "/run/agenix/github-runner-token";
-    replace = true;
-    # Surprisingly required for this to be able to delete files owned by root.
-    user = "root";
-    # The nixpkgs module strips every capability and runs the unit in a user
-    # namespace, so this root has no CAP_DAC_OVERRIDE and gets plain "other"
-    # permissions on the cardano-owned /data/cardano tree. Hydra's smoke test
-    # connects to node.socket and writes its hydra-node state there, so run as
-    # the node group instead; the unit's own group is one of the few mapped
-    # into that namespace, unlike SupplementaryGroups.
-    group = "cardano";
-    package = github-runner-new;
-    extraLabels = [
-      "nixos"
-      "self-hosted"
-      "explorer"
-      "cardano"
-    ];
-    serviceOverrides = {
-      # See: https://discourse.nixos.org/t/github-runners-cp-read-only-filesystem/36513/2
-      # Still needed: ProtectSystem=strict would otherwise mount /data
-      # read-only for the smoke test. Absence-tolerant (the '-' prefix) because
-      # under ProtectSystem=strict a ReadWritePaths entry that does not exist
-      # yet fails the unit outright.
-      ReadWritePaths = [
-        "-/data/cardano"
-      ];
+  # A runner takes one job at a time, so a single one serialises hydra's smoke
+  # test across networks even though those jobs sit in distinct `concurrency`
+  # groups and write to distinct /data/cardano/<network> state directories.
+  # Two identically labelled runners let preview and preprod run at once; each
+  # gets its own state and runtime directory from its attribute name.
+  services.github-runners =
+    let
+      runner = {
+        enable = true;
+        url = "https://github.com/cardano-scaling";
+        tokenFile = "/run/agenix/github-runner-token";
+        replace = true;
+        # Surprisingly required for this to be able to delete files owned by root.
+        user = "root";
+        # The nixpkgs module strips every capability and runs the unit in a user
+        # namespace, so this root has no CAP_DAC_OVERRIDE and gets plain "other"
+        # permissions on the cardano-owned /data/cardano tree. Hydra's smoke test
+        # connects to node.socket and writes its hydra-node state there, so run as
+        # the node group instead; the unit's own group is one of the few mapped
+        # into that namespace, unlike SupplementaryGroups.
+        group = "cardano";
+        package = github-runner-new;
+        extraLabels = [
+          "nixos"
+          "self-hosted"
+          "explorer"
+          "cardano"
+        ];
+        serviceOverrides = {
+          # See: https://discourse.nixos.org/t/github-runners-cp-read-only-filesystem/36513/2
+          # Still needed: ProtectSystem=strict would otherwise mount /data
+          # read-only for the smoke test. Absence-tolerant (the '-' prefix) because
+          # under ProtectSystem=strict a ReadWritePaths entry that does not exist
+          # yet fails the unit outright.
+          ReadWritePaths = [
+            "-/data/cardano"
+          ];
+        };
+      };
+    in
+    {
+      explorer = runner;
+      explorer-2 = runner;
     };
-  };
 
   # Use docker to manage containers
   virtualisation.docker.enable = true;
