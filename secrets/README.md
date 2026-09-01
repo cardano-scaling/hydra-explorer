@@ -9,7 +9,7 @@ Steps:
 2. Run this command
 
 ``` shell
-nix run github:ryantm/agenix -- -e github-runner-token.age -i <(xsel -b)
+agenix -e github-runner-token.age -i <(xsel -b)
 ```
 
 See https://github.com/ryantm/agenix for more instructions how to use.

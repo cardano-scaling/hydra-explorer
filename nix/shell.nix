@@ -26,6 +26,7 @@ let
     pkgs.check-jsonschema # For hydra-explorer:test:tests
     pkgs.yarn # For hacking on the UI
     pkgs.just
+    pkgs.agenix
   ];
 
   shell = project.shellFor {

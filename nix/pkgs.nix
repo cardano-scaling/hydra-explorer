@@ -9,6 +9,7 @@ import inputs.nixpkgs {
     inputs.iohk-nix.overlays.haskell-nix-crypto
     inputs.iohk-nix.overlays.haskell-nix-extra
     (final: prev: {
+      agenix = inputs.agenix.packages.${final.system}.default;
       cardano-node = inputs.cardano-node.packages.${final.system}.cardano-node;
       cardano-cli = inputs.cardano-node.packages.${final.system}.cardano-cli;
       hydra-chain-observer = inputs.hydra.packages.${final.system}.hydra-chain-observer;
